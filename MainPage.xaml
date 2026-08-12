@@ -32,6 +32,32 @@
         <ItemsPanelTemplate x:Key="PhotoPanelNarrow">
             <ItemsWrapGrid Orientation="Horizontal" ItemWidth="120" ItemHeight="120"/>
         </ItemsPanelTemplate>
+        <!-- 右键/长按上下文菜单 -->
+        <MenuFlyout x:Key="AlbumContextFlyout">
+            <MenuFlyoutItem Text="打开" Click="AlbumContext_Open_Click"/>
+            <MenuFlyoutItem Text="在文件夹中显示" Click="AlbumContext_OpenFolder_Click"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="重命名" Click="AlbumContext_Rename_Click"/>
+            <MenuFlyoutItem Text="删除" Click="AlbumContext_Delete_Click"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="属性" Click="AlbumContext_Properties_Click"/>
+        </MenuFlyout>
+        <MenuFlyout x:Key="PhotoContextFlyout">
+            <MenuFlyoutItem Text="打开" Click="PhotoContext_Open_Click"/>
+            <MenuFlyoutItem Text="在文件夹中显示" Click="PhotoContext_OpenFolder_Click"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="复制路径" Click="PhotoContext_CopyPath_Click"/>
+            <MenuFlyoutItem Text="重命名" Click="PhotoContext_Rename_Click"/>
+            <MenuFlyoutItem Text="删除" Click="PhotoContext_Delete_Click"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="属性" Click="PhotoContext_Properties_Click"/>
+        </MenuFlyout>
+        <MenuFlyout x:Key="FolderContextFlyout">
+            <MenuFlyoutItem Text="打开" Click="FolderContext_Open_Click"/>
+            <MenuFlyoutItem Text="移除" Click="FolderContext_Remove_Click"/>
+            <MenuFlyoutSeparator/>
+            <MenuFlyoutItem Text="属性" Click="FolderContext_Properties_Click"/>
+        </MenuFlyout>
     </Page.Resources>
 
     <Grid>
@@ -156,10 +182,11 @@
                 </Grid.RowDefinitions>
 
                 <!-- 顶部 Tab 栏 + 右侧操作按钮 -->
-                <Grid Grid.Row="0" Padding="16,10" Background="{ThemeResource ChromeBgBrush}">
+                <Grid Grid.Row="0" Padding="16,12" Background="{ThemeResource ChromeBgBrush}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <!-- Tab 栏 -->
@@ -172,7 +199,37 @@
                                     BorderThickness="0"
                                     FontSize="14"
                                     Foreground="{ThemeResource TextPrimaryBrush}"
-                                    AutomationProperties.Name="相册"/>
+                                    AutomationProperties.Name="相册">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
+                                        <VisualStateManager.VisualStateGroups>
+                                            <VisualStateGroup x:Name="CommonStates">
+                                                <VisualState x:Name="Normal"/>
+                                                <VisualState x:Name="PointerOver">
+                                                    <VisualState.Setters>
+                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource BtnBgBrush}"/>
+                                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource AccentBrush}"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                                <VisualState x:Name="Pressed">
+                                                    <VisualState.Setters>
+                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource AccentBrush}"/>
+                                                        <Setter Target="ContentPresenter.Foreground" Value="White"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                            </VisualStateGroup>
+                                        </VisualStateManager.VisualStateGroups>
+                                        <ContentPresenter x:Name="ContentPresenter"
+                                                          Content="{TemplateBinding Content}"
+                                                          Foreground="{TemplateBinding Foreground}"
+                                                          FontSize="{TemplateBinding FontSize}"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"/>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
                             <Border Height="3" Margin="8,2,8,0" CornerRadius="1.5"
                                     Background="{ThemeResource AccentBrush}"
                                     Visibility="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
@@ -185,7 +242,37 @@
                                     BorderThickness="0"
                                     FontSize="14"
                                     Foreground="{ThemeResource TextPrimaryBrush}"
-                                    AutomationProperties.Name="全部照片"/>
+                                    AutomationProperties.Name="全部照片">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
+                                        <VisualStateManager.VisualStateGroups>
+                                            <VisualStateGroup x:Name="CommonStates">
+                                                <VisualState x:Name="Normal"/>
+                                                <VisualState x:Name="PointerOver">
+                                                    <VisualState.Setters>
+                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource BtnBgBrush}"/>
+                                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource AccentBrush}"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                                <VisualState x:Name="Pressed">
+                                                    <VisualState.Setters>
+                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource AccentBrush}"/>
+                                                        <Setter Target="ContentPresenter.Foreground" Value="White"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                            </VisualStateGroup>
+                                        </VisualStateManager.VisualStateGroups>
+                                        <ContentPresenter x:Name="ContentPresenter"
+                                                          Content="{TemplateBinding Content}"
+                                                          Foreground="{TemplateBinding Foreground}"
+                                                          FontSize="{TemplateBinding FontSize}"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"/>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
                             <Border Height="3" Margin="8,2,8,0" CornerRadius="1.5"
                                     Background="{ThemeResource AccentBrush}"
                                     Visibility="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
@@ -198,7 +285,37 @@
                                     BorderThickness="0"
                                     FontSize="14"
                                     Foreground="{ThemeResource TextPrimaryBrush}"
-                                    AutomationProperties.Name="文件夹"/>
+                                    AutomationProperties.Name="文件夹">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
+                                        <VisualStateManager.VisualStateGroups>
+                                            <VisualStateGroup x:Name="CommonStates">
+                                                <VisualState x:Name="Normal"/>
+                                                <VisualState x:Name="PointerOver">
+                                                    <VisualState.Setters>
+                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource BtnBgBrush}"/>
+                                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource AccentBrush}"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                                <VisualState x:Name="Pressed">
+                                                    <VisualState.Setters>
+                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource AccentBrush}"/>
+                                                        <Setter Target="ContentPresenter.Foreground" Value="White"/>
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                            </VisualStateGroup>
+                                        </VisualStateManager.VisualStateGroups>
+                                        <ContentPresenter x:Name="ContentPresenter"
+                                                          Content="{TemplateBinding Content}"
+                                                          Foreground="{TemplateBinding Foreground}"
+                                                          FontSize="{TemplateBinding FontSize}"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"/>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
                             <Border Height="3" Margin="8,2,8,0" CornerRadius="1.5"
                                     Background="{ThemeResource AccentBrush}"
                                     Visibility="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
@@ -206,17 +323,29 @@
                     </StackPanel>
                     <!-- 搜索框 -->
                     <AutoSuggestBox x:Name="SearchBox"
-                                    Grid.Column="1"
-                                    Width="200"
-                                    Margin="12,0,0,0"
+                                    Grid.Column="2"
+                                    Width="240"
+                                    MaxWidth="400"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,0,12,0"
                                     PlaceholderText="搜索相册 / 照片"
                                     Text="{x:Bind Vm.SearchText, Mode=TwoWay}"
-                                    AutomationProperties.Name="搜索相册 / 照片" />
+                                    QueryIcon="Find"
+                                    AutomationProperties.Name="搜索相册 / 照片"
+                                    QuerySubmitted="SearchBox_QuerySubmitted"
+                                    SuggestionChosen="SearchBox_SuggestionChosen"
+                                    TextChanged="SearchBox_TextChanged">
+                        <AutoSuggestBox.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <TextBlock Text="{x:Bind}" />
+                            </DataTemplate>
+                        </AutoSuggestBox.ItemTemplate>
+                    </AutoSuggestBox>
                     <!-- 右侧操作按钮 -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <StackPanel Grid.Column="3" Orientation="Horizontal">
                         <Button x:Uid="LibOpenImage"
                                 Command="{x:Bind Vm.OpenImageCommand}"
-                                Padding="14,7" Margin="0,0,8,0"
+                                Padding="14,7"
                                 Background="{ThemeResource BtnBgBrush}"
                                 Foreground="{ThemeResource TextPrimaryBrush}"
                                 BorderThickness="0"
@@ -224,7 +353,7 @@
                                 AutomationProperties.Name="打开图片"/>
                         <Button x:Uid="LibAddFolder"
                                 Command="{x:Bind Vm.OpenFolderCommand}"
-                                Padding="14,7" Margin="0,0,8,0"
+                                Padding="14,7" Margin="8,0,8,0"
                                 Background="{ThemeResource AccentBrush}"
                                 Foreground="White"
                                 BorderThickness="0"
@@ -232,7 +361,7 @@
                                 AutomationProperties.Name="打开文件夹"/>
                         <Button x:Uid="LibSettings"
                                 Click="SettingsButton_Click"
-                                Padding="14,7"
+                                Padding="14,7" Margin="8,0,0,0"
                                 Background="{ThemeResource BtnBgBrush}"
                                 Foreground="{ThemeResource TextPrimaryBrush}"
                                 BorderThickness="0"
@@ -250,6 +379,7 @@
                               SelectionMode="None"
                               IsItemClickEnabled="True"
                               ItemClick="AlbumGrid_ItemClick"
+                              RightTapped="AlbumsGrid_RightTapped"
                               ScrollViewer.HorizontalScrollMode="Disabled"
                               ScrollViewer.VerticalScrollBarVisibility="Auto"
                               ItemsPanel="{StaticResource AlbumPanelWide}">
@@ -262,33 +392,97 @@
                             <Style TargetType="GridViewItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                                 <Setter Property="Margin" Value="8"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="GridViewItem">
+                                            <Grid x:Name="RootGrid" Background="Transparent">
+                                                <VisualStateManager.VisualStateGroups>
+                                                    <VisualStateGroup x:Name="CommonStates">
+                                                        <VisualState x:Name="Normal"/>
+                                                        <VisualState x:Name="PointerOver">
+                                                            <VisualState.Setters>
+                                                                <Setter Target="ContentBorder.Background" Value="{ThemeResource BtnBgBrush}"/>
+                                                                <Setter Target="ContentBorder.BorderBrush" Value="{ThemeResource AccentBrush}"/>
+                                                                <Setter Target="ContentBorder.BorderThickness" Value="2"/>
+                                                            </VisualState.Setters>
+                                                        </VisualState>
+                                                        <VisualState x:Name="Pressed">
+                                                            <VisualState.Setters>
+                                                                <Setter Target="ContentBorder.Background" Value="{ThemeResource AccentBrush}"/>
+                                                                <Setter Target="ContentBorder.BorderBrush" Value="{ThemeResource AccentBrush}"/>
+                                                                <Setter Target="ContentBorder.BorderThickness" Value="2"/>
+                                                                <Setter Target="ContentBorder.Opacity" Value="0.9"/>
+                                                            </VisualState.Setters>
+                                                        </VisualState>
+                                                    </VisualStateGroup>
+                                                    <VisualStateGroup x:Name="FocusStates">
+                                                        <VisualState x:Name="Focused">
+                                                            <VisualState.Setters>
+                                                                <Setter Target="FocusBorder.Visibility" Value="Visible"/>
+                                                            </VisualState.Setters>
+                                                        </VisualState>
+                                                        <VisualState x:Name="Unfocused"/>
+                                                    </VisualStateGroup>
+                                                </VisualStateManager.VisualStateGroups>
+                                                <Border x:Name="FocusBorder"
+                                                        BorderBrush="{ThemeResource AccentBrush}"
+                                                        BorderThickness="2"
+                                                        Visibility="Collapsed"
+                                                        IsHitTestVisible="False"/>
+                                                <Border x:Name="ContentBorder"
+                                                        Background="{ThemeResource CardBgBrush}"
+                                                        BorderBrush="{ThemeResource BtnBorderBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="14"
+                                                        Padding="4">
+                                                    <ContentPresenter
+                                                        HorizontalAlignment="Stretch"
+                                                        VerticalAlignment="Stretch"/>
+                                                </Border>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
                             </Style>
                         </GridView.ItemContainerStyle>
                         <GridView.ItemTemplate>
                             <DataTemplate x:DataType="models:AlbumItem">
-                                <Border Width="240" Height="200" CornerRadius="14"
-                                        Background="{ThemeResource CardBgBrush}"
-                                        BorderBrush="{ThemeResource BtnBorderBrush}"
-                                        BorderThickness="1"
-                                        Padding="4">
-<Grid>
-                                        <Image Source="{x:Bind Cover, Mode=OneWay}"
+                                <Grid>
+                                    <Grid>
+                                        <ProgressRing x:Name="CoverLoadingRing"
+                                                      IsActive="True"
+                                                      Width="32"
+                                                      Height="32"
+                                                      Visibility="Visible"
+                                                      Foreground="{ThemeResource AccentBrush}"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"/>
+                                        <Image x:Name="CoverImage"
+                                               Source="{x:Bind Cover, Mode=OneWay}"
                                                Stretch="UniformToFill"
-                                               Margin="0,0,0,44"/>
-                                        <StackPanel VerticalAlignment="Bottom" Padding="10,10">
-                                            <TextBlock Text="{x:Bind Name}"
-                                                       Foreground="{ThemeResource TextPrimaryBrush}"
-                                                       FontSize="15"
-                                                       FontWeight="SemiBold"
-                                                       TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Foreground="{ThemeResource TextMutedBrush}" FontSize="11" Margin="0,3,0,0">
-                                                <Run Text="{x:Bind Count}"/>
-                                                <Run Text=" · "/>
-                                                <Run Text="{x:Bind DateRangeText}"/>
-                                            </TextBlock>
-                                        </StackPanel>
+                                               Margin="0,0,0,44"
+                                               Opacity="0"
+                                               ImageOpened="CoverImage_ImageOpened">
+                                            <Image.Transitions>
+                                                <TransitionCollection>
+                                                    <EntranceThemeTransition />
+                                                </TransitionCollection>
+                                            </Image.Transitions>
+                                        </Image>
                                     </Grid>
-                                </Border>
+                                    <StackPanel VerticalAlignment="Bottom" Padding="10,10">
+                                        <TextBlock Text="{x:Bind Name}"
+                                                   Foreground="{ThemeResource TextPrimaryBrush}"
+                                                   FontSize="15"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Foreground="{ThemeResource TextMutedBrush}" FontSize="11" Margin="0,3,0,0">
+                                            <Run Text="{x:Bind Count}"/>
+                                            <Run Text=" · "/>
+                                            <Run Text="{x:Bind DateRangeText}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
                             </DataTemplate>
                         </GridView.ItemTemplate>
                     </GridView>
@@ -300,38 +494,85 @@
                               SelectionMode="None"
                               IsItemClickEnabled="True"
                               ItemClick="PhotoGrid_ItemClick"
+                              RightTapped="AllPhotosGrid_RightTapped"
                               ScrollViewer.HorizontalScrollMode="Disabled"
                               ScrollViewer.VerticalScrollBarVisibility="Auto"
                               ItemsPanel="{StaticResource PhotoPanelWide}">
                         <GridView.ItemContainerStyle>
                             <Style TargetType="GridViewItem">
                                 <Setter Property="Margin" Value="4"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="GridViewItem">
+                                            <Grid x:Name="RootGrid" Background="Transparent">
+                                                <VisualStateManager.VisualStateGroups>
+                                                    <VisualStateGroup x:Name="CommonStates">
+                                                        <VisualState x:Name="Normal"/>
+                                                        <VisualState x:Name="PointerOver">
+                                                            <VisualState.Setters>
+                                                                <Setter Target="ContentBorder.Background" Value="{ThemeResource BtnBgBrush}"/>
+                                                                <Setter Target="ContentBorder.BorderBrush" Value="{ThemeResource AccentBrush}"/>
+                                                                <Setter Target="ContentBorder.BorderThickness" Value="2"/>
+                                                            </VisualState.Setters>
+                                                        </VisualState>
+                                                        <VisualState x:Name="Pressed">
+                                                            <VisualState.Setters>
+                                                                <Setter Target="ContentBorder.Background" Value="{ThemeResource AccentBrush}"/>
+                                                                <Setter Target="ContentBorder.BorderBrush" Value="{ThemeResource AccentBrush}"/>
+                                                                <Setter Target="ContentBorder.BorderThickness" Value="2"/>
+                                                                <Setter Target="ContentBorder.Opacity" Value="0.9"/>
+                                                            </VisualState.Setters>
+                                                        </VisualState>
+                                                    </VisualStateGroup>
+                                                    <VisualStateGroup x:Name="FocusStates">
+                                                        <VisualState x:Name="Focused">
+                                                            <VisualState.Setters>
+                                                                <Setter Target="FocusBorder.Visibility" Value="Visible"/>
+                                                            </VisualState.Setters>
+                                                        </VisualState>
+                                                        <VisualState x:Name="Unfocused"/>
+                                                    </VisualStateGroup>
+                                                </VisualStateManager.VisualStateGroups>
+                                                <Border x:Name="FocusBorder"
+                                                        BorderBrush="{ThemeResource AccentBrush}"
+                                                        BorderThickness="2"
+                                                        Visibility="Collapsed"
+                                                        IsHitTestVisible="False"/>
+                                                <Border x:Name="ContentBorder"
+                                                        Background="{ThemeResource CardBgBrush}"
+                                                        BorderBrush="{ThemeResource BtnBorderBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="10"
+                                                        Padding="3">
+                                                    <ContentPresenter
+                                                        HorizontalAlignment="Stretch"
+                                                        VerticalAlignment="Stretch"/>
+                                                </Border>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
                             </Style>
                         </GridView.ItemContainerStyle>
                         <GridView.ItemTemplate>
                             <DataTemplate x:DataType="models:PhotoItem">
-                                <Border Width="160" Height="160" CornerRadius="10"
-                                        Background="{ThemeResource CardBgBrush}"
-                                        BorderBrush="{ThemeResource BtnBorderBrush}"
-                                        BorderThickness="1"
-                                        Padding="3">
-                                    <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
-                                           Stretch="UniformToFill"
-                                           Loaded="PhotoThumbnail_Loaded"/>
-                                </Border>
+                                <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
+                                       Stretch="UniformToFill"
+                                       Loaded="PhotoThumbnail_Loaded"/>
                             </DataTemplate>
                         </GridView.ItemTemplate>
                     </GridView>
 
                     <!-- 文件夹 Tab: 文件夹列表 -->
-                    <ScrollViewer Visibility="{x:Bind Vm.FoldersContentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                    <ScrollViewer x:Name="FoldersGrid" Visibility="{x:Bind Vm.FoldersContentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
                                   Padding="16"
                                   VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{x:Bind Vm.RecentFolders, Mode=OneWay}">
-                            <ItemsControl.ItemTemplate>
+<ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="storage:StorageFolder">
                                     <Button Tag="{x:Bind}"
                                             Click="HomeRecent_Click"
+                                            RightTapped="RecentFolder_RightTapped"
                                             Margin="0,0,0,8"
                                             Padding="0"
                                             MinWidth="280"
@@ -344,18 +585,37 @@
                                                 BorderBrush="{ThemeResource BtnBorderBrush}"
                                                 BorderThickness="1"
                                                 Padding="16,13">
-                                            <StackPanel>
-                                                <TextBlock Text="{x:Bind Name}"
-                                                           FontSize="14"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{ThemeResource TextPrimaryBrush}"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{x:Bind Path}"
-                                                           FontSize="11"
-                                                           Foreground="{ThemeResource TextMutedBrush}"
-                                                           Margin="0,4,0,0"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                            </StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <FontIcon Grid.Column="0"
+                                                          Glyph="&#xE8B7;"
+                                                          FontFamily="Segoe MDL2 Assets"
+                                                          FontSize="24"
+                                                          Foreground="{ThemeResource AccentBrush}"
+                                                          VerticalAlignment="Center"
+                                                          Margin="0,0,12,0"/>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{x:Bind Name}"
+                                                               FontSize="14"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{ThemeResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{x:Bind Path}"
+                                                               FontSize="11"
+                                                               Foreground="{ThemeResource TextMutedBrush}"
+                                                               Margin="0,4,0,0"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock x:Name="FolderMetaText"
+                                                               FontSize="11"
+                                                               Foreground="{ThemeResource TextMutedBrush}"
+                                                               Margin="0,4,0,0"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Visibility="Collapsed"/>
+                                                </StackPanel>
+                                            </Grid>
                                         </Border>
                                     </Button>
                                 </DataTemplate>

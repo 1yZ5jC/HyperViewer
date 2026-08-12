@@ -127,9 +127,12 @@ namespace HyperViewer.ViewModels
                 if (SetProperty(ref _libraryTab, value))
                 {
                     RaiseTabVisibilities();
+                    LibraryTabChanged?.Invoke(this, value);
                 }
             }
         }
+
+        public event EventHandler<LibraryTabKind> LibraryTabChanged;
         public bool AlbumsVisible => LibraryTab == LibraryTabKind.Albums;
         public bool AllPhotosVisible => LibraryTab == LibraryTabKind.AllPhotos;
         public bool FoldersVisible => LibraryTab == LibraryTabKind.Folders;
@@ -959,6 +962,7 @@ Albums.Clear();
         // ====== 最近打开 ======
         private readonly RecentFoldersService _recent;
         public System.Collections.Generic.IReadOnlyList<StorageFolder> RecentFolders => _recent.Folders;
+        public RecentFoldersService RecentFoldersService => _recent;
 
         public async Task OpenRecentAsync(StorageFolder folder)
         {

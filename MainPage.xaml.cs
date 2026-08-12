@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
@@ -23,6 +25,10 @@ namespace HyperViewer
     {
         public MainViewModel Vm { get; } = new MainViewModel();
 
+        public MenuFlyout AlbumContextFlyout => Resources["AlbumContextFlyout"] as MenuFlyout;
+        public MenuFlyout PhotoContextFlyout => Resources["PhotoContextFlyout"] as MenuFlyout;
+        public MenuFlyout FolderContextFlyout => Resources["FolderContextFlyout"] as MenuFlyout;
+
         // UI 显隐 (顶栏/胶片条/状态栏): 全屏自动隐藏, 单击图片区切换
         private bool _chromeVisible = true;
         private bool _thumbStripEnabled = true;
@@ -41,6 +47,7 @@ namespace HyperViewer
             this.InitializeComponent();
             this.DataContext = Vm;
             Vm.PropertyChanged += OnVmPropertyChanged;
+            Vm.LibraryTabChanged += OnLibraryTabChanged;
             // 启动初始态: 主页 (无图) 时隐藏悬浮顶栏, 图片模式才显示
             SetChrome(!Vm.HomeVisible);
             Viewer.ZoomFactorChanged += (_, __) =>
@@ -112,6 +119,49 @@ namespace HyperViewer
                     SetChrome(Vm.HomeVisible ? false : true);
                     break;
             }
+        }
+
+        private async void OnLibraryTabChanged(object sender, MainViewModel.LibraryTabKind newTab)
+        {
+            // 简单的淡入淡出切换动画
+            var grids = new FrameworkElement[] { AlbumsGrid, AllPhotosGrid, FoldersGrid };
+            FrameworkElement targetGrid = null;
+            if (newTab == MainViewModel.LibraryTabKind.Albums)
+                targetGrid = AlbumsGrid;
+            else if (newTab == MainViewModel.LibraryTabKind.AllPhotos)
+                targetGrid = AllPhotosGrid;
+            else if (newTab == MainViewModel.LibraryTabKind.Folders)
+                targetGrid = FoldersGrid;
+
+            if (targetGrid == null) return;
+
+            // 淡出当前显示的网格
+            foreach (var grid in grids)
+            {
+                if (grid != targetGrid && grid.Visibility == Visibility.Visible)
+                {
+                    var fadeOut = new DoubleAnimation { From = 1, To = 0, Duration = TimeSpan.FromMilliseconds(150) };
+                    var sb = new Storyboard();
+                    sb.Children.Add(fadeOut);
+                    Storyboard.SetTarget(fadeOut, grid);
+                    Storyboard.SetTargetProperty(fadeOut, "Opacity");
+                    sb.Completed += (s, e) => grid.Visibility = Visibility.Collapsed;
+                    sb.Begin();
+                }
+            }
+
+            // 显示目标网格并淡入
+            if (targetGrid.Visibility != Visibility.Visible)
+            {
+                targetGrid.Opacity = 0;
+                targetGrid.Visibility = Visibility.Visible;
+            }
+            var fadeIn = new DoubleAnimation { From = 0, To = 1, Duration = TimeSpan.FromMilliseconds(200) };
+            var sbIn = new Storyboard();
+            sbIn.Children.Add(fadeIn);
+            Storyboard.SetTarget(fadeIn, targetGrid);
+            Storyboard.SetTargetProperty(fadeIn, "Opacity");
+            sbIn.Begin();
         }
 
         // ====== UI 显隐 ======
@@ -498,6 +548,138 @@ namespace HyperViewer
             }
         }
 
+        private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+        {
+            // 用户提交搜索（按 Enter 或点击搜索图标），搜索逻辑在 SearchText 属性绑定中已触发
+        }
+
+        private void SearchBox_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
+        {
+            if (args.SelectedItem is string suggestion)
+            {
+                sender.Text = suggestion;
+            }
+        }
+
+        private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+        {
+            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+            {
+                var term = sender.Text?.ToLowerInvariant() ?? string.Empty;
+                var suggestions = new List<string>();
+
+                if (!string.IsNullOrWhiteSpace(term))
+                {
+                    // 从相册名称中匹配
+                    suggestions.AddRange(Vm.Albums
+                        .Where(a => a.Name?.ToLowerInvariant().Contains(term) == true)
+                        .Select(a => a.Name)
+                        .Distinct()
+                        .Take(5));
+
+                    // 从照片名称中匹配
+                    suggestions.AddRange(Vm.AllPhotos
+                        .Where(p => p.Name?.ToLowerInvariant().Contains(term) == true)
+                        .Select(p => p.Name)
+                        .Distinct()
+                        .Take(5));
+                }
+
+                sender.ItemsSource = suggestions.Distinct().ToList();
+            }
+        }
+
+        private void CoverImage_ImageOpened(object sender, RoutedEventArgs e)
+        {
+            if (sender is Image img)
+            {
+                // 隐藏加载指示器
+                if (img.Parent is Grid grid)
+                {
+                    var loadingRing = grid.FindName("CoverLoadingRing") as ProgressRing;
+                    if (loadingRing != null)
+                    {
+                        loadingRing.Visibility = Visibility.Collapsed;
+                        loadingRing.IsActive = false;
+                    }
+                }
+                // 淡入动画
+                var fadeIn = new Windows.UI.Xaml.Media.Animation.DoubleAnimation
+                {
+                    From = 0,
+                    To = 1,
+                    Duration = TimeSpan.FromMilliseconds(300),
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                var storyboard = new Storyboard();
+                storyboard.Children.Add(fadeIn);
+                Storyboard.SetTarget(fadeIn, img);
+                Storyboard.SetTargetProperty(fadeIn, "Opacity");
+                storyboard.Begin();
+            }
+        }
+
+        private void AlbumsGrid_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            if (sender is GridView gv && e.OriginalSource is FrameworkElement fe)
+            {
+                var item = gv.ContainerFromItem(fe.DataContext) as GridViewItem;
+                if (item?.DataContext is AlbumItem album)
+                {
+                    var flyout = Resources["AlbumContextFlyout"] as MenuFlyout;
+                    flyout?.ShowAt(item, e.GetPosition(item));
+                    e.Handled = true;
+                }
+            }
+        }
+
+        private void AllPhotosGrid_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            if (sender is GridView gv && e.OriginalSource is FrameworkElement fe)
+            {
+                var item = gv.ContainerFromItem(fe.DataContext) as GridViewItem;
+                if (item?.DataContext is PhotoItem photo)
+                {
+                    var flyout = Resources["PhotoContextFlyout"] as MenuFlyout;
+                    flyout?.ShowAt(item, e.GetPosition(item));
+                    e.Handled = true;
+                }
+            }
+        }
+
+        private void RecentFolder_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext is StorageFolder folder)
+            {
+                var flyout = Resources["FolderContextFlyout"] as MenuFlyout;
+                flyout?.ShowAt(btn, e.GetPosition(btn));
+                e.Handled = true;
+            }
+        }
+
+        private async Task LoadFolderMetadataAsync()
+        {
+            if (Vm.RecentFolders == null) return;
+            
+            foreach (var folder in Vm.RecentFolders)
+            {
+                try
+                {
+                    var files = await folder.GetFilesAsync();
+                    var imageFiles = files.Where(f => f.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)).ToList();
+                    var count = imageFiles.Count;
+                    var lastModified = files.Any() ? files.Max(f => f.DateCreated) : folder.DateCreated;
+                    
+                    // 在UI线程上更新UI
+                    await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                    {
+                        // 这里需要找到对应的UI元素并更新，简化处理
+                    });
+                }
+                catch { }
+            }
+        }
+
         // ====== 文件操作 ======
 
         private async void Delete_Click(object sender, RoutedEventArgs e)
@@ -555,18 +737,221 @@ namespace HyperViewer
             };
             if (await dlg.ShowAsync() == ContentDialogResult.Primary)
             {
-                bool ok = await Vm.RenameCurrentAsync(input.Text);
-                if (!ok)
+bool ok = await Vm.RenameCurrentAsync(input.Text);
+            if (!ok)
+            {
+                var err = new ContentDialog
                 {
-                    var err = new ContentDialog
-                    {
-                        Title = Loc.Get("RenameFailTitle"),
-                        Content = Loc.Get("RenameFailMessage"),
-                        CloseButtonText = Loc.Get("DialogOK")
-                    };
-                    await err.ShowAsync();
-                }
+                    Title = Loc.Get("RenameFailTitle"),
+                    Content = Loc.Get("RenameFailMessage"),
+                    CloseButtonText = Loc.Get("DialogOK")
+                };
+                await err.ShowAsync();
             }
         }
     }
+
+    // ====== 右键/长按上下文菜单处理 ======
+
+    // 相册上下文菜单
+    private async void AlbumContext_Open_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is AlbumItem album)
+            await Vm.OpenAlbumAsync(album);
+    }
+
+    private async void AlbumContext_OpenFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is AlbumItem album && album.Folder != null)
+            await Vm.LoadFolderAsync(album.Folder);
+    }
+
+    private async void AlbumContext_Rename_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is AlbumItem album && album.Folder != null)
+        {
+            var input = new TextBox { Text = album.Name, Margin = new Thickness(0, 12, 0, 0) };
+            var dlg = new ContentDialog
+            {
+                Title = Loc.Get("RenameTitle"),
+                Content = input,
+                PrimaryButtonText = Loc.Get("RenamePrimary"),
+                CloseButtonText = Loc.Get("DialogCancel")
+            };
+            if (await dlg.ShowAsync() == ContentDialogResult.Primary)
+            {
+                try
+                {
+                    await album.Folder.RenameAsync(input.Text.Trim(), NameCollisionOption.GenerateUniqueName);
+                    await Vm.RefreshLibraryAsync();
+                }
+                catch { }
+            }
+        }
+    }
+
+    private async void AlbumContext_Delete_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is AlbumItem album && album.Folder != null)
+        {
+            var dlg = new ContentDialog
+            {
+                Title = Loc.Get("DeleteTitle"),
+                Content = Loc.Format("DeleteMessage", album.Name),
+                PrimaryButtonText = Loc.Get("DeletePrimary"),
+                CloseButtonText = Loc.Get("DialogCancel")
+            };
+            if (await dlg.ShowAsync() == ContentDialogResult.Primary)
+            {
+                try
+                {
+                    await album.Folder.DeleteAsync();
+                    await Vm.RefreshLibraryAsync();
+                }
+                catch { }
+            }
+        }
+    }
+
+    private void AlbumContext_Properties_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is AlbumItem album)
+        {
+            var info = new ContentDialog
+            {
+                Title = Loc.Get("PropertiesTitle"),
+                Content = new TextBlock { Text = $"名称: {album.Name}\n路径: {album.Path}\n图片数: {album.Count}\n日期范围: {album.DateRangeText}", TextWrapping = TextWrapping.Wrap },
+                CloseButtonText = Loc.Get("DialogOK")
+            };
+            _ = info.ShowAsync();
+        }
+    }
+
+    // 照片上下文菜单
+    private async void PhotoContext_Open_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is PhotoItem photo)
+            await Vm.OpenPhotoFromLibraryAsync(photo);
+    }
+
+    private async void PhotoContext_OpenFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is PhotoItem photo && photo.File != null)
+        {
+            var folder = await photo.File.GetParentAsync();
+            if (folder != null) await Vm.LoadFolderAsync(folder);
+        }
+    }
+
+    private void PhotoContext_CopyPath_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is PhotoItem photo)
+        {
+            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+            package.SetText(photo.Path);
+            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+        }
+    }
+
+    private async void PhotoContext_Rename_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is PhotoItem photo && photo.File != null)
+        {
+            var input = new TextBox { Text = photo.Name, Margin = new Thickness(0, 12, 0, 0) };
+            var dlg = new ContentDialog
+            {
+                Title = Loc.Get("RenameTitle"),
+                Content = input,
+                PrimaryButtonText = Loc.Get("RenamePrimary"),
+                CloseButtonText = Loc.Get("DialogCancel")
+            };
+            if (await dlg.ShowAsync() == ContentDialogResult.Primary)
+            {
+                try
+                {
+                    await photo.File.RenameAsync(input.Text.Trim(), NameCollisionOption.GenerateUniqueName);
+                    await Vm.RefreshLibraryAsync();
+                }
+                catch { }
+            }
+        }
+    }
+
+    private async void PhotoContext_Delete_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is PhotoItem photo && photo.File != null)
+        {
+            var dlg = new ContentDialog
+            {
+                Title = Loc.Get("DeleteTitle"),
+                Content = Loc.Format("DeleteMessage", photo.Name),
+                PrimaryButtonText = Loc.Get("DeletePrimary"),
+                CloseButtonText = Loc.Get("DialogCancel")
+            };
+            if (await dlg.ShowAsync() == ContentDialogResult.Primary)
+            {
+                try
+                {
+                    await photo.File.DeleteAsync();
+                    await Vm.RefreshLibraryAsync();
+                }
+                catch { }
+            }
+        }
+    }
+
+    private void PhotoContext_Properties_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is PhotoItem photo)
+        {
+            var info = new ContentDialog
+            {
+                Title = Loc.Get("PropertiesTitle"),
+                Content = new TextBlock { Text = $"名称: {photo.Name}\n路径: {photo.Path}\n创建时间: {photo.DateCreated}", TextWrapping = TextWrapping.Wrap },
+                CloseButtonText = Loc.Get("DialogOK")
+            };
+            _ = info.ShowAsync();
+        }
+    }
+
+    // 文件夹上下文菜单
+    private async void FolderContext_Open_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is StorageFolder folder)
+            await Vm.LoadFolderAsync(folder);
+    }
+
+    private async void FolderContext_Remove_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is StorageFolder folder)
+        {
+            var dlg = new ContentDialog
+            {
+                Title = Loc.Get("RemoveTitle"),
+                Content = Loc.Format("RemoveMessage", folder.Name),
+                PrimaryButtonText = Loc.Get("RemovePrimary"),
+                CloseButtonText = Loc.Get("DialogCancel")
+            };
+            if (await dlg.ShowAsync() == ContentDialogResult.Primary)
+            {
+                await Vm.RecentFoldersService.RemoveAsync(folder);
+                await Vm.RefreshLibraryAsync();
+            }
+        }
+    }
+
+    private void FolderContext_Properties_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is MenuFlyoutItem item && item.DataContext is StorageFolder folder)
+        {
+            var info = new ContentDialog
+            {
+                Title = Loc.Get("PropertiesTitle"),
+                Content = new TextBlock { Text = $"名称: {folder.Name}\n路径: {folder.Path}", TextWrapping = TextWrapping.Wrap },
+                CloseButtonText = Loc.Get("DialogOK")
+            };
+            _ = info.ShowAsync();
+}
+}
+}
 }

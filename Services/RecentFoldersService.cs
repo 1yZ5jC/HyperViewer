@@ -96,5 +96,23 @@ namespace HyperViewer.Services
             var settings = ApplicationData.Current.LocalSettings;
             settings.Values[IndexKey] = string.Join("|", _tokens);
         }
+
+        public Task RemoveAsync(StorageFolder folder)
+        {
+            if (folder == null) return Task.CompletedTask;
+
+            for (int i = _folders.Count - 1; i >= 0; i--)
+            {
+                if (string.Equals(_folders[i]?.Path, folder.Path, StringComparison.OrdinalIgnoreCase))
+                {
+                    _folders.RemoveAt(i);
+                    if (i < _tokens.Count) _tokens.RemoveAt(i);
+                }
+            }
+
+            SaveIndex();
+            Changed?.Invoke(this, EventArgs.Empty);
+            return Task.CompletedTask;
+        }
     }
 }
