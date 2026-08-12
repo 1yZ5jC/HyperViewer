@@ -375,4 +375,205 @@
   <data name="EditTypeJPEG" xml:space="preserve">
     <value>JPEG 图片</value>
   </data>
+  <data name="StatusLoadFailed.Text" xml:space="preserve">
+    <value>无法加载此图片</value>
+  </data>
+  <data name="LoadFailedRetry.Content" xml:space="preserve">
+    <value>重试</value>
+  </data>
+  <data name="LibTabAlbumsFlyout.Text" xml:space="preserve">
+    <value>集锦</value>
+  </data>
+  <data name="LibTabAllPhotosFlyout.Text" xml:space="preserve">
+    <value>全部照片</value>
+  </data>
+  <data name="LibTabFoldersFlyout.Text" xml:space="preserve">
+    <value>文件夹</value>
+  </data>
+  <data name="LibOpenImageFlyout.Text" xml:space="preserve">
+    <value>打开图片</value>
+  </data>
+  <data name="LibAddFolderFlyout.Text" xml:space="preserve">
+    <value>添加文件夹</value>
+  </data>
+  <data name="LibSettingsFlyout.Text" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="MenuShare.Text" xml:space="preserve">
+    <value>分享</value>
+  </data>
+  <data name="MenuSaveAs.Text" xml:space="preserve">
+    <value>另存为</value>
+  </data>
+  <data name="MenuPrint.Text" xml:space="preserve">
+    <value>打印</value>
+  </data>
+  <data name="ExportTitle" xml:space="preserve">
+    <value>导出完成</value>
+  </data>
+  <data name="ExportDone" xml:space="preserve">
+    <value>已导出为 "{0}"。</value>
+  </data>
+  <data name="ExportTypeImage" xml:space="preserve">
+    <value>图片</value>
+  </data>
+  <data name="SettingsStartupLabel.Text" xml:space="preserve">
+    <value>启动行为</value>
+  </data>
+  <data name="SettingsRestoreFolder.Header" xml:space="preserve">
+    <value>启动时恢复上次浏览的文件夹</value>
+  </data>
+  <data name="SettingsRestoreFolder.OnContent" xml:space="preserve">
+    <value>开</value>
+  </data>
+  <data name="SettingsRestoreFolder.OffContent" xml:space="preserve">
+    <value>关</value>
+  </data>
+  <data name="SettingsRestoreFolderHint.Text" xml:space="preserve">
+    <value>仅适用于通过图库或最近记录打开过的文件夹。</value>
+  </data>
+  <data name="SettingsLanguageLabel.Text" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="LangSystem.Content" xml:space="preserve">
+    <value>跟随系统</value>
+  </data>
+  <data name="LangZh.Content" xml:space="preserve">
+    <value>简体中文</value>
+  </data>
+  <data name="LangEn.Content" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="SettingsLanguageHint.Text" xml:space="preserve">
+    <value>切换语言后需要重启应用才能生效。</value>
+  </data>
+  <data name="RestartTitle" xml:space="preserve">
+    <value>重启应用</value>
+  </data>
+  <data name="RestartMessage" xml:space="preserve">
+    <value>语言更改将在重启后生效。</value>
+  </data>
+  <data name="RestartNow" xml:space="preserve">
+    <value>立即重启</value>
+  </data>
+  <data name="RestartLater" xml:space="preserve">
+    <value>稍后</value>
+  </data>
+  <data name="SettingsCacheLabel.Text" xml:space="preserve">
+    <value>缓存与数据</value>
+  </data>
+  <data name="CacheInfo" xml:space="preserve">
+    <value>缩略图缓存: {0} 项</value>
+  </data>
+  <data name="ClearCache.Content" xml:space="preserve">
+    <value>清除缩略图缓存</value>
+  </data>
+  <data name="ClearRecent.Content" xml:space="preserve">
+    <value>清除最近记录</value>
+  </data>
+  <data name="ClearCacheTitle" xml:space="preserve">
+    <value>清除缓存</value>
+  </data>
+  <data name="CacheCleared" xml:space="preserve">
+    <value>已清除 {0} 项缩略图缓存。</value>
+  </data>
+  <data name="ClearRecentTitle" xml:space="preserve">
+    <value>清除最近记录</value>
+  </data>
+  <data name="RecentCleared" xml:space="preserve">
+    <value>最近打开的文件夹记录已清除。</value>
+  </data>
+  <data name="SettingsShortcutsLabel.Text" xml:space="preserve">
+    <value>键盘快捷键</value>
+  </data>
+  <data name="SettingsShortcutsHint.Text" xml:space="preserve">
+    <value>为动作分配按键, 修改立即生效。Ctrl 组合键固定不可更改。</value>
+  </data>
+  <data name="ShortcutReset.Content" xml:space="preserve">
+    <value>恢复默认</value>
+  </data>
+  <data name="ShortcutPrev" xml:space="preserve">
+    <value>上一张</value>
+  </data>
+  <data name="ShortcutNext" xml:space="preserve">
+    <value>下一张</value>
+  </data>
+  <data name="ShortcutFirst" xml:space="preserve">
+    <value>第一张</value>
+  </data>
+  <data name="ShortcutLast" xml:space="preserve">
+    <value>最后一张</value>
+  </data>
+  <data name="ShortcutRotate" xml:space="preserve">
+    <value>顺时针旋转</value>
+  </data>
+  <data name="ShortcutFlipH" xml:space="preserve">
+    <value>水平翻转</value>
+  </data>
+  <data name="ShortcutFlipV" xml:space="preserve">
+    <value>垂直翻转</value>
+  </data>
+  <data name="ShortcutResetZoom" xml:space="preserve">
+    <value>重置缩放</value>
+  </data>
+  <data name="ShortcutZoomIn" xml:space="preserve">
+    <value>放大</value>
+  </data>
+  <data name="ShortcutZoomOut" xml:space="preserve">
+    <value>缩小</value>
+  </data>
+  <data name="ShortcutToggleChrome" xml:space="preserve">
+    <value>切换缩略图栏</value>
+  </data>
+  <data name="ShortcutSlideShow" xml:space="preserve">
+    <value>播放/停止幻灯片</value>
+  </data>
+  <data name="ShortcutFullScreen" xml:space="preserve">
+    <value>全屏</value>
+  </data>
+  <data name="KeyLeft" xml:space="preserve">
+    <value>向左键</value>
+  </data>
+  <data name="KeyRight" xml:space="preserve">
+    <value>向右键</value>
+  </data>
+  <data name="KeyUp" xml:space="preserve">
+    <value>向上键</value>
+  </data>
+  <data name="KeyDown" xml:space="preserve">
+    <value>向下键</value>
+  </data>
+  <data name="KeySpace" xml:space="preserve">
+    <value>空格</value>
+  </data>
+  <data name="KeyHome" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="KeyEnd" xml:space="preserve">
+    <value>End</value>
+  </data>
+  <data name="KeyNumber0" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="KeyNumber1" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="KeyNumber2" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="KeyAdd" xml:space="preserve">
+    <value>+</value>
+  </data>
+  <data name="KeySubtract" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="KeyF5" xml:space="preserve">
+    <value>F5</value>
+  </data>
+  <data name="KeyF8" xml:space="preserve">
+    <value>F8</value>
+  </data>
+  <data name="KeyF11" xml:space="preserve">
+    <value>F11</value>
+  </data>
 </root>

@@ -16,25 +16,31 @@
         </Grid.RowDefinitions>
 
         <!-- 顶栏 -->
-        <Grid Grid.Row="0" Padding="8,4" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
+        <Grid Grid.Row="0" Padding="12,6" Background="{ThemeResource ChromeBgBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Click="BackButton_Click" Padding="10,4" x:Uid="BackToolTip">
-                <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"/>
-            </Button>
+         </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Click="BackButton_Click" Padding="10,4"
+                    Background="Transparent" BorderThickness="0"
+                    x:Uid="BackToolTip">
+                <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"
+                          Foreground="{ThemeResource TextPrimaryBrush}"/>
+         </Button>
             <TextBlock x:Name="TitleText" Grid.Column="1" VerticalAlignment="Center"
-                       FontSize="18" FontWeight="SemiBold" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
+                       FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
+                       Foreground="{ThemeResource TextPrimaryBrush}"
+                       TextTrimming="CharacterEllipsis"/>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                 <ProgressRing x:Name="BusyRing" IsActive="False" Width="20" Height="20" Margin="0,0,8,0"/>
-                <TextBlock x:Name="StatusText" VerticalAlignment="Center"/>
-            </StackPanel>
-        </Grid>
+                <TextBlock x:Name="StatusText" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextMutedBrush}"/>
+         </StackPanel>
+     </Grid>
 
         <!-- 工具条 -->
-        <Grid Grid.Row="1" Padding="8,4" Background="#FF2D2D2D">
+        <Grid Grid.Row="1" Padding="8,6" Background="{ThemeResource ChromeBgBrush}">
             <StackPanel Orientation="Horizontal">
                 <ToggleButton x:Name="CropToggle" x:Uid="EditCropToggle" Click="CropToggle_Click" MinWidth="72"/>
                 <Button x:Uid="EditApplyCrop" Click="ApplyCrop_Click" MinWidth="88" Margin="8,0,0,0"/>
@@ -42,33 +48,37 @@
                 <Button x:Uid="EditSave" Click="Save_Click" MinWidth="72" Margin="8,0,0,0"/>
                 <TextBlock x:Name="HintText" x:Uid="EditCropHint"
                            VerticalAlignment="Center" Margin="16,0,0,0"
-                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                           Foreground="{ThemeResource TextMutedBrush}"
                            Visibility="Collapsed"/>
-            </StackPanel>
-        </Grid>
+         </StackPanel>
+     </Grid>
 
         <!-- 调色条 -->
-        <Grid Grid.Row="2" Padding="8,0,8,6" Background="#FF2D2D2D">
+        <Grid Grid.Row="2" Padding="8,0,8,6" Background="{ThemeResource ChromeBgBrush}">
             <StackPanel Orientation="Horizontal">
-                <TextBlock x:Uid="EditBrightness" VerticalAlignment="Center"/>
+                <TextBlock x:Uid="EditBrightness" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextPrimaryBrush}"/>
                 <Slider x:Name="BrightnessSlider" Minimum="-100" Maximum="100" StepFrequency="1" Width="140"
                         ValueChanged="Adjust_Changed" Margin="6,0,14,0"/>
-                <TextBlock x:Uid="EditContrast" VerticalAlignment="Center"/>
+                <TextBlock x:Uid="EditContrast" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextPrimaryBrush}"/>
                 <Slider x:Name="ContrastSlider" Minimum="-100" Maximum="100" StepFrequency="1" Width="140"
                         ValueChanged="Adjust_Changed" Margin="6,0,14,0"/>
-                <TextBlock x:Uid="EditSaturation" VerticalAlignment="Center"/>
+                <TextBlock x:Uid="EditSaturation" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextPrimaryBrush}"/>
                 <Slider x:Name="SaturationSlider" Minimum="-100" Maximum="100" StepFrequency="1" Width="140"
                         ValueChanged="Adjust_Changed" Margin="6,0,14,0"/>
-                <TextBlock x:Uid="EditFilter" VerticalAlignment="Center"/>
+                <TextBlock x:Uid="EditFilter" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextPrimaryBrush}"/>
                 <ComboBox x:Name="FilterBox" Width="110" SelectionChanged="Filter_Changed" Margin="6,0,14,0">
                     <ComboBoxItem x:Uid="FilterNone"/>
                     <ComboBoxItem x:Uid="FilterGrayscale"/>
                     <ComboBoxItem x:Uid="FilterInvert"/>
                     <ComboBoxItem x:Uid="FilterSepia"/>
-                </ComboBox>
+             </ComboBox>
                 <Button x:Uid="EditApplyAdjust" Click="ApplyAdjust_Click" MinWidth="88"/>
-            </StackPanel>
-        </Grid>
+         </StackPanel>
+     </Grid>
 
         <!-- 预览区 -->
         <Grid Grid.Row="3" Background="Black">
@@ -81,9 +91,9 @@
                                 PointerPressed="CropCanvas_PointerPressed"
                                 PointerMoved="CropCanvas_PointerMoved"
                                 PointerReleased="CropCanvas_PointerReleased">
-                            <Path x:Name="DimPath" Fill="#59000000" Visibility="Collapsed"/>
+                            <Path x:Name="DimPath" Fill="{ThemeResource CropDimBrush}" Visibility="Collapsed"/>
                             <Rectangle x:Name="CropRectVisual" Stroke="White" StrokeThickness="2"
-                                       Fill="#33FFFFFF" Visibility="Collapsed"/>
+                                       Fill="{ThemeResource CropLineBrush}" Visibility="Collapsed"/>
                         </Canvas>
                     </Grid>
                 </ScrollViewer>

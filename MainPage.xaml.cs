@@ -34,6 +34,8 @@ namespace HyperViewer
         private bool _thumbStripEnabled = true;
         private DispatcherTimer _tapTimer;
         private bool _doubleTapPending;
+        private readonly Windows.UI.Xaml.Media.TranslateTransform _thumbBarTransform = new Windows.UI.Xaml.Media.TranslateTransform();
+        private Storyboard _chromeAnim;
 
         // 中央导航箭头: 鼠标移动显示, 空闲 2s 隐藏
         private DispatcherTimer _navTimer;
@@ -118,6 +120,9 @@ namespace HyperViewer
                 case nameof(MainViewModel.HomeVisible):
                     SetChrome(Vm.HomeVisible ? false : true);
                     break;
+                case nameof(MainViewModel.ThumbnailVisible):
+                    ApplyChrome();
+                    break;
             }
         }
 
@@ -174,9 +179,69 @@ namespace HyperViewer
 
         private void ApplyChrome()
         {
-            TopBar.Visibility = _chromeVisible ? Visibility.Visible : Visibility.Collapsed;
-            StatusBar.Visibility = _chromeVisible ? Visibility.Visible : Visibility.Collapsed;
-            ThumbBar.Visibility = (_chromeVisible && _thumbStripEnabled) ? Visibility.Visible : Visibility.Collapsed;
+            _chromeAnim?.Stop();
+
+            var showThumb = _chromeVisible && _thumbStripEnabled && Vm.ThumbnailVisible;
+            var sb = new Storyboard();
+            var duration = TimeSpan.FromMilliseconds(showThumb ? 240 : 180);
+            var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+            void Anim(DependencyObject target, string prop, double to)
+            {
+                var anim = new DoubleAnimation { To = to, Duration = duration, EasingFunction = ease };
+                Storyboard.SetTarget(anim, target);
+                Storyboard.SetTargetProperty(anim, prop);
+                sb.Children.Add(anim);
+            }
+
+            // 缩略图栏: 滑入/滑出
+            if (showThumb && ThumbBar.Visibility != Visibility.Visible)
+            {
+                ThumbBar.Visibility = Visibility.Visible;
+                ThumbBar.RenderTransform = _thumbBarTransform;
+                _thumbBarTransform.Y = 92;
+                ThumbBar.Opacity = 0;
+                Anim(_thumbBarTransform, "Y", 0);
+                Anim(ThumbBar, "Opacity", 1);
+            }
+            else if (!showThumb && ThumbBar.Visibility == Visibility.Visible)
+            {
+                Anim(_thumbBarTransform, "Y", 92);
+                Anim(ThumbBar, "Opacity", 0);
+            }
+
+            // 悬浮工具栏 / 状态栏: 淡入淡出
+            if (_chromeVisible)
+            {
+                FloatingBar.Visibility = Visibility.Visible;
+                StatusBar.Visibility = Visibility.Visible;
+                if (FloatingBar.Opacity < 1.0) Anim(FloatingBar, "Opacity", 1);
+                if (StatusBar.Opacity < 1.0) Anim(StatusBar, "Opacity", 1);
+            }
+            else
+            {
+                Anim(FloatingBar, "Opacity", 0);
+                Anim(StatusBar, "Opacity", 0);
+            }
+
+            if (sb.Children.Count > 0)
+            {
+                sb.Completed += (_, __) =>
+                {
+                    if (!showThumb)
+                    {
+                        ThumbBar.Visibility = Visibility.Collapsed;
+                        ThumbBar.Opacity = 0;
+                    }
+                    if (!_chromeVisible)
+                    {
+                        FloatingBar.Visibility = Visibility.Collapsed;
+                        StatusBar.Visibility = Visibility.Collapsed;
+                    }
+                };
+                _chromeAnim = sb;
+                sb.Begin();
+            }
         }
 
         private void ToggleChrome()
@@ -239,7 +304,7 @@ namespace HyperViewer
             _tapTimer.Start();
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             this.Focus(FocusState.Programmatic);
@@ -251,6 +316,19 @@ namespace HyperViewer
             else if (e.Parameter is StorageFile file)
             {
                 Vm.ActivateFromFile(file);
+            }
+            else if (e.NavigationMode == NavigationMode.New
+                     && SettingsService.RestoreLastFolder
+                     && !string.IsNullOrEmpty(SettingsService.LastFolderPath))
+            {
+                // 启动恢复上次浏览的文件夹 (仅限全新导航, 返回时不触发)
+                var path = SettingsService.LastFolderPath;
+                var folder = RecentFoldersService.Instance.Folders
+                    .FirstOrDefault(f => string.Equals(f?.Path, path, StringComparison.OrdinalIgnoreCase));
+                if (folder != null)
+                {
+                    await Vm.LoadFolderAsync(folder);
+                }
             }
             // 全屏时按 Esc 退出
             Window.Current.CoreWindow.Dispatcher.AcceleratorKeyActivated += CoreWindow_AcceleratorKeyActivated;
@@ -275,11 +353,51 @@ namespace HyperViewer
             Frame.Navigate(typeof(SettingsPage));
         }
 
+        private void Retry_Click(object sender, RoutedEventArgs e)
+        {
+            Vm.RetryLoad();
+        }
+
         private void TimelineButton_Click(object sender, RoutedEventArgs e)
         {
             if (Vm.CurrentFolder == null) return;
             Vm.StopSlideShow();
             Frame.Navigate(typeof(TimelinePage), Vm.CurrentFolder);
+        }
+
+        // ====== 分享 / 导出 / 打印 ======
+
+        private void Share_Click(object sender, RoutedEventArgs e)
+        {
+            if (Vm.Current?.File is StorageFile file)
+            {
+                ShareService.Share(file, Vm.Current.Name);
+            }
+        }
+
+        private async void SaveAs_Click(object sender, RoutedEventArgs e)
+        {
+            if (Vm.Current?.File is StorageFile file)
+            {
+                var target = await ExportService.SaveAsAsync(file);
+                if (target != null)
+                {
+                    await new ContentDialog
+                    {
+                        Title = Loc.Get("ExportTitle"),
+                        Content = Loc.Format("ExportDone", target.Name),
+                        CloseButtonText = Loc.Get("DialogOK")
+                    }.ShowAsync();
+                }
+            }
+        }
+
+        private async void Print_Click(object sender, RoutedEventArgs e)
+        {
+            if (Vm.Current?.File is StorageFile file)
+            {
+                await PrintService.PrintAsync(file);
+            }
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -330,82 +448,44 @@ namespace HyperViewer
 
         private bool HandleKey(VirtualKey key)
         {
-            switch (key)
+            // Ctrl 组合键固定不可自定义
+            var ctrlDown = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
+            if (ctrlDown)
             {
-                case VirtualKey.C:
-                    var ctrlDown = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control)
-                                   .HasFlag(CoreVirtualKeyStates.Down);
-                    if (ctrlDown)
-                    {
+                switch (key)
+                {
+                    case VirtualKey.C:
                         Vm.CopyCurrentToClipboard();
                         return true;
-                    }
-                    return false;
-                case VirtualKey.Left:
-                case VirtualKey.Up:
-                    Vm.Prev();
-                    return true;
-                case VirtualKey.Right:
-                case VirtualKey.Down:
-                    Vm.Next();
-                    return true;
-                case VirtualKey.Space:
-                    Vm.Next();
-                    return true;
-                case VirtualKey.Home:
-                    Vm.First();
-                    return true;
-                case VirtualKey.End:
-                    Vm.Last();
-                    return true;
-                case VirtualKey.R:
-                    var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
-                    if ((ctrl & CoreVirtualKeyStates.Down) != 0)
-                    {
-                        Vm.RotateBackCommand.Execute(null);
-                    }
-                    else
-                    {
-                        Vm.RotateCommand.Execute(null);
-                    }
-                    return true;
-                case VirtualKey.H:
-                    Vm.FlipHCommand.Execute(null);
-                    return true;
-                case VirtualKey.V:
-                    Vm.FlipVCommand.Execute(null);
-                    return true;
-                case VirtualKey.Number0:
-                    Vm.ResetTransformCommand.Execute(null);
-                    Viewer.ResetView();
-                    return true;
-                case VirtualKey.F:
-                    // Ctrl+F: 聚焦搜索框, 否则切换缩略图栏
-                    var ctrlF = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
-                    if (ctrlF && SearchBox != null)
-                    {
-                        SearchBox.Focus(FocusState.Programmatic);
-                        return true;
-                    }
-                    else
-                    {
-                        ToggleThumbStrip();
-                        return true;
-                    }
-                case VirtualKey.O:
-                    // Ctrl+O: 打开图片
-                    var ctrlO = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
-                    if (ctrlO)
-                    {
+                    case VirtualKey.F:
+                        if (SearchBox != null)
+                        {
+                            SearchBox.Focus(FocusState.Programmatic);
+                            return true;
+                        }
+                        return false;
+                    case VirtualKey.O:
                         Vm.OpenImageCommand.Execute(null);
                         return true;
-                    }
-                    return false;
-                case VirtualKey.F11:
-                    ToggleFullScreen();
-                    return true;
-                case VirtualKey.F5:
-                    Vm.ToggleSlideShow();
+                    case VirtualKey.R:
+                        Vm.RotateBackCommand.Execute(null);
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+
+            // 自定义单键动作 (含默认绑定)
+            var action = KeyboardService.ActionForKey(key);
+            if (action != null)
+            {
+                return ExecuteAction(action);
+            }
+
+            switch (key)
+            {
+                case VirtualKey.Space:
+                    Vm.Next();
                     return true;
                 case VirtualKey.Escape:
                     if (Vm.SlideShowRunning)
@@ -421,11 +501,55 @@ namespace HyperViewer
                         return true;
                     }
                     return false;
-                case VirtualKey.Add:
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>执行自定义快捷键动作 (返回是否处理)。</summary>
+        private bool ExecuteAction(string action)
+        {
+            switch (action)
+            {
+                case "Prev":
+                    Vm.Prev();
+                    return true;
+                case "Next":
+                    Vm.Next();
+                    return true;
+                case "First":
+                    Vm.First();
+                    return true;
+                case "Last":
+                    Vm.Last();
+                    return true;
+                case "Rotate":
+                    Vm.RotateCommand.Execute(null);
+                    return true;
+                case "FlipH":
+                    Vm.FlipHCommand.Execute(null);
+                    return true;
+                case "FlipV":
+                    Vm.FlipVCommand.Execute(null);
+                    return true;
+                case "ResetZoom":
+                    Vm.ResetTransformCommand.Execute(null);
+                    Viewer.ResetView();
+                    return true;
+                case "ZoomIn":
                     ZoomByKeys(1.2f);
                     return true;
-                case VirtualKey.Subtract:
+                case "ZoomOut":
                     ZoomByKeys(1f / 1.2f);
+                    return true;
+                case "ToggleChrome":
+                    ToggleThumbStrip();
+                    return true;
+                case "SlideShow":
+                    Vm.ToggleSlideShow();
+                    return true;
+                case "FullScreen":
+                    ToggleFullScreen();
                     return true;
                 default:
                     return false;

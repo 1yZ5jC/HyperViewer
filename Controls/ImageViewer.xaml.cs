@@ -89,6 +89,7 @@ namespace HyperViewer.Controls
         private readonly TranslateTransform _transitionTranslate = new TranslateTransform();
         private TransformGroup _transitionGroup;
         private Storyboard _fadeStoryboard;
+        private Storyboard _rotationStoryboard;
 
         public ImageViewer()
         {
@@ -181,9 +182,20 @@ namespace HyperViewer.Controls
 
         private void ApplyTransform()
         {
-            _imageTransform.Rotation = ImageRotation;
             _imageTransform.ScaleX = FlipH;
             _imageTransform.ScaleY = FlipV;
+            _rotationStoryboard?.Stop();
+            var anim = new DoubleAnimation
+            {
+                To = ImageRotation,
+                Duration = TimeSpan.FromMilliseconds(200)
+            };
+            Storyboard.SetTarget(anim, _imageTransform);
+            Storyboard.SetTargetProperty(anim, "Rotation");
+            var sb = new Storyboard();
+            sb.Children.Add(anim);
+            _rotationStoryboard = sb;
+            sb.Begin();
         }
 
         private void Scroller_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
@@ -255,10 +267,59 @@ namespace HyperViewer.Controls
 
         private void Scroller_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
+            var z = Scroller.ZoomFactor;
+            // 缩放级别变化 (含捏合过程) 时显示百分比指示器
+            if ((e.IsIntermediate || Math.Abs(z - 1.0f) > 0.001f)
+                && Math.Abs(z - _lastBadgeZoom) > 0.005f)
+            {
+                _lastBadgeZoom = z;
+                ShowZoomBadge();
+            }
             if (!_suppressViewChange && !e.IsIntermediate)
             {
                 ZoomFactorChanged?.Invoke(this, EventArgs.Empty);
             }
+        }
+
+        // ====== 缩放指示器 ======
+        private DispatcherTimer _zoomBadgeTimer;
+        private float _lastBadgeZoom = -1f;
+        private readonly Storyboard _zoomBadgeFade = new Storyboard();
+
+        private void ShowZoomBadge()
+        {
+            if (_zoomBadgeTimer == null)
+            {
+                _zoomBadgeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(900) };
+                _zoomBadgeTimer.Tick += (_, __) =>
+                {
+                    _zoomBadgeTimer.Stop();
+                    _zoomBadgeFade.Stop();
+                    _zoomBadgeFade.Children.Clear();
+                    var anim = new DoubleAnimation
+                    {
+                        From = ZoomBadge.Opacity,
+                        To = 0,
+                        Duration = TimeSpan.FromMilliseconds(250)
+                    };
+                    Storyboard.SetTarget(anim, ZoomBadge);
+                    Storyboard.SetTargetProperty(anim, "Opacity");
+                    _zoomBadgeFade.Children.Add(anim);
+                    _zoomBadgeFade.Begin();
+                };
+                // 只订阅一次, 防止重复叠加
+                _zoomBadgeFade.Completed += (s, e) =>
+                {
+                    if (ZoomBadge.Opacity <= 0.01) ZoomBadge.Visibility = Visibility.Collapsed;
+                };
+            }
+
+            ZoomText.Text = string.Format("{0:0}%", Scroller.ZoomFactor * 100);
+            ZoomBadge.Visibility = Visibility.Visible;
+            ZoomBadge.Opacity = 1;
+            _zoomBadgeFade.Stop();
+            _zoomBadgeTimer.Stop();
+            _zoomBadgeTimer.Start();
         }
 
         public void ResetView()

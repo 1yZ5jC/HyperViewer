@@ -86,33 +86,11 @@ namespace HyperViewer.Services
                     .OrderByDescending(f => f.DateCreated)
                     .FirstOrDefault();
                 if (latest == null) return;
-                album.Cover = await LoadThumbnailAsync(latest, thumbSize);
+                album.Cover = await ImageLoaderService.LoadThumbnailAsync(latest, thumbSize);
             }
             catch
             {
                 // 封面加载失败留空, UI 显示占位
-            }
-        }
-
-        /// <summary>
-        /// 加载单张图片的缩略图 (按需请求, 异步生成 BitmapImage)。
-        /// </summary>
-        public static async Task<BitmapImage> LoadThumbnailAsync(StorageFile file, int thumbSize = 180)
-        {
-            try
-            {
-                using (var stream = await file.OpenReadAsync())
-                {
-                    var bmp = new BitmapImage();
-                    bmp.DecodePixelType = DecodePixelType.Logical;
-                    bmp.DecodePixelWidth = thumbSize;
-                    await bmp.SetSourceAsync(stream);
-                    return bmp;
-                }
-            }
-            catch
-            {
-                return null;
             }
         }
     }

@@ -13,6 +13,8 @@ namespace HyperViewer.Helpers
         private const string KeyResetRotation = "ResetRotationOnNavigate";
         private const string KeySlideTransition = "SlideTransition";
         private const string KeyLastTab = "LastTab";
+        private const string KeyRestoreLastFolder = "RestoreLastFolder";
+        private const string KeyLastFolderPath = "LastFolderPath";
 
         private static readonly ApplicationDataContainer Store =
             ApplicationData.Current.LocalSettings;
@@ -64,6 +66,20 @@ namespace HyperViewer.Helpers
         {
             get { return GetString(KeyLastTab, "Albums"); }
             set { Store.Values[KeyLastTab] = value; }
+        }
+
+        /// <summary>启动时是否恢复上次浏览的文件夹。</summary>
+        public static bool RestoreLastFolder
+        {
+            get { return GetBool(KeyRestoreLastFolder, false); }
+            set { Store.Values[KeyRestoreLastFolder] = value; }
+        }
+
+        /// <summary>最近一次浏览的文件夹路径 (供启动恢复)。</summary>
+        public static string LastFolderPath
+        {
+            get { return GetString(KeyLastFolderPath, null); }
+            set { Store.Values[KeyLastFolderPath] = value; }
         }
 
         private static bool GetBool(string key, bool def)

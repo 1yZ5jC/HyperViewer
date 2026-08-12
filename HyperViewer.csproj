@@ -145,14 +145,20 @@
     <Compile Include="Services\ImageEditService.cs" />
     <Compile Include="Services\RecentFoldersService.cs" />
     <Compile Include="Services\LibraryScanService.cs" />
+    <Compile Include="Services\ShareService.cs" />
+    <Compile Include="Services\ExportService.cs" />
+    <Compile Include="Services\PrintService.cs" />
     <Compile Include="Controls\ImageViewer.xaml.cs">
       <DependentUpon>ImageViewer.xaml</DependentUpon>
     </Compile>
     <Compile Include="Helpers\ObservableObject.cs" />
     <Compile Include="Helpers\RelayCommand.cs" />
     <Compile Include="Helpers\BoolToVisibilityConverter.cs" />
+    <Compile Include="Helpers\InverseBoolToVisibilityConverter.cs" />
+    <Compile Include="Helpers\SelectionBrushConverter.cs" />
     <Compile Include="Helpers\FavoritesService.cs" />
     <Compile Include="Helpers\SettingsService.cs" />
+    <Compile Include="Helpers\KeyboardService.cs" />
     <Compile Include="Helpers\Loc.cs" />
   </ItemGroup>
   <ItemGroup>

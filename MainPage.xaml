@@ -18,20 +18,84 @@
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="Padding" Value="2"/>
-        </Style>
+       </Style>
+        <!-- Pill 形 Tab 按钮样式 (Win11 Photos 风格) -->
+        <Style x:Key="TabPillButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,5"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextMutedBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="RootBorder"
+                                CornerRadius="14"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootBorder.Background" Value="{ThemeResource BtnBgBrush}"/>
+                                            <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource AccentBrush}"/>
+                                       </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootBorder.Background" Value="{ThemeResource AccentBrush}"/>
+                                            <Setter Target="ContentPresenter.Foreground" Value="White"/>
+                                       </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootBorder.Opacity" Value="0.4"/>
+                                       </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="FocusStates">
+                                    <VisualState x:Name="Focused">
+                                        <VisualState.Setters>
+                                            <Setter Target="FocusRing.Visibility" Value="Visible"/>
+                                       </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Unfocused"/>
+                                    <VisualState x:Name="PointerFocused"/>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Grid>
+                                <Border x:Name="FocusRing"
+                                        BorderBrush="{ThemeResource AccentBrush}"
+                                        BorderThickness="2"
+                                        CornerRadius="14"
+                                        Visibility="Collapsed"
+                                        IsHitTestVisible="False"/>
+                                <ContentPresenter x:Name="ContentPresenter"
+                                                  Content="{TemplateBinding Content}"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  FontSize="{TemplateBinding FontSize}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                            </Grid>
+                       </Border>
+                   </ControlTemplate>
+               </Setter.Value>
+           </Setter>
+       </Style>
         <!-- 视图布局资源: 项目宽高 -->
         <ItemsPanelTemplate x:Key="AlbumPanelWide">
-            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="240" ItemHeight="200"/>
-        </ItemsPanelTemplate>
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="224" ItemHeight="220"/>
+       </ItemsPanelTemplate>
         <ItemsPanelTemplate x:Key="AlbumPanelNarrow">
-            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="180" ItemHeight="150"/>
-        </ItemsPanelTemplate>
-        <ItemsPanelTemplate x:Key="PhotoPanelWide">
             <ItemsWrapGrid Orientation="Horizontal" ItemWidth="160" ItemHeight="160"/>
-        </ItemsPanelTemplate>
+       </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="PhotoPanelWide">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="150" ItemHeight="150"/>
+       </ItemsPanelTemplate>
         <ItemsPanelTemplate x:Key="PhotoPanelNarrow">
-            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="120" ItemHeight="120"/>
-        </ItemsPanelTemplate>
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="110" ItemHeight="110"/>
+       </ItemsPanelTemplate>
         <!-- 右键/长按上下文菜单 -->
         <MenuFlyout x:Key="AlbumContextFlyout">
             <MenuFlyoutItem Text="打开" Click="AlbumContext_Open_Click"/>
@@ -76,12 +140,36 @@
                     <VisualState.Setters>
                         <Setter Target="AlbumsGrid.ItemsPanel" Value="{StaticResource AlbumPanelWide}" />
                         <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelWide}" />
+                        <Setter Target="SearchBox.Width" Value="240" />
+                        <Setter Target="LibOpenImageBtn.Visibility" Value="Visible" />
+                        <Setter Target="TabPanel.Visibility" Value="Visible" />
+                        <Setter Target="ActionPanel.Visibility" Value="Visible" />
+                        <Setter Target="LibOverflowBtn.Visibility" Value="Collapsed" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="Medium">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="640"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="AlbumsGrid.ItemsPanel" Value="{StaticResource AlbumPanelNarrow}" />
+                        <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
+                        <Setter Target="SearchBox.Width" Value="160" />
+                        <Setter Target="LibOpenImageBtn.Visibility" Value="Collapsed" />
+                        <Setter Target="TabPanel.Visibility" Value="Visible" />
+                        <Setter Target="ActionPanel.Visibility" Value="Visible" />
+                        <Setter Target="LibOverflowBtn.Visibility" Value="Collapsed" />
                     </VisualState.Setters>
                 </VisualState>
                 <VisualState x:Name="Narrow">
                     <VisualState.Setters>
                         <Setter Target="AlbumsGrid.ItemsPanel" Value="{StaticResource AlbumPanelNarrow}" />
                         <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
+                        <Setter Target="SearchBox.Width" Value="120" />
+                        <Setter Target="LibOpenImageBtn.Visibility" Value="Collapsed" />
+                        <Setter Target="TabPanel.Visibility" Value="Collapsed" />
+                        <Setter Target="ActionPanel.Visibility" Value="Collapsed" />
+                        <Setter Target="LibOverflowBtn.Visibility" Value="Visible" />
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>
@@ -117,17 +205,34 @@
                             Visibility="{x:Bind Vm.LoadFailed, Mode=OneWay, Converter={StaticResource BoolToVis}}"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center">
-                    <TextBlock x:Uid="StatusLoadFailed" FontSize="20"
-                               Foreground="#FFFF6060"
+                    <FontIcon Glyph="&#xE783;"
+                              FontFamily="Segoe MDL2 Assets"
+                              FontSize="48"
+                              Foreground="{ThemeResource ErrorTextBrush}"
+                              HorizontalAlignment="Center"/>
+                    <TextBlock x:Uid="StatusLoadFailed"
+                               FontSize="20"
+                               Margin="0,8,0,0"
+                               Foreground="{ThemeResource ErrorTextBrush}"
                                HorizontalAlignment="Center"/>
                     <TextBlock Text="{x:Bind Vm.Current.Path, Mode=OneWay, FallbackValue=''}"
                                FontSize="12"
-                               Margin="0,8,0,0"
-                               Foreground="#FFA0A0A0"
+                               Margin="0,4,0,16"
+                               Foreground="{ThemeResource DimTextBrush}"
                                HorizontalAlignment="Center"
                                MaxWidth="600"
                                TextWrapping="Wrap"/>
-                </StackPanel>
+                    <Button x:Name="RetryButton"
+                            x:Uid="LoadFailedRetry"
+                            Click="Retry_Click"
+                            HorizontalAlignment="Center"
+                            Padding="20,8"
+                            MinWidth="120"
+                            Background="{ThemeResource BtnBgBrush}"
+                            Foreground="{ThemeResource TextPrimaryBrush}"
+                            BorderThickness="1"
+                            BorderBrush="{ThemeResource BtnBorderBrush}"/>
+               </StackPanel>
 
                 <!-- 中央悬停导航箭头 -->
                 <Border x:Name="PrevArrow"
@@ -136,7 +241,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         Margin="16,0,0,0"
-                        Background="#A0000000"
+                        Background="{ThemeResource NavArrowBgBrush}"
                         Opacity="0"
                         IsHitTestVisible="False"
                         Visibility="Collapsed">
@@ -146,7 +251,8 @@
                             BorderThickness="0"
                             Padding="0"
                             HorizontalContentAlignment="Center"
-                            VerticalContentAlignment="Center">
+                            VerticalContentAlignment="Center"
+                            AutomationProperties.Name="上一张">
                         <FontIcon Glyph="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="White"/>
                     </Button>
                 </Border>
@@ -156,7 +262,7 @@
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center"
                         Margin="0,0,16,0"
-                        Background="#A0000000"
+                        Background="{ThemeResource NavArrowBgBrush}"
                         Opacity="0"
                         IsHitTestVisible="False"
                         Visibility="Collapsed">
@@ -166,7 +272,8 @@
                             BorderThickness="0"
                             Padding="0"
                             HorizontalContentAlignment="Center"
-                            VerticalContentAlignment="Center">
+                            VerticalContentAlignment="Center"
+                            AutomationProperties.Name="下一张">
                         <FontIcon Glyph="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="White"/>
                     </Button>
                 </Border>
@@ -181,146 +288,72 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- 顶部 Tab 栏 + 右侧操作按钮 -->
-                <Grid Grid.Row="0" Padding="16,12" Background="{ThemeResource ChromeBgBrush}">
+                <!-- 顶部 Tab 栏 + 右侧操作按钮 (Win11 Photos Pill 风格) -->
+                <Grid Grid.Row="0" Padding="16,8" Background="{ThemeResource ChromeBgBrush}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <!-- Tab 栏 -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal">
-                        <StackPanel Margin="0,0,6,0">
-                            <Button x:Name="TabAlbums" x:Uid="LibTabAlbums"
-                                    Command="{x:Bind Vm.SelectAlbumsTabCommand}"
-                                    Padding="14,7"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    FontSize="14"
-                                    Foreground="{ThemeResource TextPrimaryBrush}"
-                                    AutomationProperties.Name="相册">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
-                                        <VisualStateManager.VisualStateGroups>
-                                            <VisualStateGroup x:Name="CommonStates">
-                                                <VisualState x:Name="Normal"/>
-                                                <VisualState x:Name="PointerOver">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource BtnBgBrush}"/>
-                                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource AccentBrush}"/>
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                                <VisualState x:Name="Pressed">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource AccentBrush}"/>
-                                                        <Setter Target="ContentPresenter.Foreground" Value="White"/>
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                            </VisualStateGroup>
-                                        </VisualStateManager.VisualStateGroups>
-                                        <ContentPresenter x:Name="ContentPresenter"
-                                                          Content="{TemplateBinding Content}"
-                                                          Foreground="{TemplateBinding Foreground}"
-                                                          FontSize="{TemplateBinding FontSize}"
-                                                          HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center"/>
-                                    </Grid>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                            <Border Height="3" Margin="8,2,8,0" CornerRadius="1.5"
-                                    Background="{ThemeResource AccentBrush}"
-                                    Visibility="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,6,0">
-                            <Button x:Name="TabAllPhotos" x:Uid="LibTabAllPhotos"
-                                    Command="{x:Bind Vm.SelectAllPhotosTabCommand}"
-                                    Padding="14,7"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    FontSize="14"
-                                    Foreground="{ThemeResource TextPrimaryBrush}"
-                                    AutomationProperties.Name="全部照片">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
-                                        <VisualStateManager.VisualStateGroups>
-                                            <VisualStateGroup x:Name="CommonStates">
-                                                <VisualState x:Name="Normal"/>
-                                                <VisualState x:Name="PointerOver">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource BtnBgBrush}"/>
-                                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource AccentBrush}"/>
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                                <VisualState x:Name="Pressed">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource AccentBrush}"/>
-                                                        <Setter Target="ContentPresenter.Foreground" Value="White"/>
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                            </VisualStateGroup>
-                                        </VisualStateManager.VisualStateGroups>
-                                        <ContentPresenter x:Name="ContentPresenter"
-                                                          Content="{TemplateBinding Content}"
-                                                          Foreground="{TemplateBinding Foreground}"
-                                                          FontSize="{TemplateBinding FontSize}"
-                                                          HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center"/>
-                                    </Grid>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                            <Border Height="3" Margin="8,2,8,0" CornerRadius="1.5"
-                                    Background="{ThemeResource AccentBrush}"
-                                    Visibility="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
-                        </StackPanel>
-                        <StackPanel>
-                            <Button x:Name="TabFolders" x:Uid="LibTabFolders"
-                                    Command="{x:Bind Vm.SelectFoldersTabCommand}"
-                                    Padding="14,7"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    FontSize="14"
-                                    Foreground="{ThemeResource TextPrimaryBrush}"
-                                    AutomationProperties.Name="文件夹">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Grid x:Name="RootGrid" Background="{TemplateBinding Background}">
-                                        <VisualStateManager.VisualStateGroups>
-                                            <VisualStateGroup x:Name="CommonStates">
-                                                <VisualState x:Name="Normal"/>
-                                                <VisualState x:Name="PointerOver">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource BtnBgBrush}"/>
-                                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource AccentBrush}"/>
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                                <VisualState x:Name="Pressed">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="RootGrid.Background" Value="{ThemeResource AccentBrush}"/>
-                                                        <Setter Target="ContentPresenter.Foreground" Value="White"/>
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                            </VisualStateGroup>
-                                        </VisualStateManager.VisualStateGroups>
-                                        <ContentPresenter x:Name="ContentPresenter"
-                                                          Content="{TemplateBinding Content}"
-                                                          Foreground="{TemplateBinding Foreground}"
-                                                          FontSize="{TemplateBinding FontSize}"
-                                                          HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center"/>
-                                    </Grid>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                            <Border Height="3" Margin="8,2,8,0" CornerRadius="1.5"
-                                    Background="{ThemeResource AccentBrush}"
-                                    Visibility="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
-                        </StackPanel>
-                    </StackPanel>
+                   </Grid.ColumnDefinitions>
+                    <!-- Tab 栏 (Pill 风格) -->
+                    <StackPanel x:Name="TabPanel" Grid.Column="0" Orientation="Horizontal">
+                        <Button x:Name="TabAlbums" x:Uid="LibTabAlbums"
+                                Style="{StaticResource TabPillButtonStyle}"
+                                Command="{x:Bind Vm.SelectAlbumsTabCommand}"
+                                Background="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                Foreground="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                                AutomationProperties.Name="相册"
+                                Margin="0,0,2,0"/>
+                        <Button x:Name="TabAllPhotos" x:Uid="LibTabAllPhotos"
+                                Style="{StaticResource TabPillButtonStyle}"
+                                Command="{x:Bind Vm.SelectAllPhotosTabCommand}"
+                                Background="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                Foreground="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                                AutomationProperties.Name="全部照片"
+                                Margin="0,0,2,0"/>
+                        <Button x:Name="TabFolders" x:Uid="LibTabFolders"
+                                Style="{StaticResource TabPillButtonStyle}"
+                                Command="{x:Bind Vm.SelectFoldersTabCommand}"
+                                Background="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                Foreground="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                                AutomationProperties.Name="文件夹"/>
+                   </StackPanel>
+                    <!-- 窄窗口溢出菜单 (Tab + 操作按钮收进 ... ) -->
+                    <Button x:Name="LibOverflowBtn"
+                            Grid.Column="0"
+                            Visibility="Collapsed"
+                            Padding="12,7"
+                            Margin="0,0,8,0"
+                            Background="{ThemeResource BtnBgBrush}"
+                            Foreground="{ThemeResource TextPrimaryBrush}"
+                            BorderThickness="0"
+                            FontSize="13"
+                            VerticalAlignment="Center"
+                            AutomationProperties.Name="更多操作">
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem x:Uid="LibTabAlbumsFlyout"
+                                                Command="{x:Bind Vm.SelectAlbumsTabCommand}"
+                                                Background="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                                Foreground="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"/>
+                                <MenuFlyoutItem x:Uid="LibTabAllPhotosFlyout"
+                                                Command="{x:Bind Vm.SelectAllPhotosTabCommand}"
+                                                Background="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                                Foreground="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"/>
+                                <MenuFlyoutItem x:Uid="LibTabFoldersFlyout"
+                                                Command="{x:Bind Vm.SelectFoldersTabCommand}"
+                                                Background="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                                Foreground="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"/>
+                                <MenuFlyoutSeparator/>
+                                <MenuFlyoutItem x:Uid="LibOpenImageFlyout" Command="{x:Bind Vm.OpenImageCommand}"/>
+                                <MenuFlyoutItem x:Uid="LibAddFolderFlyout" Command="{x:Bind Vm.OpenFolderCommand}"/>
+                                <MenuFlyoutSeparator/>
+                                <MenuFlyoutItem x:Uid="LibSettingsFlyout" Click="SettingsButton_Click"/>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                        <FontIcon Glyph="&#xE712;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                    </Button>
                     <!-- 搜索框 -->
                     <AutoSuggestBox x:Name="SearchBox"
                                     Grid.Column="2"
@@ -338,12 +371,13 @@
                         <AutoSuggestBox.ItemTemplate>
                             <DataTemplate x:DataType="x:String">
                                 <TextBlock Text="{x:Bind}" />
-                            </DataTemplate>
+                           </DataTemplate>
                         </AutoSuggestBox.ItemTemplate>
-                    </AutoSuggestBox>
+                   </AutoSuggestBox>
                     <!-- 右侧操作按钮 -->
-                    <StackPanel Grid.Column="3" Orientation="Horizontal">
+                    <StackPanel x:Name="ActionPanel" Grid.Column="3" Orientation="Horizontal">
                         <Button x:Uid="LibOpenImage"
+                                x:Name="LibOpenImageBtn"
                                 Command="{x:Bind Vm.OpenImageCommand}"
                                 Padding="14,7"
                                 Background="{ThemeResource BtnBgBrush}"
@@ -367,7 +401,7 @@
                                 BorderThickness="0"
                                 FontSize="13"
                                 AutomationProperties.Name="设置"/>
-                    </StackPanel>
+                   </StackPanel>
                 </Grid>
 
                 <!-- 内容: 三个 Tab 视图 + 空态 -->
@@ -629,48 +663,61 @@
                             VerticalAlignment="Center"
                             MaxWidth="560"
                             Background="{ThemeResource PanelBgBrush}"
-                            CornerRadius="20"
+                            CornerRadius="16"
                             Padding="48,40">
                         <Border.Transitions>
                             <TransitionCollection>
                                 <EntranceThemeTransition />
-                            </TransitionCollection>
-                        </Border.Transitions>
+                           </TransitionCollection>
+                       </Border.Transitions>
                         <StackPanel>
+                            <!-- 大图标 (Win11 Photos 风格) -->
+                            <Border Width="72" Height="72"
+                                    CornerRadius="36"
+                                    Background="{ThemeResource BtnBgBrush}"
+                                    HorizontalAlignment="Center">
+                                <FontIcon Glyph="&#xE8B7;"
+                                          FontFamily="Segoe MDL2 Assets"
+                                          FontSize="32"
+                                          Foreground="{ThemeResource AccentBrush}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                           </Border>
                             <TextBlock Text="HyperViewer"
-                                       FontSize="38"
-                                       FontWeight="Bold"
+                                       FontSize="28"
+                                       FontWeight="SemiBold"
                                        Foreground="{ThemeResource TextPrimaryBrush}"
-                                       HorizontalAlignment="Center"/>
+                                       HorizontalAlignment="Center"
+                                       Margin="0,20,0,0"/>
                             <TextBlock x:Uid="HomeSubtitle"
                                        FontSize="14"
                                        Foreground="{ThemeResource TextMutedBrush}"
                                        HorizontalAlignment="Center"
-                                       Margin="0,12,0,0"/>
+                                       Margin="0,8,0,0"/>
                             <StackPanel Orientation="Horizontal"
                                         HorizontalAlignment="Center"
-                                        Margin="0,30,0,0">
+                                        Margin="0,28,0,0">
                                 <Button x:Uid="HomeOpenImage"
                                         Command="{x:Bind Vm.OpenImageCommand}"
-                                        Padding="28,12"
-                                        MinWidth="170"
-                                        FontSize="14"
+                                        Padding="24,10"
+                                        MinWidth="160"
+                                        FontSize="13"
                                         Background="{ThemeResource AccentBrush}"
                                         Foreground="White"
                                         BorderThickness="0"/>
                                 <Button x:Uid="HomeOpenFolder"
                                         Command="{x:Bind Vm.OpenFolderCommand}"
-                                        Padding="28,12"
-                                        MinWidth="170"
-                                        FontSize="14"
+                                        Padding="24,10"
+                                        MinWidth="160"
+                                        FontSize="13"
                                         Margin="12,0,0,0"
                                         Background="{ThemeResource BtnBgBrush}"
                                         Foreground="{ThemeResource TextPrimaryBrush}"
                                         BorderThickness="1"
                                         BorderBrush="{ThemeResource BtnBorderBrush}"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
+                           </StackPanel>
+                       </StackPanel>
+                   </Border>
                 </Grid>
             </Grid>
 
@@ -724,13 +771,13 @@
 
         <!-- 缩略图栏 -->
         <Grid x:Name="ThumbBar" Grid.Row="1"
-              Height="100"
+              Height="92"
               Background="{ThemeResource ChromeBgStrongBrush}"
-              Visibility="{x:Bind Vm.ThumbnailVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+              Visibility="Collapsed">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+           </Grid.ColumnDefinitions>
             <Button Grid.Column="0"
                     x:Uid="RecentMenu"
                     Background="{ThemeResource BtnBgBrush}"
@@ -752,8 +799,8 @@
                 <ListView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel Orientation="Horizontal"/>
-                    </ItemsPanelTemplate>
-                </ListView.ItemsPanel>
+                  </ItemsPanelTemplate>
+              </ListView.ItemsPanel>
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
                         <Setter Property="Padding" Value="0"/>
@@ -762,27 +809,29 @@
                         <Setter Property="MinHeight" Value="0"/>
                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                         <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-                    </Style>
-                </ListView.ItemContainerStyle>
+                  </Style>
+              </ListView.ItemContainerStyle>
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="models:PhotoItem">
-                        <Border Width="90" Height="90"
+                        <Border Width="80" Height="80"
                                 BorderBrush="Transparent"
                                 BorderThickness="2"
+                                CornerRadius="6"
                                 Padding="0"
-                                Background="#FF2D2D2D">
+                                Background="{ThemeResource BtnBgBrush}">
                             <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
                                    Stretch="UniformToFill"
-                                   Width="86"
-                                   Height="86"
+                                   Width="76"
+                                   Height="76"
                                    Loaded="PhotoThumbnail_Loaded"/>
-                        </Border>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
+                      </Border>
+                  </DataTemplate>
+              </ListView.ItemTemplate>
             </ListView>
         </Grid>
 
-        <Border x:Name="StatusBar" Grid.Row="2" Background="{ThemeResource ChromeBgBrush}" Padding="12,6">
+        <Border x:Name="StatusBar" Grid.Row="2" Background="{ThemeResource ChromeBgBrush}" Padding="12,6"
+                Visibility="Collapsed">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -813,16 +862,22 @@
             </Grid>
         </Border>
 
-        <!-- 悬浮工具栏 (声明在最后, 保证 Z 序最上层) -->
-        <CommandBar x:Name="TopBar" Grid.Row="0" IsOpen="False"
-                    VerticalAlignment="Top"
-                    Background="{ThemeResource TopBarBgBrush}">
-            <CommandBar.Content>
-                <TextBlock Text="HyperViewer"
-                           Margin="12,0,0,0"
-                           VerticalAlignment="Center"
-                           FontWeight="SemiBold"/>
-            </CommandBar.Content>
+        <!-- 底部悬浮工具栏 (声明在最后, 保证 Z 序最上层) -->
+        <Border x:Name="FloatingBar"
+                Grid.RowSpan="3"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Center"
+                Margin="0,0,0,14"
+                CornerRadius="12"
+                Padding="4,2"
+                Background="{ThemeResource TopBarBgBrush}"
+                BorderThickness="1"
+                BorderBrush="{ThemeResource BtnBorderBrush}"
+                MinWidth="260"
+                MaxWidth="440"
+                Visibility="{x:Bind Vm.HomeVisible, Mode=OneWay, Converter={StaticResource InvBoolToVis}}">
+            <CommandBar x:Name="TopBar" IsOpen="False"
+                        Background="Transparent">
             <AppBarButton Icon="OpenFile" x:Uid="CmdOpenImage" Command="{x:Bind Vm.OpenImageCommand}"/>
             <AppBarButton Icon="Folder" x:Uid="CmdOpenFolder" Command="{x:Bind Vm.OpenFolderCommand}"/>
             <AppBarSeparator/>
@@ -861,6 +916,13 @@
                         <MenuFlyoutItem x:Uid="MenuTimeline" Click="TimelineButton_Click"
                                         IsEnabled="{x:Bind Vm.CanOpenTimeline, Mode=OneWay}"/>
                         <MenuFlyoutSeparator/>
+                        <MenuFlyoutItem x:Uid="MenuShare" Click="Share_Click"
+                                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
+                        <MenuFlyoutItem x:Uid="MenuSaveAs" Click="SaveAs_Click"
+                                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
+                        <MenuFlyoutItem x:Uid="MenuPrint" Click="Print_Click"
+                                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
+                        <MenuFlyoutSeparator/>
                         <MenuFlyoutItem x:Uid="CmdDelete" Click="Delete_Click"
                                         IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
                         <MenuFlyoutItem x:Uid="CmdRename" Click="Rename_Click"
@@ -872,5 +934,6 @@
                 </AppBarButton.Flyout>
             </AppBarButton>
         </CommandBar>
+        </Border>
     </Grid>
 </Page>

@@ -8,38 +8,79 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
-                <!-- 深色板 (默认) -->
+                <!-- 深色板 (默认) - Win11 Photos 风格 -->
                 <ResourceDictionary x:Key="Dark">
-                    <SolidColorBrush x:Key="AccentBrush" Color="#FF3D7FEA"/>
-                    <SolidColorBrush x:Key="ChromeBgBrush" Color="#FF1F1F1F"/>
+                    <SolidColorBrush x:Key="AccentBrush" Color="{ThemeResource SystemAccentColor}"/>
+                    <SolidColorBrush x:Key="ChromeBgBrush" Color="#FF202020"/>
                     <SolidColorBrush x:Key="ChromeBgAltBrush" Color="#FF2A2A2A"/>
-                    <SolidColorBrush x:Key="ChromeBgStrongBrush" Color="#FF1A1A1A"/>
+                    <SolidColorBrush x:Key="ChromeBgStrongBrush" Color="#FF181818"/>
                     <SolidColorBrush x:Key="TopBarBgBrush" Color="#CC202020"/>
                     <SolidColorBrush x:Key="PanelBgBrush" Color="#E6101010"/>
                     <SolidColorBrush x:Key="BtnBgBrush" Color="#FF2D2D2D"/>
+                    <SolidColorBrush x:Key="BtnBgHoverBrush" Color="#FF383838"/>
                     <SolidColorBrush x:Key="BtnBorderBrush" Color="#FF4A4A4A"/>
                     <SolidColorBrush x:Key="CardBgBrush" Color="#FF262626"/>
                     <SolidColorBrush x:Key="TextPrimaryBrush" Color="White"/>
                     <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FFCCCCCC"/>
                     <SolidColorBrush x:Key="TextMutedBrush" Color="#FF909090"/>
-                </ResourceDictionary>
-                <!-- 浅色板 -->
+                    <!-- 半透明叠加 -->
+                    <SolidColorBrush x:Key="OverlayScrimBrush" Color="#80000000"/>
+                    <!-- 错误/提示/导航 -->
+                    <SolidColorBrush x:Key="ErrorTextBrush" Color="#FFFF6060"/>
+                    <SolidColorBrush x:Key="DimTextBrush" Color="#FFA0A0A0"/>
+                    <SolidColorBrush x:Key="NavArrowBgBrush" Color="#A0000000"/>
+                    <!-- 裁剪遮罩 -->
+                    <SolidColorBrush x:Key="CropDimBrush" Color="#59000000"/>
+                    <SolidColorBrush x:Key="CropLineBrush" Color="#33FFFFFF"/>
+               </ResourceDictionary>
+                <!-- 浅色板 - Win11 Photos 风格 -->
                 <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="AccentBrush" Color="#FF2F6FD8"/>
+                    <SolidColorBrush x:Key="AccentBrush" Color="{ThemeResource SystemAccentColor}"/>
                     <SolidColorBrush x:Key="ChromeBgBrush" Color="#FFF3F3F3"/>
                     <SolidColorBrush x:Key="ChromeBgAltBrush" Color="#FFE6E6E6"/>
-                    <SolidColorBrush x:Key="ChromeBgStrongBrush" Color="#FFEDEDED"/>
-                    <SolidColorBrush x:Key="TopBarBgBrush" Color="#CCF5F5F5"/>
+                    <SolidColorBrush x:Key="ChromeBgStrongBrush" Color="#FFFAFAFA"/>
+                    <SolidColorBrush x:Key="TopBarBgBrush" Color="#CCFAFAFA"/>
                     <SolidColorBrush x:Key="PanelBgBrush" Color="#E6F7F7F7"/>
-                    <SolidColorBrush x:Key="BtnBgBrush" Color="#FFE0E0E0"/>
+                    <SolidColorBrush x:Key="BtnBgBrush" Color="#FFEDEDED"/>
+                    <SolidColorBrush x:Key="BtnBgHoverBrush" Color="#FFE0E0E0"/>
                     <SolidColorBrush x:Key="BtnBorderBrush" Color="#FFBFBFBF"/>
                     <SolidColorBrush x:Key="CardBgBrush" Color="#FFFFFFFF"/>
                     <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FF1A1A1A"/>
                     <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FF444444"/>
                     <SolidColorBrush x:Key="TextMutedBrush" Color="#FF777777"/>
-                </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
+                    <SolidColorBrush x:Key="OverlayScrimBrush" Color="#80000000"/>
+                    <!-- 错误/提示/导航 -->
+                    <SolidColorBrush x:Key="ErrorTextBrush" Color="#FFB00020"/>
+                    <SolidColorBrush x:Key="DimTextBrush" Color="#FF808080"/>
+                    <SolidColorBrush x:Key="NavArrowBgBrush" Color="#A0000000"/>
+                    <!-- 裁剪遮罩 -->
+                    <SolidColorBrush x:Key="CropDimBrush" Color="#59000000"/>
+                    <SolidColorBrush x:Key="CropLineBrush" Color="#33FFFFFF"/>
+               </ResourceDictionary>
+                <!-- 高对比度板 - 使用系统 HC 颜色 -->
+                <ResourceDictionary x:Key="HighContrast">
+                    <SolidColorBrush x:Key="AccentBrush" Color="{ThemeResource SystemColorHighlightColor}"/>
+                    <SolidColorBrush x:Key="ChromeBgBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <SolidColorBrush x:Key="ChromeBgAltBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <SolidColorBrush x:Key="ChromeBgStrongBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <SolidColorBrush x:Key="TopBarBgBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <SolidColorBrush x:Key="PanelBgBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <SolidColorBrush x:Key="BtnBgBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <SolidColorBrush x:Key="BtnBgHoverBrush" Color="{ThemeResource SystemColorHighlightColor}"/>
+                    <SolidColorBrush x:Key="BtnBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+                    <SolidColorBrush x:Key="CardBgBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
+                    <SolidColorBrush x:Key="TextMutedBrush" Color="{ThemeResource SystemColorGrayTextColor}"/>
+                    <SolidColorBrush x:Key="OverlayScrimBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <!-- 裁剪遮罩 -->
+                    <SolidColorBrush x:Key="CropDimBrush" Color="{ThemeResource SystemColorWindowColor}"/>
+                    <SolidColorBrush x:Key="CropLineBrush" Color="{ThemeResource SystemColorHighlightColor}"/>
+               </ResourceDictionary>
+           </ResourceDictionary.ThemeDictionaries>
             <helpers:BoolToVisibilityConverter x:Key="BoolToVis"/>
-        </ResourceDictionary>
-    </Application.Resources>
+            <helpers:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+            <helpers:SelectionBrushConverter x:Key="SelBrush"/>
+       </ResourceDictionary>
+   </Application.Resources>
 </Application>

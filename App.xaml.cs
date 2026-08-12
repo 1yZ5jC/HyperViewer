@@ -14,6 +14,7 @@ using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Navigation;
 
 namespace HyperViewer
@@ -98,6 +99,13 @@ namespace HyperViewer
             if (rootFrame == null)
             {
                 rootFrame = new Frame();
+                rootFrame.ContentTransitions = new TransitionCollection
+                {
+                    new NavigationThemeTransition
+                    {
+                        DefaultNavigationTransitionInfo = new SlideNavigationTransitionInfo()
+                    }
+                };
                 rootFrame.NavigationFailed += OnNavigationFailed;
                 Window.Current.Content = rootFrame;
             }

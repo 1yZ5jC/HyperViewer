@@ -397,7 +397,7 @@ namespace HyperViewer.ViewModels
             SelectAllPhotosTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.AllPhotos));
             SelectFoldersTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.Folders));
 
-            _recent = new RecentFoldersService();
+            _recent = RecentFoldersService.Instance;
             _recent.Changed += (_, __) =>
             {
                 RaisePropertyChanged(nameof(RecentFolders));
@@ -439,11 +439,19 @@ namespace HyperViewer.ViewModels
                 var result = await LibraryScanService.ScanAsync(folders, token);
                 if (token.IsCancellationRequested) return;
 
-Albums.Clear();
+                // 复用旧 PhotoItem 实例: 保留已加载的缩略图/拍摄日期, 避免重复解码
+                var oldByPath = _masterAllPhotos.ToDictionary(p => p.Path, StringComparer.OrdinalIgnoreCase);
+                var reused = new List<PhotoItem>(result.AllPhotos.Count);
+                foreach (var p in result.AllPhotos)
+                {
+                    reused.Add(oldByPath.TryGetValue(p.Path, out var old) ? old : p);
+                }
+
+                Albums.Clear();
                     AllPhotos.Clear();
                     // Keep master copies for search/filter
                     _masterAlbums = new List<AlbumItem>(result.Albums);
-                    _masterAllPhotos = new List<PhotoItem>(result.AllPhotos);
+                    _masterAllPhotos = reused;
                     // Populate filtered collections based on current search text
                     ApplySearch();
                     LibraryEmptyVisible = _masterAlbums.Count == 0 && _masterAllPhotos.Count == 0;
@@ -519,6 +527,7 @@ Albums.Clear();
             CurrentIndex = 0;
             Current = photo;
             CurrentFolder = null;
+            SettingsService.LastFolderPath = null;
             RaisePropertyChanged(nameof(ThumbnailVisible));
             // PreloadThumbnailsAsync removed for lazy loading
         }
@@ -543,6 +552,7 @@ Albums.Clear();
                 _photos.Clear();
                 foreach (var p in items) _photos.Add(p);
                 CurrentFolder = folder;
+                SettingsService.LastFolderPath = folder.Path;
                 if (_photos.Count > 0)
                 {
                     CurrentIndex = 0;
@@ -644,6 +654,17 @@ Albums.Clear();
             }
         }
 
+        /// <summary>
+        /// 加载失败后重试当前图片。
+        /// </summary>
+        public void RetryLoad()
+        {
+            if (Current != null)
+            {
+                RaiseImageChangedAsync();
+            }
+        }
+
         public void ActivateFromFile(StorageFile file)
         {
             _photos.Clear();
@@ -652,6 +673,7 @@ Albums.Clear();
             CurrentIndex = 0;
             Current = photo;
             CurrentFolder = null;
+            SettingsService.LastFolderPath = null;
             RaisePropertyChanged(nameof(ThumbnailVisible));
             // PreloadThumbnailsAsync removed for lazy loading
         }

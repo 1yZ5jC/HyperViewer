@@ -13,6 +13,9 @@ namespace HyperViewer.Services
     /// </summary>
     public sealed class RecentFoldersService
     {
+        /// <summary>全局共享实例 (主页面与设置页共用)。</summary>
+        public static RecentFoldersService Instance { get; } = new RecentFoldersService();
+
         private const string IndexKey = "RecentFoldersIndex";
         private const int MaxCount = 10;
         private readonly List<string> _tokens = new List<string>();
@@ -110,6 +113,21 @@ namespace HyperViewer.Services
                 }
             }
 
+            SaveIndex();
+            Changed?.Invoke(this, EventArgs.Empty);
+            return Task.CompletedTask;
+        }
+
+        /// <summary>清空全部记录并移除访问令牌。</summary>
+        public Task ClearAsync()
+        {
+            var fal = StorageApplicationPermissions.FutureAccessList;
+            foreach (var token in _tokens)
+            {
+                try { fal.Remove(token); } catch { }
+            }
+            _tokens.Clear();
+            _folders.Clear();
             SaveIndex();
             Changed?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;

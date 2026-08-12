@@ -15,40 +15,46 @@
         </Grid.RowDefinitions>
 
         <!-- 顶栏: 返回 / 标题 / 扫描进度 -->
-        <Grid Grid.Row="0" Padding="8,4" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
+        <Grid Grid.Row="0" Padding="12,6" Background="{ThemeResource ChromeBgBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Click="BackButton_Click" Padding="10,4" x:Uid="BackToolTip">
-                <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"/>
-            </Button>
+          </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Click="BackButton_Click" Padding="10,4"
+                    Background="Transparent" BorderThickness="0"
+                    x:Uid="BackToolTip">
+                <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"
+                          Foreground="{ThemeResource TextPrimaryBrush}"/>
+          </Button>
             <TextBlock x:Name="TitleText" Grid.Column="1" VerticalAlignment="Center"
-                       FontSize="18" FontWeight="SemiBold" Margin="8,0,0,0"
+                       FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
+                       Foreground="{ThemeResource TextPrimaryBrush}"
                        TextTrimming="CharacterEllipsis"/>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                 <ProgressRing IsActive="{x:Bind Vm.IsScanning, Mode=OneWay}" Width="20" Height="20" Margin="0,0,8,0"/>
-                <TextBlock Text="{x:Bind Vm.StatusText, Mode=OneWay}" VerticalAlignment="Center"/>
-            </StackPanel>
-        </Grid>
+                <TextBlock Text="{x:Bind Vm.StatusText, Mode=OneWay}" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextMutedBrush}"/>
+          </StackPanel>
+      </Grid>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="348"/>
+                <ColumnDefinition Width="320"/>
                 <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+          </Grid.ColumnDefinitions>
 
             <!-- 日历快速定位 -->
-            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                          Background="{ThemeResource ChromeBgBrush}">
                 <CalendarView x:Name="Cal"
-                              Width="320" Margin="8"
+                              Width="300" Margin="10"
                               HorizontalAlignment="Left" VerticalAlignment="Top"
                               SelectionMode="Single" IsTodayHighlighted="False"
                               MinDate="{x:Bind Vm.CalendarMin, Mode=OneWay}"
                               MaxDate="{x:Bind Vm.CalendarMax, Mode=OneWay}"
                               SelectedDatesChanged="Cal_SelectedDatesChanged"/>
-            </ScrollViewer>
+          </ScrollViewer>
 
             <Grid Grid.Column="1">
                 <ListView x:Name="TimelineList"
@@ -85,8 +91,8 @@
 
                 <StackPanel x:Name="EmptyHint" Visibility="Collapsed" VerticalAlignment="Center" HorizontalAlignment="Center">
                     <TextBlock x:Uid="TimelineEmpty" FontSize="16"
-                               Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                </StackPanel>
+                               Foreground="{ThemeResource TextMutedBrush}"/>
+         </StackPanel>
             </Grid>
         </Grid>
     </Grid>

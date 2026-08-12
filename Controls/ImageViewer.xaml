@@ -9,25 +9,41 @@
     d:DesignHeight="300"
     d:DesignWidth="400">
 
-    <ScrollViewer x:Name="Scroller"
-                  ZoomMode="Enabled"
-                  HorizontalScrollMode="Enabled"
-                  VerticalScrollMode="Enabled"
-                  HorizontalScrollBarVisibility="Hidden"
-                  VerticalScrollBarVisibility="Hidden"
-                   MinZoomFactor="0.1"
-                   MaxZoomFactor="10"
-                  IsHorizontalScrollChainingEnabled="True"
-                  IsVerticalScrollChainingEnabled="True"
-                  ManipulationMode="All"
-                  ViewChanged="Scroller_ViewChanged"
-                  DoubleTapped="Scroller_DoubleTapped"
-                  PointerWheelChanged="Scroller_PointerWheelChanged"
-                  Background="{x:Bind Root.Background, Mode=OneWay}">
-        <Image x:Name="TheImage"
-               Stretch="Uniform"
-               HorizontalAlignment="Center"
-               VerticalAlignment="Center"
-               RenderTransformOrigin="0.5,0.5"/>
-    </ScrollViewer>
+    <Grid>
+        <ScrollViewer x:Name="Scroller"
+                      ZoomMode="Enabled"
+                      HorizontalScrollMode="Enabled"
+                      VerticalScrollMode="Enabled"
+                      HorizontalScrollBarVisibility="Hidden"
+                      VerticalScrollBarVisibility="Hidden"
+                       MinZoomFactor="0.1"
+                       MaxZoomFactor="10"
+                      IsHorizontalScrollChainingEnabled="True"
+                      IsVerticalScrollChainingEnabled="True"
+                      ManipulationMode="All"
+                      ViewChanged="Scroller_ViewChanged"
+                      DoubleTapped="Scroller_DoubleTapped"
+                      PointerWheelChanged="Scroller_PointerWheelChanged"
+                      Background="{x:Bind Root.Background, Mode=OneWay}">
+            <Image x:Name="TheImage"
+                   Stretch="Uniform"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   RenderTransformOrigin="0.5,0.5"/>
+        </ScrollViewer>
+
+        <!-- 捏合/缩放百分比指示器 -->
+        <Border x:Name="ZoomBadge"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,24"
+                Background="{ThemeResource OverlayScrimBrush}"
+                CornerRadius="12"
+                Padding="14,6"
+                Visibility="Collapsed"
+                IsHitTestVisible="False"
+                AutomationProperties.LiveSetting="Polite">
+            <TextBlock x:Name="ZoomText" FontSize="12" Foreground="White"/>
+        </Border>
+    </Grid>
 </UserControl>

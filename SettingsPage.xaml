@@ -7,6 +7,26 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
+    <Page.Resources>
+        <Style x:Key="SectionLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextPrimaryBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+        <Style x:Key="SettingHintStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextMutedBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style x:Key="ShortcutRowNameStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextPrimaryBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </Page.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -14,53 +34,106 @@
         </Grid.RowDefinitions>
 
         <!-- 顶栏 -->
-        <Grid Grid.Row="0" Padding="8,4" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
+        <Grid Grid.Row="0" Padding="12,6" Background="{ThemeResource ChromeBgBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Click="BackButton_Click" Padding="10,4" x:Uid="BackToolTip">
-                <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"/>
+            <Button Grid.Column="0" Click="BackButton_Click" Padding="10,4"
+                    Background="Transparent" BorderThickness="0"
+                    x:Uid="BackToolTip"
+                    AutomationProperties.Name="返回">
+                <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"
+                          Foreground="{ThemeResource TextPrimaryBrush}"/>
             </Button>
             <TextBlock Grid.Column="1" VerticalAlignment="Center"
-                       FontSize="18" FontWeight="SemiBold" Margin="8,0,0,0" x:Uid="SettingsTitle"/>
+                       FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
+                       Foreground="{ThemeResource TextPrimaryBrush}"
+                       x:Uid="SettingsTitle"/>
         </Grid>
 
-        <StackPanel Grid.Row="1" Padding="24,16">
-            <TextBlock x:Uid="SettingsThemeLabel" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
-            <ComboBox x:Name="ThemeBox" Width="200" SelectionChanged="ThemeBox_SelectionChanged">
-                <ComboBoxItem x:Uid="ThemeDefault" Tag="Default"/>
-                <ComboBoxItem x:Uid="ThemeDark" Tag="Dark"/>
-                <ComboBoxItem x:Uid="ThemeLight" Tag="Light"/>
-            </ComboBox>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Padding="24,16" MaxWidth="640" HorizontalAlignment="Left">
 
-            <TextBlock x:Uid="SettingsSlideLabel" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,8"/>
-            <ComboBox x:Name="SlideSecondsBox" Width="200" SelectionChanged="SlideSecondsBox_SelectionChanged">
-                <ComboBoxItem x:Uid="Seconds1" Tag="1"/>
-                <ComboBoxItem x:Uid="Seconds3" Tag="3"/>
-                <ComboBoxItem x:Uid="Seconds5" Tag="5"/>
-                <ComboBoxItem x:Uid="Seconds10" Tag="10"/>
-            </ComboBox>
+                <!-- 主题 -->
+                <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsThemeLabel"/>
+                <ComboBox x:Name="ThemeBox" Width="200" SelectionChanged="ThemeBox_SelectionChanged">
+                    <ComboBoxItem x:Uid="ThemeDefault" Tag="Default"/>
+                    <ComboBoxItem x:Uid="ThemeDark" Tag="Dark"/>
+                    <ComboBoxItem x:Uid="ThemeLight" Tag="Light"/>
+                </ComboBox>
 
-            <TextBlock x:Uid="SettingsTransitionLabel" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,8"/>
-            <ComboBox x:Name="TransitionBox" Width="200" SelectionChanged="TransitionBox_SelectionChanged">
-                <ComboBoxItem x:Uid="TransitionFade" Tag="Fade"/>
-                <ComboBoxItem x:Uid="TransitionZoom" Tag="Zoom"/>
-                <ComboBoxItem x:Uid="TransitionPan" Tag="Pan"/>
-                <ComboBoxItem x:Uid="TransitionFlicker" Tag="Flicker"/>
-            </ComboBox>
+                <!-- 启动行为 -->
+                <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsStartupLabel" Margin="0,24,0,0"/>
+                <ToggleSwitch x:Name="RestoreFolderSwitch"
+                              x:Uid="SettingsRestoreFolder"
+                              Toggled="RestoreFolderSwitch_Toggled"/>
+                <TextBlock Style="{StaticResource SettingHintStyle}" x:Uid="SettingsRestoreFolderHint"/>
 
-            <TextBlock x:Uid="SettingsBgLabel" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,8"/>
-            <ComboBox x:Name="BackgroundBox" Width="200" SelectionChanged="BackgroundBox_SelectionChanged">
-                <ComboBoxItem x:Uid="BgBlack" Tag="Black"/>
-                <ComboBoxItem x:Uid="BgDarkGray" Tag="DarkGray"/>
-                <ComboBoxItem x:Uid="BgWhite" Tag="White"/>
-            </ComboBox>
+                <!-- 语言 -->
+                <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsLanguageLabel" Margin="0,24,0,0"/>
+                <ComboBox x:Name="LanguageBox" Width="200" SelectionChanged="LanguageBox_SelectionChanged">
+                    <ComboBoxItem x:Uid="LangSystem" Tag="System"/>
+                    <ComboBoxItem x:Uid="LangZh" Tag="zh-CN"/>
+                    <ComboBoxItem x:Uid="LangEn" Tag="en-US"/>
+                </ComboBox>
+                <TextBlock Style="{StaticResource SettingHintStyle}" x:Uid="SettingsLanguageHint"/>
 
-            <ToggleSwitch x:Name="ResetRotationSwitch"
-                          x:Uid="SettingsResetRotation"
-                          Margin="0,24,0,0"
-                          Toggled="ResetRotationSwitch_Toggled"/>
-        </StackPanel>
+                <!-- 幻灯片 -->
+                <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsSlideLabel" Margin="0,24,0,0"/>
+                <ComboBox x:Name="SlideSecondsBox" Width="200" SelectionChanged="SlideSecondsBox_SelectionChanged">
+                    <ComboBoxItem x:Uid="Seconds1" Tag="1"/>
+                    <ComboBoxItem x:Uid="Seconds3" Tag="3"/>
+                    <ComboBoxItem x:Uid="Seconds5" Tag="5"/>
+                    <ComboBoxItem x:Uid="Seconds10" Tag="10"/>
+                </ComboBox>
+
+                <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsTransitionLabel" Margin="0,24,0,0"/>
+                <ComboBox x:Name="TransitionBox" Width="200" SelectionChanged="TransitionBox_SelectionChanged">
+                    <ComboBoxItem x:Uid="TransitionFade" Tag="Fade"/>
+                    <ComboBoxItem x:Uid="TransitionZoom" Tag="Zoom"/>
+                    <ComboBoxItem x:Uid="TransitionPan" Tag="Pan"/>
+                    <ComboBoxItem x:Uid="TransitionFlicker" Tag="Flicker"/>
+                </ComboBox>
+
+                <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsBgLabel" Margin="0,24,0,0"/>
+                <ComboBox x:Name="BackgroundBox" Width="200" SelectionChanged="BackgroundBox_SelectionChanged">
+                    <ComboBoxItem x:Uid="BgBlack" Tag="Black"/>
+                    <ComboBoxItem x:Uid="BgDarkGray" Tag="DarkGray"/>
+                    <ComboBoxItem x:Uid="BgWhite" Tag="White"/>
+                </ComboBox>
+
+                <ToggleSwitch x:Name="ResetRotationSwitch"
+                              x:Uid="SettingsResetRotation"
+                              Margin="0,24,0,0"
+                              Toggled="ResetRotationSwitch_Toggled"/>
+
+                <!-- 缓存与数据 -->
+                <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsCacheLabel" Margin="0,24,0,0"/>
+                <TextBlock x:Name="CacheInfoText" Style="{StaticResource SettingHintStyle}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button x:Uid="ClearCache" Click="ClearCache_Click"
+                            Padding="16,8" Background="{ThemeResource BtnBgBrush}"
+                            Foreground="{ThemeResource TextPrimaryBrush}"
+                            BorderThickness="1" BorderBrush="{ThemeResource BtnBorderBrush}"/>
+                    <Button x:Uid="ClearRecent" Click="ClearRecent_Click"
+                            Padding="16,8" Margin="8,0,0,0"
+                            Background="{ThemeResource BtnBgBrush}"
+                            Foreground="{ThemeResource TextPrimaryBrush}"
+                            BorderThickness="1" BorderBrush="{ThemeResource BtnBorderBrush}"/>
+                </StackPanel>
+
+                <!-- 快捷键自定义 -->
+                <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsShortcutsLabel" Margin="0,24,0,0"/>
+                <TextBlock Style="{StaticResource SettingHintStyle}" x:Uid="SettingsShortcutsHint"/>
+                <Button x:Uid="ShortcutReset" Click="ShortcutReset_Click"
+                        Padding="16,8" Margin="0,4,0,0"
+                        Background="{ThemeResource BtnBgBrush}"
+                        Foreground="{ThemeResource TextPrimaryBrush}"
+                        BorderThickness="1" BorderBrush="{ThemeResource BtnBorderBrush}"/>
+                <StackPanel x:Name="ShortcutPanel" Margin="0,12,0,0"/>
+
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>

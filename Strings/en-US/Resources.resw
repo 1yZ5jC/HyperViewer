@@ -375,4 +375,205 @@
   <data name="EditTypeJPEG" xml:space="preserve">
     <value>JPEG image</value>
   </data>
+  <data name="StatusLoadFailed.Text" xml:space="preserve">
+    <value>Failed to load this image</value>
+  </data>
+  <data name="LoadFailedRetry.Content" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="LibTabAlbumsFlyout.Text" xml:space="preserve">
+    <value>Albums</value>
+  </data>
+  <data name="LibTabAllPhotosFlyout.Text" xml:space="preserve">
+    <value>All photos</value>
+  </data>
+  <data name="LibTabFoldersFlyout.Text" xml:space="preserve">
+    <value>Folders</value>
+  </data>
+  <data name="LibOpenImageFlyout.Text" xml:space="preserve">
+    <value>Open image</value>
+  </data>
+  <data name="LibAddFolderFlyout.Text" xml:space="preserve">
+    <value>Add folder</value>
+  </data>
+  <data name="LibSettingsFlyout.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="MenuShare.Text" xml:space="preserve">
+    <value>Share</value>
+  </data>
+  <data name="MenuSaveAs.Text" xml:space="preserve">
+    <value>Save a copy</value>
+  </data>
+  <data name="MenuPrint.Text" xml:space="preserve">
+    <value>Print</value>
+  </data>
+  <data name="ExportTitle" xml:space="preserve">
+    <value>Export complete</value>
+  </data>
+  <data name="ExportDone" xml:space="preserve">
+    <value>Saved as "{0}".</value>
+  </data>
+  <data name="ExportTypeImage" xml:space="preserve">
+    <value>Image</value>
+  </data>
+  <data name="SettingsStartupLabel.Text" xml:space="preserve">
+    <value>Startup behavior</value>
+  </data>
+  <data name="SettingsRestoreFolder.Header" xml:space="preserve">
+    <value>Restore the last folder on startup</value>
+  </data>
+  <data name="SettingsRestoreFolder.OnContent" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="SettingsRestoreFolder.OffContent" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="SettingsRestoreFolderHint.Text" xml:space="preserve">
+    <value>Only applies to folders opened through the library or recent list.</value>
+  </data>
+  <data name="SettingsLanguageLabel.Text" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="LangSystem.Content" xml:space="preserve">
+    <value>System default</value>
+  </data>
+  <data name="LangZh.Content" xml:space="preserve">
+    <value>简体中文</value>
+  </data>
+  <data name="LangEn.Content" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="SettingsLanguageHint.Text" xml:space="preserve">
+    <value>Changing the language requires an app restart.</value>
+  </data>
+  <data name="RestartTitle" xml:space="preserve">
+    <value>Restart app</value>
+  </data>
+  <data name="RestartMessage" xml:space="preserve">
+    <value>The language change will take effect after restart.</value>
+  </data>
+  <data name="RestartNow" xml:space="preserve">
+    <value>Restart now</value>
+  </data>
+  <data name="RestartLater" xml:space="preserve">
+    <value>Later</value>
+  </data>
+  <data name="SettingsCacheLabel.Text" xml:space="preserve">
+    <value>Cache and data</value>
+  </data>
+  <data name="CacheInfo" xml:space="preserve">
+    <value>Thumbnail cache: {0} items</value>
+  </data>
+  <data name="ClearCache.Content" xml:space="preserve">
+    <value>Clear thumbnail cache</value>
+  </data>
+  <data name="ClearRecent.Content" xml:space="preserve">
+    <value>Clear recent list</value>
+  </data>
+  <data name="ClearCacheTitle" xml:space="preserve">
+    <value>Clear cache</value>
+  </data>
+  <data name="CacheCleared" xml:space="preserve">
+    <value>Cleared {0} thumbnail cache items.</value>
+  </data>
+  <data name="ClearRecentTitle" xml:space="preserve">
+    <value>Clear recent list</value>
+  </data>
+  <data name="RecentCleared" xml:space="preserve">
+    <value>The recently opened folders list has been cleared.</value>
+  </data>
+  <data name="SettingsShortcutsLabel.Text" xml:space="preserve">
+    <value>Keyboard shortcuts</value>
+  </data>
+  <data name="SettingsShortcutsHint.Text" xml:space="preserve">
+    <value>Assign a key to each action. Changes take effect immediately. Ctrl combinations are fixed.</value>
+  </data>
+  <data name="ShortcutReset.Content" xml:space="preserve">
+    <value>Restore defaults</value>
+  </data>
+  <data name="ShortcutPrev" xml:space="preserve">
+    <value>Previous image</value>
+  </data>
+  <data name="ShortcutNext" xml:space="preserve">
+    <value>Next image</value>
+  </data>
+  <data name="ShortcutFirst" xml:space="preserve">
+    <value>First image</value>
+  </data>
+  <data name="ShortcutLast" xml:space="preserve">
+    <value>Last image</value>
+  </data>
+  <data name="ShortcutRotate" xml:space="preserve">
+    <value>Rotate clockwise</value>
+  </data>
+  <data name="ShortcutFlipH" xml:space="preserve">
+    <value>Flip horizontally</value>
+  </data>
+  <data name="ShortcutFlipV" xml:space="preserve">
+    <value>Flip vertically</value>
+  </data>
+  <data name="ShortcutResetZoom" xml:space="preserve">
+    <value>Reset zoom</value>
+  </data>
+  <data name="ShortcutZoomIn" xml:space="preserve">
+    <value>Zoom in</value>
+  </data>
+  <data name="ShortcutZoomOut" xml:space="preserve">
+    <value>Zoom out</value>
+  </data>
+  <data name="ShortcutToggleChrome" xml:space="preserve">
+    <value>Toggle thumbnail strip</value>
+  </data>
+  <data name="ShortcutSlideShow" xml:space="preserve">
+    <value>Play / stop slideshow</value>
+  </data>
+  <data name="ShortcutFullScreen" xml:space="preserve">
+    <value>Full screen</value>
+  </data>
+  <data name="KeyLeft" xml:space="preserve">
+    <value>Left arrow</value>
+  </data>
+  <data name="KeyRight" xml:space="preserve">
+    <value>Right arrow</value>
+  </data>
+  <data name="KeyUp" xml:space="preserve">
+    <value>Up arrow</value>
+  </data>
+  <data name="KeyDown" xml:space="preserve">
+    <value>Down arrow</value>
+  </data>
+  <data name="KeySpace" xml:space="preserve">
+    <value>Space</value>
+  </data>
+  <data name="KeyHome" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="KeyEnd" xml:space="preserve">
+    <value>End</value>
+  </data>
+  <data name="KeyNumber0" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="KeyNumber1" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="KeyNumber2" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="KeyAdd" xml:space="preserve">
+    <value>+</value>
+  </data>
+  <data name="KeySubtract" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="KeyF5" xml:space="preserve">
+    <value>F5</value>
+  </data>
+  <data name="KeyF8" xml:space="preserve">
+    <value>F8</value>
+  </data>
+  <data name="KeyF11" xml:space="preserve">
+    <value>F11</value>
+  </data>
 </root>
