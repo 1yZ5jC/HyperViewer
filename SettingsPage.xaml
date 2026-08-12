@@ -1,0 +1,46 @@
+<Page
+    x:Class="HyperViewer.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 顶栏 -->
+        <Grid Grid.Row="0" Padding="8,4" Background="{ThemeResource SystemControlBackgroundChromeMediumBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Click="BackButton_Click" Padding="10,4" x:Uid="BackToolTip">
+                <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"/>
+            </Button>
+            <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                       FontSize="18" FontWeight="SemiBold" Margin="8,0,0,0" x:Uid="SettingsTitle"/>
+        </Grid>
+
+        <StackPanel Grid.Row="1" Padding="24,16">
+            <TextBlock x:Uid="SettingsSlideLabel" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <ComboBox x:Name="SlideSecondsBox" Width="200" SelectionChanged="SlideSecondsBox_SelectionChanged">
+                <ComboBoxItem x:Uid="Seconds1" Tag="1"/>
+                <ComboBoxItem x:Uid="Seconds3" Tag="3"/>
+                <ComboBoxItem x:Uid="Seconds5" Tag="5"/>
+                <ComboBoxItem x:Uid="Seconds10" Tag="10"/>
+            </ComboBox>
+
+            <TextBlock x:Uid="SettingsBgLabel" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,8"/>
+            <ComboBox x:Name="BackgroundBox" Width="200" SelectionChanged="BackgroundBox_SelectionChanged">
+                <ComboBoxItem x:Uid="BgBlack" Tag="Black"/>
+                <ComboBoxItem x:Uid="BgDarkGray" Tag="DarkGray"/>
+                <ComboBoxItem x:Uid="BgWhite" Tag="White"/>
+            </ComboBox>
+        </StackPanel>
+    </Grid>
+</Page>

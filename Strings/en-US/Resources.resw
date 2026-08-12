@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="CmdOpenImage.Label" xml:space="preserve">
+    <value>Open image</value>
+  </data>
+  <data name="CmdOpenFolder.Label" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="CmdPrev.Label" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="CmdNext.Label" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="CmdRotate.Label" xml:space="preserve">
+    <value>Rotate</value>
+  </data>
+  <data name="CmdFlipH.Label" xml:space="preserve">
+    <value>Flip horizontal</value>
+  </data>
+  <data name="CmdFlipV.Label" xml:space="preserve">
+    <value>Flip vertical</value>
+  </data>
+  <data name="CmdEdit.Label" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="CmdSlideShow.Label" xml:space="preserve">
+    <value>Slideshow</value>
+  </data>
+  <data name="CmdInfo.Label" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="CmdFavorite.Label" xml:space="preserve">
+    <value>Favorite</value>
+  </data>
+  <data name="CmdMore.Label" xml:space="preserve">
+    <value>More</value>
+  </data>
+  <data name="MenuRotate.Text" xml:space="preserve">
+    <value>Rotate</value>
+  </data>
+  <data name="MenuRotateCW.Text" xml:space="preserve">
+    <value>Rotate clockwise 90°</value>
+  </data>
+  <data name="MenuRotateCCW.Text" xml:space="preserve">
+    <value>Rotate counterclockwise 90°</value>
+  </data>
+  <data name="MenuRotate180.Text" xml:space="preserve">
+    <value>Rotate 180°</value>
+  </data>
+  <data name="MenuFlipH.Text" xml:space="preserve">
+    <value>Flip horizontal</value>
+  </data>
+  <data name="MenuFlipV.Text" xml:space="preserve">
+    <value>Flip vertical</value>
+  </data>
+  <data name="MenuInfo.Text" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="MenuFavorite.Text" xml:space="preserve">
+    <value>Favorite</value>
+  </data>
+  <data name="MenuTimeline.Text" xml:space="preserve">
+    <value>Timeline</value>
+  </data>
+  <data name="MenuFullScreen.Text" xml:space="preserve">
+    <value>Full screen</value>
+  </data>
+  <data name="MenuSettings.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="HomeSubtitle" xml:space="preserve">
+    <value>Open an image or folder to start browsing</value>
+  </data>
+  <data name="HomeOpenImage.Content" xml:space="preserve">
+    <value>Open image</value>
+  </data>
+  <data name="HomeOpenFolder.Content" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="HomeRecent" xml:space="preserve">
+    <value>Recent</value>
+  </data>
+  <data name="CmdDelete.Text" xml:space="preserve">
+    <value>Delete current image</value>
+  </data>
+  <data name="CmdRename.Text" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="CmdTimeline.Label" xml:space="preserve">
+    <value>Timeline</value>
+  </data>
+  <data name="CmdFullScreen.Label" xml:space="preserve">
+    <value>Full screen</value>
+  </data>
+  <data name="CmdSettings.Label" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="StartSlideshow" xml:space="preserve">
+    <value>Slideshow</value>
+  </data>
+  <data name="StopSlideshow" xml:space="preserve">
+    <value>Stop slideshow</value>
+  </data>
+  <data name="StatusNoImage" xml:space="preserve">
+    <value>No image opened</value>
+  </data>
+  <data name="RecentTitle" xml:space="preserve">
+    <value>Recently opened folders</value>
+  </data>
+  <data name="RecentEmpty" xml:space="preserve">
+    <value>No history yet.</value>
+  </data>
+  <data name="RecentNone" xml:space="preserve">
+    <value>Recent</value>
+  </data>
+  <data name="DialogOK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="DeleteTitle" xml:space="preserve">
+    <value>Delete image</value>
+  </data>
+  <data name="DeleteMessage" xml:space="preserve">
+    <value>Delete "{0}"? This cannot be undone.</value>
+  </data>
+  <data name="DeletePrimary" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="DeleteFailTitle" xml:space="preserve">
+    <value>Delete failed</value>
+  </data>
+  <data name="DeleteFailMessage" xml:space="preserve">
+    <value>The file may be in use or protected by the system.</value>
+  </data>
+  <data name="RenameTitle" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="RenamePrimary" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="RenameFailTitle" xml:space="preserve">
+    <value>Rename failed</value>
+  </data>
+  <data name="RenameFailMessage" xml:space="preserve">
+    <value>Invalid file name or the file is not writable.</value>
+  </data>
+  <data name="EditCropToggle.Content" xml:space="preserve">
+    <value>Crop</value>
+  </data>
+  <data name="EditApplyCrop.Content" xml:space="preserve">
+    <value>Apply crop</value>
+  </data>
+  <data name="EditReset.Content" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="EditSave.Content" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="EditCropHint.Text" xml:space="preserve">
+    <value>Drag on the image to draw a crop area, drag the selection to move it</value>
+  </data>
+  <data name="EditBrightness.Text" xml:space="preserve">
+    <value>Brightness</value>
+  </data>
+  <data name="EditContrast.Text" xml:space="preserve">
+    <value>Contrast</value>
+  </data>
+  <data name="EditSaturation.Text" xml:space="preserve">
+    <value>Saturation</value>
+  </data>
+  <data name="EditFilter.Text" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="FilterNone.Content" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="FilterGrayscale.Content" xml:space="preserve">
+    <value>Grayscale</value>
+  </data>
+  <data name="FilterInvert.Content" xml:space="preserve">
+    <value>Invert</value>
+  </data>
+  <data name="FilterSepia.Content" xml:space="preserve">
+    <value>Sepia</value>
+  </data>
+  <data name="EditApplyAdjust.Content" xml:space="preserve">
+    <value>Apply adjustments</value>
+  </data>
+  <data name="EditLoaded" xml:space="preserve">
+    <value>Loaded {0}x{1}</value>
+  </data>
+  <data name="EditLoadFailed" xml:space="preserve">
+    <value>Load failed</value>
+  </data>
+  <data name="EditProcessing" xml:space="preserve">
+    <value>Processing...</value>
+  </data>
+  <data name="EditApplied" xml:space="preserve">
+    <value>Adjustments applied {0}x{1}</value>
+  </data>
+  <data name="EditCropped" xml:space="preserve">
+    <value>Cropped {0}x{1}</value>
+  </data>
+  <data name="EditSaved" xml:space="preserve">
+    <value>Saved {0}</value>
+  </data>
+  <data name="EditSaveFailed" xml:space="preserve">
+    <value>Save failed</value>
+  </data>
+  <data name="EditProcessFailed" xml:space="preserve">
+    <value>Processing failed</value>
+  </data>
+  <data name="BackToolTip.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="TimelineEmpty" xml:space="preserve">
+    <value>No images to show in this folder</value>
+  </data>
+  <data name="TimelineNoImages" xml:space="preserve">
+    <value>No images in this folder</value>
+  </data>
+  <data name="TimelineScanning" xml:space="preserve">
+    <value>Reading capture dates {0}/{1}</value>
+  </data>
+  <data name="TimelineDone" xml:space="preserve">
+    <value>{0} images across {1} days</value>
+  </data>
+  <data name="TimelineNoDate" xml:space="preserve">
+    <value>Unable to read capture date</value>
+  </data>
+  <data name="TimelineNoFolder" xml:space="preserve">
+    <value>No folder provided</value>
+  </data>
+  <data name="SettingsTitle.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="SettingsSlideLabel.Text" xml:space="preserve">
+    <value>Slideshow interval</value>
+  </data>
+  <data name="SettingsBgLabel.Text" xml:space="preserve">
+    <value>Main view background</value>
+  </data>
+  <data name="Seconds1.Content" xml:space="preserve">
+    <value>1 second</value>
+  </data>
+  <data name="Seconds3.Content" xml:space="preserve">
+    <value>3 seconds</value>
+  </data>
+  <data name="Seconds5.Content" xml:space="preserve">
+    <value>5 seconds</value>
+  </data>
+  <data name="Seconds10.Content" xml:space="preserve">
+    <value>10 seconds</value>
+  </data>
+  <data name="BgBlack.Content" xml:space="preserve">
+    <value>Black</value>
+  </data>
+  <data name="BgDarkGray.Content" xml:space="preserve">
+    <value>Dark gray</value>
+  </data>
+  <data name="BgWhite.Content" xml:space="preserve">
+    <value>White</value>
+  </data>
+  <data name="FlipHState" xml:space="preserve">
+    <value>Flip horizontally</value>
+  </data>
+  <data name="FlipVState" xml:space="preserve">
+    <value>Flip vertically</value>
+  </data>
+  <data name="TimelineTitle" xml:space="preserve">
+    <value>Timeline</value>
+  </data>
+  <data name="EditTitle" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="TimelineDateTitle" xml:space="preserve">
+    <value>{1}/{2}/{0}</value>
+  </data>
+  <data name="InfoFileName" xml:space="preserve">
+    <value>File name</value>
+  </data>
+  <data name="InfoPath" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="InfoType" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="InfoSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="InfoModified" xml:space="preserve">
+    <value>Modified</value>
+  </data>
+  <data name="InfoDimensions" xml:space="preserve">
+    <value>Dimensions</value>
+  </data>
+  <data name="InfoTaken" xml:space="preserve">
+    <value>Date taken</value>
+  </data>
+  <data name="InfoCamera" xml:space="preserve">
+    <value>Camera</value>
+  </data>
+  <data name="InfoAperture" xml:space="preserve">
+    <value>Aperture</value>
+  </data>
+  <data name="InfoShutter" xml:space="preserve">
+    <value>Shutter speed</value>
+  </data>
+  <data name="InfoFocal" xml:space="preserve">
+    <value>Focal length</value>
+  </data>
+  <data name="EditTypePNG" xml:space="preserve">
+    <value>PNG image</value>
+  </data>
+  <data name="EditTypeJPEG" xml:space="preserve">
+    <value>JPEG image</value>
+  </data>
+</root>

@@ -18,6 +18,9 @@ namespace HyperViewer.Services
         private readonly List<string> _tokens = new List<string>();
         private readonly List<StorageFolder> _folders = new List<StorageFolder>();
 
+        /// <summary>列表内容变化 (含异步加载完成后)。</summary>
+        public event EventHandler Changed;
+
         public IReadOnlyList<StorageFolder> Folders => _folders;
 
         public RecentFoldersService()
@@ -53,6 +56,7 @@ namespace HyperViewer.Services
                 }
             }
             SaveIndex();
+            Changed?.Invoke(this, EventArgs.Empty);
         }
 
         public Task AddAsync(StorageFolder folder)
@@ -83,6 +87,7 @@ namespace HyperViewer.Services
             }
 
             SaveIndex();
+            Changed?.Invoke(this, EventArgs.Empty);
             return Task.CompletedTask;
         }
 

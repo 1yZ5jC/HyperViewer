@@ -116,12 +116,12 @@ namespace HyperViewer.Controls
 
         private void Scroller_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
         {
-            // 直接滚轮 = 缩放；按住 Ctrl 滚轮 = 滚动 (ScrollViewer 默认行为)
+            // Ctrl + 滚轮 = 缩放; 直接滚轮 = 默认平移 (与 Windows 照片一致)
             var ctrl = Windows.UI.Core.CoreVirtualKeyStates.Down ==
                        Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
-            if (ctrl)
+            if (!ctrl)
             {
-                // 走默认滚动
+                // 走默认平移滚动
                 return;
             }
 

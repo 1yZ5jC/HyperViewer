@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="CmdOpenImage.Label" xml:space="preserve">
+    <value>打开图片</value>
+  </data>
+  <data name="CmdOpenFolder.Label" xml:space="preserve">
+    <value>打开文件夹</value>
+  </data>
+  <data name="CmdPrev.Label" xml:space="preserve">
+    <value>上一张</value>
+  </data>
+  <data name="CmdNext.Label" xml:space="preserve">
+    <value>下一张</value>
+  </data>
+  <data name="CmdRotate.Label" xml:space="preserve">
+    <value>旋转</value>
+  </data>
+  <data name="CmdFlipH.Label" xml:space="preserve">
+    <value>水平翻转</value>
+  </data>
+  <data name="CmdFlipV.Label" xml:space="preserve">
+    <value>垂直翻转</value>
+  </data>
+  <data name="CmdEdit.Label" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="CmdSlideShow.Label" xml:space="preserve">
+    <value>幻灯片</value>
+  </data>
+  <data name="CmdInfo.Label" xml:space="preserve">
+    <value>信息</value>
+  </data>
+  <data name="CmdFavorite.Label" xml:space="preserve">
+    <value>收藏</value>
+  </data>
+  <data name="CmdMore.Label" xml:space="preserve">
+    <value>更多</value>
+  </data>
+  <data name="MenuRotate.Text" xml:space="preserve">
+    <value>旋转</value>
+  </data>
+  <data name="MenuRotateCW.Text" xml:space="preserve">
+    <value>顺时针 90°</value>
+  </data>
+  <data name="MenuRotateCCW.Text" xml:space="preserve">
+    <value>逆时针 90°</value>
+  </data>
+  <data name="MenuRotate180.Text" xml:space="preserve">
+    <value>旋转 180°</value>
+  </data>
+  <data name="MenuFlipH.Text" xml:space="preserve">
+    <value>水平翻转</value>
+  </data>
+  <data name="MenuFlipV.Text" xml:space="preserve">
+    <value>垂直翻转</value>
+  </data>
+  <data name="MenuInfo.Text" xml:space="preserve">
+    <value>信息</value>
+  </data>
+  <data name="MenuFavorite.Text" xml:space="preserve">
+    <value>收藏</value>
+  </data>
+  <data name="MenuTimeline.Text" xml:space="preserve">
+    <value>时间轴</value>
+  </data>
+  <data name="MenuFullScreen.Text" xml:space="preserve">
+    <value>全屏</value>
+  </data>
+  <data name="MenuSettings.Text" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="HomeSubtitle" xml:space="preserve">
+    <value>打开一张图片或文件夹，开始浏览你的收藏</value>
+  </data>
+  <data name="HomeOpenImage.Content" xml:space="preserve">
+    <value>打开图片</value>
+  </data>
+  <data name="HomeOpenFolder.Content" xml:space="preserve">
+    <value>打开文件夹</value>
+  </data>
+  <data name="HomeRecent" xml:space="preserve">
+    <value>最近打开</value>
+  </data>
+  <data name="CmdDelete.Text" xml:space="preserve">
+    <value>删除当前图片</value>
+  </data>
+  <data name="CmdRename.Text" xml:space="preserve">
+    <value>重命名</value>
+  </data>
+  <data name="CmdTimeline.Label" xml:space="preserve">
+    <value>时间轴</value>
+  </data>
+  <data name="CmdFullScreen.Label" xml:space="preserve">
+    <value>全屏</value>
+  </data>
+  <data name="CmdSettings.Label" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="StartSlideshow" xml:space="preserve">
+    <value>幻灯片</value>
+  </data>
+  <data name="StopSlideshow" xml:space="preserve">
+    <value>停止幻灯片</value>
+  </data>
+  <data name="StatusNoImage" xml:space="preserve">
+    <value>未打开图片</value>
+  </data>
+  <data name="RecentTitle" xml:space="preserve">
+    <value>最近打开的文件夹</value>
+  </data>
+  <data name="RecentEmpty" xml:space="preserve">
+    <value>暂无历史记录。</value>
+  </data>
+  <data name="RecentNone" xml:space="preserve">
+    <value>最近打开</value>
+  </data>
+  <data name="DialogOK" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="DeleteTitle" xml:space="preserve">
+    <value>删除图片</value>
+  </data>
+  <data name="DeleteMessage" xml:space="preserve">
+    <value>确定要删除 "{0}" 吗? 此操作不可撤销。</value>
+  </data>
+  <data name="DeletePrimary" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="DeleteFailTitle" xml:space="preserve">
+    <value>删除失败</value>
+  </data>
+  <data name="DeleteFailMessage" xml:space="preserve">
+    <value>文件可能正被占用或被系统保护。</value>
+  </data>
+  <data name="RenameTitle" xml:space="preserve">
+    <value>重命名</value>
+  </data>
+  <data name="RenamePrimary" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="RenameFailTitle" xml:space="preserve">
+    <value>重命名失败</value>
+  </data>
+  <data name="RenameFailMessage" xml:space="preserve">
+    <value>文件名无效或文件不可写。</value>
+  </data>
+  <data name="EditCropToggle.Content" xml:space="preserve">
+    <value>裁剪</value>
+  </data>
+  <data name="EditApplyCrop.Content" xml:space="preserve">
+    <value>应用裁剪</value>
+  </data>
+  <data name="EditReset.Content" xml:space="preserve">
+    <value>恢复</value>
+  </data>
+  <data name="EditSave.Content" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="EditCropHint.Text" xml:space="preserve">
+    <value>在图片上拖拽画出裁剪区域, 可拖动选区位置</value>
+  </data>
+  <data name="EditBrightness.Text" xml:space="preserve">
+    <value>亮度</value>
+  </data>
+  <data name="EditContrast.Text" xml:space="preserve">
+    <value>对比度</value>
+  </data>
+  <data name="EditSaturation.Text" xml:space="preserve">
+    <value>饱和度</value>
+  </data>
+  <data name="EditFilter.Text" xml:space="preserve">
+    <value>滤镜</value>
+  </data>
+  <data name="FilterNone.Content" xml:space="preserve">
+    <value>原图</value>
+  </data>
+  <data name="FilterGrayscale.Content" xml:space="preserve">
+    <value>灰度</value>
+  </data>
+  <data name="FilterInvert.Content" xml:space="preserve">
+    <value>反色</value>
+  </data>
+  <data name="FilterSepia.Content" xml:space="preserve">
+    <value>棕褐</value>
+  </data>
+  <data name="EditApplyAdjust.Content" xml:space="preserve">
+    <value>应用调色</value>
+  </data>
+  <data name="EditLoaded" xml:space="preserve">
+    <value>已加载 {0}x{1}</value>
+  </data>
+  <data name="EditLoadFailed" xml:space="preserve">
+    <value>加载失败</value>
+  </data>
+  <data name="EditProcessing" xml:space="preserve">
+    <value>处理中...</value>
+  </data>
+  <data name="EditApplied" xml:space="preserve">
+    <value>已应用调整 {0}x{1}</value>
+  </data>
+  <data name="EditCropped" xml:space="preserve">
+    <value>已裁剪 {0}x{1}</value>
+  </data>
+  <data name="EditSaved" xml:space="preserve">
+    <value>已保存 {0}</value>
+  </data>
+  <data name="EditSaveFailed" xml:space="preserve">
+    <value>保存失败</value>
+  </data>
+  <data name="EditProcessFailed" xml:space="preserve">
+    <value>处理失败</value>
+  </data>
+  <data name="BackToolTip.ToolTipService.ToolTip" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="TimelineEmpty" xml:space="preserve">
+    <value>该文件夹没有可显示的图片</value>
+  </data>
+  <data name="TimelineNoImages" xml:space="preserve">
+    <value>该文件夹没有图片</value>
+  </data>
+  <data name="TimelineScanning" xml:space="preserve">
+    <value>正在读取拍摄日期 {0}/{1}</value>
+  </data>
+  <data name="TimelineDone" xml:space="preserve">
+    <value>共 {0} 张图片, 分布在 {1} 天</value>
+  </data>
+  <data name="TimelineNoDate" xml:space="preserve">
+    <value>未能读取到拍摄日期</value>
+  </data>
+  <data name="TimelineNoFolder" xml:space="preserve">
+    <value>未提供文件夹</value>
+  </data>
+  <data name="SettingsTitle.Text" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="SettingsSlideLabel.Text" xml:space="preserve">
+    <value>幻灯片切换间隔</value>
+  </data>
+  <data name="SettingsBgLabel.Text" xml:space="preserve">
+    <value>主视图背景</value>
+  </data>
+  <data name="Seconds1.Content" xml:space="preserve">
+    <value>1 秒</value>
+  </data>
+  <data name="Seconds3.Content" xml:space="preserve">
+    <value>3 秒</value>
+  </data>
+  <data name="Seconds5.Content" xml:space="preserve">
+    <value>5 秒</value>
+  </data>
+  <data name="Seconds10.Content" xml:space="preserve">
+    <value>10 秒</value>
+  </data>
+  <data name="BgBlack.Content" xml:space="preserve">
+    <value>黑色</value>
+  </data>
+  <data name="BgDarkGray.Content" xml:space="preserve">
+    <value>深灰</value>
+  </data>
+  <data name="BgWhite.Content" xml:space="preserve">
+    <value>白色</value>
+  </data>
+  <data name="FlipHState" xml:space="preserve">
+    <value>水平翻转</value>
+  </data>
+  <data name="FlipVState" xml:space="preserve">
+    <value>垂直翻转</value>
+  </data>
+  <data name="TimelineTitle" xml:space="preserve">
+    <value>时间轴</value>
+  </data>
+  <data name="EditTitle" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="TimelineDateTitle" xml:space="preserve">
+    <value>{0}年{1}月{2}日</value>
+  </data>
+  <data name="InfoFileName" xml:space="preserve">
+    <value>文件名</value>
+  </data>
+  <data name="InfoPath" xml:space="preserve">
+    <value>路径</value>
+  </data>
+  <data name="InfoType" xml:space="preserve">
+    <value>类型</value>
+  </data>
+  <data name="InfoSize" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="InfoModified" xml:space="preserve">
+    <value>修改时间</value>
+  </data>
+  <data name="InfoDimensions" xml:space="preserve">
+    <value>尺寸</value>
+  </data>
+  <data name="InfoTaken" xml:space="preserve">
+    <value>拍摄时间</value>
+  </data>
+  <data name="InfoCamera" xml:space="preserve">
+    <value>相机</value>
+  </data>
+  <data name="InfoAperture" xml:space="preserve">
+    <value>光圈</value>
+  </data>
+  <data name="InfoShutter" xml:space="preserve">
+    <value>快门</value>
+  </data>
+  <data name="InfoFocal" xml:space="preserve">
+    <value>焦距</value>
+  </data>
+  <data name="EditTypePNG" xml:space="preserve">
+    <value>PNG 图片</value>
+  </data>
+  <data name="EditTypeJPEG" xml:space="preserve">
+    <value>JPEG 图片</value>
+  </data>
+</root>

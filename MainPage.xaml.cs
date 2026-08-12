@@ -8,6 +8,8 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
+using HyperViewer.Helpers;
+using HyperViewer.Models;
 using HyperViewer.ViewModels;
 
 namespace HyperViewer
@@ -23,9 +25,8 @@ namespace HyperViewer
         {
             this.InitializeComponent();
             this.DataContext = Vm;
-            UpdateEmptyHint();
-            Vm.PropertyChanged += (_, __) => UpdateEmptyHint();
             Vm.PropertyChanged += OnVmPropertyChanged;
+            Viewer.ZoomFactorChanged += (_, __) => Vm.UpdateZoomFactor(Viewer.CurrentZoomFactor);
         }
 
         private void OnVmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -35,6 +36,9 @@ namespace HyperViewer
                 case nameof(MainViewModel.CurrentIndex):
                     SyncThumbnailSelection();
                     break;
+                case nameof(MainViewModel.InfoPanelOpen):
+                    InfoColumn.Width = Vm.InfoPanelOpen ? new GridLength(320) : new GridLength(0);
+                    break;
             }
         }
 
@@ -42,12 +46,43 @@ namespace HyperViewer
         {
             base.OnNavigatedTo(e);
             this.Focus(FocusState.Programmatic);
-            if (e.Parameter is StorageFile file)
+            Vm.RefreshSettings();
+            if (e.Parameter is TimelineRequest req)
+            {
+                _ = HandleTimelineRequestAsync(req);
+            }
+            else if (e.Parameter is StorageFile file)
             {
                 Vm.ActivateFromFile(file);
             }
             // 全屏时按 Esc 退出
             Window.Current.CoreWindow.Dispatcher.AcceleratorKeyActivated += CoreWindow_AcceleratorKeyActivated;
+        }
+
+        private async System.Threading.Tasks.Task HandleTimelineRequestAsync(TimelineRequest req)
+        {
+            await Vm.LoadFolderAsync(req.Folder);
+            Vm.SelectFile(req.File);
+        }
+
+        private void EditButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (Vm.Current == null) return;
+            Vm.StopSlideShow();
+            Frame.Navigate(typeof(EditPage), Vm.Current);
+        }
+
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            Vm.StopSlideShow();
+            Frame.Navigate(typeof(SettingsPage));
+        }
+
+        private void TimelineButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (Vm.CurrentFolder == null) return;
+            Vm.StopSlideShow();
+            Frame.Navigate(typeof(TimelinePage), Vm.CurrentFolder);
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -64,11 +99,6 @@ namespace HyperViewer
             {
                 HandleKey(args.VirtualKey);
             }
-        }
-
-        private void UpdateEmptyHint()
-        {
-            EmptyHint.Visibility = Vm.HasImage ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private void SyncThumbnailSelection()
@@ -205,9 +235,9 @@ namespace HyperViewer
             {
                 var dlg = new ContentDialog
                 {
-                    Title = "最近打开",
-                    Content = "暂无历史记录。",
-                    CloseButtonText = "确定"
+                    Title = Loc.Get("RecentNone"),
+                    Content = Loc.Get("RecentEmpty"),
+                    CloseButtonText = Loc.Get("DialogOK")
                 };
                 await dlg.ShowAsync();
                 return;
@@ -232,9 +262,9 @@ namespace HyperViewer
 
             var dlg2 = new ContentDialog
             {
-                Title = "最近打开的文件夹",
+                Title = Loc.Get("RecentTitle"),
                 Content = panel,
-                CloseButtonText = "取消"
+                CloseButtonText = Loc.Get("DialogCancel")
             };
             await dlg2.ShowAsync();
         }
@@ -244,6 +274,75 @@ namespace HyperViewer
             if (sender is Button btn && btn.Tag is StorageFolder folder)
             {
                 _ = Vm.OpenRecentAsync(folder);
+            }
+        }
+
+        private void HomeRecent_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is StorageFolder folder)
+            {
+                _ = Vm.OpenRecentAsync(folder);
+            }
+        }
+
+        // ====== 文件操作 ======
+
+        private async void Delete_Click(object sender, RoutedEventArgs e)
+        {
+            if (Vm.Current == null) return;
+            var dlg = new ContentDialog
+            {
+                Title = Loc.Get("DeleteTitle"),
+                Content = Loc.Format("DeleteMessage", Vm.Current.Name),
+                PrimaryButtonText = Loc.Get("DeletePrimary"),
+                CloseButtonText = Loc.Get("DialogCancel")
+            };
+            if (await dlg.ShowAsync() == ContentDialogResult.Primary)
+            {
+                bool ok = await Vm.DeleteCurrentAsync();
+                if (!ok)
+                {
+                    var err = new ContentDialog
+                    {
+                        Title = Loc.Get("DeleteFailTitle"),
+                        Content = Loc.Get("DeleteFailMessage"),
+                        CloseButtonText = Loc.Get("DialogOK")
+                    };
+                    await err.ShowAsync();
+                }
+            }
+        }
+
+        private async void Rename_Click(object sender, RoutedEventArgs e)
+        {
+            if (Vm.Current == null || Vm.CurrentFolder == null) return;
+            var input = new TextBox
+            {
+                Text = Vm.Current.Name,
+                SelectionStart = 0,
+                SelectionLength = Vm.Current.Name.Length - (System.IO.Path.GetExtension(Vm.Current.Name).Length),
+                Margin = new Thickness(0, 12, 0, 0)
+            };
+            var dlg = new ContentDialog
+            {
+                Title = Loc.Get("RenameTitle"),
+                Content = input,
+                PrimaryButtonText = Loc.Get("RenamePrimary"),
+                CloseButtonText = Loc.Get("DialogCancel")
+            };
+            if (await dlg.ShowAsync() == ContentDialogResult.Primary)
+            {
+                bool ok = await Vm.RenameCurrentAsync(input.Text);
+                if (!ok)
+                {
+                    var err = new ContentDialog
+                    {
+                        Title = Loc.Get("RenameFailTitle"),
+                        Content = Loc.Get("RenameFailMessage"),
+                        CloseButtonText = Loc.Get("DialogOK")
+                    };
+                    await err.ShowAsync();
+                }
             }
         }
     }

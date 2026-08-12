@@ -21,11 +21,23 @@ namespace HyperViewer.Services
                 using (var stream = await photo.File.OpenReadAsync())
                 {
                     var image = new BitmapImage();
+                    bool isAnimated = string.Equals(photo.ContentType, "image/gif", StringComparison.OrdinalIgnoreCase)
+                                   || photo.Name.EndsWith(".gif", StringComparison.OrdinalIgnoreCase);
+
                     if (decodePixelWidth > 0)
                     {
+                        // 缩略图：降采样
                         image.DecodePixelWidth = decodePixelWidth;
                         image.DecodePixelType = DecodePixelType.Logical;
                     }
+                    else if (!isAnimated)
+                    {
+                        // 主图静态图：超大图降采样到 4K 短边，避免 OOM
+                        // GIF 则保持原尺寸, 让动画帧自动播放
+                        image.DecodePixelWidth = 4096;
+                        image.DecodePixelType = DecodePixelType.Logical;
+                    }
+
                     await image.SetSourceAsync(stream);
                     return image;
                 }

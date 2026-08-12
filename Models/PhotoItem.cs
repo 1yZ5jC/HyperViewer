@@ -35,6 +35,27 @@ namespace HyperViewer.Models
         // 标记是否已被请求过缩略图，避免重复加载
         internal bool ThumbnailLoaded { get; set; }
 
+        private DateTimeOffset? _dateTaken;
+        /// <summary>
+        /// 拍摄日期 (EXIF 优先, 无 EXIF 时为文件修改时间), 由时间轴扫描填充。
+        /// </summary>
+        public DateTimeOffset? DateTaken
+        {
+            get => _dateTaken;
+            set
+            {
+                if (_dateTaken != value)
+                {
+                    _dateTaken = value;
+                    RaisePropertyChanged();
+                }
+            }
+        }
+
+        // 原始像素尺寸 (由信息服务/解码器填充, 用于状态栏显示)
+        public double PixelWidth { get; set; }
+        public double PixelHeight { get; set; }
+
         public bool IsImage { get; }
 
         public PhotoItem(StorageFile file)
