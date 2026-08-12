@@ -29,7 +29,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <CommandBar Grid.Row="0" IsOpen="False">
+        <CommandBar Grid.Row="0" IsOpen="False" RequestedTheme="Dark">
             <CommandBar.Content>
                 <TextBlock Text="HyperViewer"
                            Margin="12,0,0,0"
@@ -94,12 +94,13 @@
             </Grid.ColumnDefinitions>
 
             <!-- 主图区 -->
-            <Grid Grid.Column="0" Background="Black">
+            <Grid Grid.Column="0">
                 <controls:ImageViewer x:Name="Viewer"
                                       Source="{x:Bind Vm.DisplayImage, Mode=OneWay}"
                                       ImageRotation="{x:Bind Vm.Rotation, Mode=OneWay}"
                                       FlipH="{x:Bind Vm.FlipH, Mode=OneWay}"
-                                      FlipV="{x:Bind Vm.FlipV, Mode=OneWay}"/>
+                                      FlipV="{x:Bind Vm.FlipV, Mode=OneWay}"
+                                      Background="{x:Bind Vm.MainBackground, Mode=OneWay}"/>
 
                 <!-- 加载中 -->
                 <ProgressRing x:Name="LoadingRing"
@@ -124,8 +125,7 @@
                                MaxWidth="600"
                                TextWrapping="Wrap"/>
                 </StackPanel>
-
-                </Grid>
+            </Grid>
 
             <!-- 主页 (无图片时的欢迎面板) -->
             <Grid Grid.Column="0"
