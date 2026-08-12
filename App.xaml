@@ -7,6 +7,38 @@
 
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <!-- 深色板 (默认) -->
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="AccentBrush" Color="#FF3D7FEA"/>
+                    <SolidColorBrush x:Key="ChromeBgBrush" Color="#FF1F1F1F"/>
+                    <SolidColorBrush x:Key="ChromeBgAltBrush" Color="#FF2A2A2A"/>
+                    <SolidColorBrush x:Key="ChromeBgStrongBrush" Color="#FF1A1A1A"/>
+                    <SolidColorBrush x:Key="TopBarBgBrush" Color="#CC202020"/>
+                    <SolidColorBrush x:Key="PanelBgBrush" Color="#E6101010"/>
+                    <SolidColorBrush x:Key="BtnBgBrush" Color="#FF2D2D2D"/>
+                    <SolidColorBrush x:Key="BtnBorderBrush" Color="#FF4A4A4A"/>
+                    <SolidColorBrush x:Key="CardBgBrush" Color="#FF262626"/>
+                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="White"/>
+                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FFCCCCCC"/>
+                    <SolidColorBrush x:Key="TextMutedBrush" Color="#FF909090"/>
+                </ResourceDictionary>
+                <!-- 浅色板 -->
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="AccentBrush" Color="#FF2F6FD8"/>
+                    <SolidColorBrush x:Key="ChromeBgBrush" Color="#FFF3F3F3"/>
+                    <SolidColorBrush x:Key="ChromeBgAltBrush" Color="#FFE6E6E6"/>
+                    <SolidColorBrush x:Key="ChromeBgStrongBrush" Color="#FFEDEDED"/>
+                    <SolidColorBrush x:Key="TopBarBgBrush" Color="#CCF5F5F5"/>
+                    <SolidColorBrush x:Key="PanelBgBrush" Color="#E6F7F7F7"/>
+                    <SolidColorBrush x:Key="BtnBgBrush" Color="#FFE0E0E0"/>
+                    <SolidColorBrush x:Key="BtnBorderBrush" Color="#FFBFBFBF"/>
+                    <SolidColorBrush x:Key="CardBgBrush" Color="#FFFFFFFF"/>
+                    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FF1A1A1A"/>
+                    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#FF444444"/>
+                    <SolidColorBrush x:Key="TextMutedBrush" Color="#FF777777"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
             <helpers:BoolToVisibilityConverter x:Key="BoolToVis"/>
         </ResourceDictionary>
     </Application.Resources>

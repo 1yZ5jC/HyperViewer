@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using Windows.Storage;
 using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
@@ -8,9 +7,12 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Media.Animation;
 using HyperViewer.Helpers;
 using HyperViewer.Models;
 using HyperViewer.ViewModels;
+using HyperViewer.Services;
+using Windows.Storage;
 
 namespace HyperViewer
 {
@@ -21,12 +23,76 @@ namespace HyperViewer
     {
         public MainViewModel Vm { get; } = new MainViewModel();
 
+        // UI 显隐 (顶栏/胶片条/状态栏): 全屏自动隐藏, 单击图片区切换
+        private bool _chromeVisible = true;
+        private bool _thumbStripEnabled = true;
+        private DispatcherTimer _tapTimer;
+        private bool _doubleTapPending;
+
+        // 中央导航箭头: 鼠标移动显示, 空闲 2s 隐藏
+        private DispatcherTimer _navTimer;
+        private bool _navArrowsVisible;
+
+        // 缩放滑块同步
+        private bool _syncingSlider;
+
         public MainPage()
         {
             this.InitializeComponent();
             this.DataContext = Vm;
             Vm.PropertyChanged += OnVmPropertyChanged;
-            Viewer.ZoomFactorChanged += (_, __) => Vm.UpdateZoomFactor(Viewer.CurrentZoomFactor);
+            // 启动初始态: 主页 (无图) 时隐藏悬浮顶栏, 图片模式才显示
+            SetChrome(!Vm.HomeVisible);
+            Viewer.ZoomFactorChanged += (_, __) =>
+            {
+                Vm.UpdateZoomFactor(Viewer.CurrentZoomFactor);
+                UpdateZoomSlider();
+            };
+            Viewer.DoubleTappedOccurred += (_, __) =>
+            {
+                _doubleTapPending = true;
+                _tapTimer?.Stop();
+                var view = ApplicationView.GetForCurrentView();
+                if (view.IsFullScreenMode)
+                {
+                    view.ExitFullScreenMode();
+                    SetChrome(true);
+                }
+            };
+            _tapTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(240) };
+            _tapTimer.Tick += (_, __) =>
+            {
+                _tapTimer.Stop();
+                if (!_doubleTapPending)
+                {
+                    ToggleChrome();
+                }
+                _doubleTapPending = false;
+            };
+            _navTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+            _navTimer.Tick += (_, __) => SetNavArrows(false);
+            ZoomSlider.ValueChanged += ZoomSlider_ValueChanged;
+            // 键盘快捷键注册
+            CoreWindow.GetForCurrentThread().Dispatcher.AcceleratorKeyActivated += CoreWindow_AcceleratorKeyActivated;
+            UpdateZoomSlider();
+        }
+
+        private void UpdateZoomSlider()
+        {
+            if (_syncingSlider) return;
+            _syncingSlider = true;
+            ZoomSlider.Value = Math.Max(ZoomSlider.Minimum,
+                                        Math.Min(ZoomSlider.Maximum,
+                                                 Viewer.CurrentZoomFactor * 100));
+            _syncingSlider = false;
+        }
+
+        private void ZoomSlider_ValueChanged(object sender, Windows.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+        {
+            if (_syncingSlider) return;
+            _syncingSlider = true;
+            Viewer.SetZoomFactor((float)(e.NewValue / 100.0));
+            _syncingSlider = false;
         }
 
         private void OnVmPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -39,7 +105,88 @@ namespace HyperViewer
                 case nameof(MainViewModel.InfoPanelOpen):
                     InfoColumn.Width = Vm.InfoPanelOpen ? new GridLength(320) : new GridLength(0);
                     break;
+                case nameof(MainViewModel.DisplayImage):
+                    Viewer.FadeIn();
+                    break;
+                case nameof(MainViewModel.HomeVisible):
+                    SetChrome(Vm.HomeVisible ? false : true);
+                    break;
             }
+        }
+
+        // ====== UI 显隐 ======
+
+        private void SetChrome(bool visible)
+        {
+            _chromeVisible = visible;
+            ApplyChrome();
+        }
+
+        private void ApplyChrome()
+        {
+            TopBar.Visibility = _chromeVisible ? Visibility.Visible : Visibility.Collapsed;
+            StatusBar.Visibility = _chromeVisible ? Visibility.Visible : Visibility.Collapsed;
+            ThumbBar.Visibility = (_chromeVisible && _thumbStripEnabled) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void ToggleChrome()
+        {
+            if (!Vm.HasImage) return;
+            SetChrome(!_chromeVisible);
+            SetNavArrows(false);
+        }
+
+        private void ToggleThumbStrip()
+        {
+            _thumbStripEnabled = !_thumbStripEnabled;
+            ApplyChrome();
+        }
+
+        // ====== 中央导航箭头 ======
+
+        private void ImageArea_PointerMoved(object sender, PointerRoutedEventArgs e)
+        {
+            if (!Vm.HasImage) return;
+            if (!_navArrowsVisible)
+            {
+                SetNavArrows(true);
+            }
+            _navTimer.Stop();
+            _navTimer.Start();
+        }
+
+        private void SetNavArrows(bool visible)
+        {
+            _navArrowsVisible = visible;
+            var vis = visible && Vm.HasImage ? Visibility.Visible : Visibility.Collapsed;
+            PrevArrow.Visibility = vis;
+            NextArrow.Visibility = vis;
+            PrevArrow.IsHitTestVisible = visible;
+            NextArrow.IsHitTestVisible = visible;
+        }
+
+        private void ImageArea_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            if (!Vm.HasImage) return;
+            // 未放大时: 点击左/右 1/4 区域翻页, 中间区域切换 UI 显隐
+            if (Vm.ZoomFactor <= 1.05)
+            {
+                var pos = e.GetPosition(ImageArea);
+                var w = ImageArea.ActualWidth;
+                if (pos.X < w * 0.25)
+                {
+                    Vm.Prev();
+                    return;
+                }
+                if (pos.X > w * 0.75)
+                {
+                    Vm.Next();
+                    return;
+                }
+            }
+            _doubleTapPending = false;
+            _tapTimer.Stop();
+            _tapTimer.Start();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -135,6 +282,15 @@ namespace HyperViewer
         {
             switch (key)
             {
+                case VirtualKey.C:
+                    var ctrlDown = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control)
+                                   .HasFlag(CoreVirtualKeyStates.Down);
+                    if (ctrlDown)
+                    {
+                        Vm.CopyCurrentToClipboard();
+                        return true;
+                    }
+                    return false;
                 case VirtualKey.Left:
                 case VirtualKey.Up:
                     Vm.Prev();
@@ -174,6 +330,27 @@ namespace HyperViewer
                     Viewer.ResetView();
                     return true;
                 case VirtualKey.F:
+                    // Ctrl+F: 聚焦搜索框, 否则切换缩略图栏
+                    var ctrlF = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
+                    if (ctrlF && SearchBox != null)
+                    {
+                        SearchBox.Focus(FocusState.Programmatic);
+                        return true;
+                    }
+                    else
+                    {
+                        ToggleThumbStrip();
+                        return true;
+                    }
+                case VirtualKey.O:
+                    // Ctrl+O: 打开图片
+                    var ctrlO = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
+                    if (ctrlO)
+                    {
+                        Vm.OpenImageCommand.Execute(null);
+                        return true;
+                    }
+                    return false;
                 case VirtualKey.F11:
                     ToggleFullScreen();
                     return true;
@@ -190,6 +367,7 @@ namespace HyperViewer
                     if (view.IsFullScreenMode)
                     {
                         view.ExitFullScreenMode();
+                        SetChrome(true);
                         return true;
                     }
                     return false;
@@ -210,6 +388,21 @@ namespace HyperViewer
             Viewer.ZoomAt(center, factor);
         }
 
+        // --------- 懒加载照片缩略图 ---------
+        private async void PhotoThumbnail_Loaded(object sender, RoutedEventArgs e)
+        {
+            var img = sender as Image;
+            if (img?.DataContext is PhotoItem photo && !photo.ThumbnailLoaded)
+            {
+                var bmp = await ImageLoaderService.LoadThumbnailAsync(photo);
+                if (bmp != null)
+                {
+                    photo.Thumbnail = bmp;
+                    photo.ThumbnailLoaded = true;
+                }
+            }
+        }
+
         private void ToggleFullScreen_Click(object sender, RoutedEventArgs e)
         {
             ToggleFullScreen();
@@ -221,10 +414,12 @@ namespace HyperViewer
             if (view.IsFullScreenMode)
             {
                 view.ExitFullScreenMode();
+                SetChrome(true);
             }
             else
             {
                 view.TryEnterFullScreenMode();
+                SetChrome(false);
             }
         }
 
@@ -285,6 +480,24 @@ namespace HyperViewer
             }
         }
 
+        // ====== 图库视图点击 ======
+
+        private void AlbumGrid_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is AlbumItem album)
+            {
+                _ = Vm.OpenAlbumAsync(album);
+            }
+        }
+
+        private void PhotoGrid_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is PhotoItem photo)
+            {
+                _ = Vm.OpenPhotoFromLibraryAsync(photo);
+            }
+        }
+
         // ====== 文件操作 ======
 
         private async void Delete_Click(object sender, RoutedEventArgs e)
@@ -309,6 +522,16 @@ namespace HyperViewer
                         CloseButtonText = Loc.Get("DialogOK")
                     };
                     await err.ShowAsync();
+                }
+                else if (!Vm.LastDeleteToRecycleBin)
+                {
+                    var info = new ContentDialog
+                    {
+                        Title = Loc.Get("DeleteFailTitle"),
+                        Content = Loc.Get("DeleteRecycleFallbackMessage"),
+                        CloseButtonText = Loc.Get("DialogOK")
+                    };
+                    await info.ShowAsync();
                 }
             }
         }

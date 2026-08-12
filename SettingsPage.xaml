@@ -27,12 +27,27 @@
         </Grid>
 
         <StackPanel Grid.Row="1" Padding="24,16">
-            <TextBlock x:Uid="SettingsSlideLabel" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <TextBlock x:Uid="SettingsThemeLabel" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <ComboBox x:Name="ThemeBox" Width="200" SelectionChanged="ThemeBox_SelectionChanged">
+                <ComboBoxItem x:Uid="ThemeDefault" Tag="Default"/>
+                <ComboBoxItem x:Uid="ThemeDark" Tag="Dark"/>
+                <ComboBoxItem x:Uid="ThemeLight" Tag="Light"/>
+            </ComboBox>
+
+            <TextBlock x:Uid="SettingsSlideLabel" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,8"/>
             <ComboBox x:Name="SlideSecondsBox" Width="200" SelectionChanged="SlideSecondsBox_SelectionChanged">
                 <ComboBoxItem x:Uid="Seconds1" Tag="1"/>
                 <ComboBoxItem x:Uid="Seconds3" Tag="3"/>
                 <ComboBoxItem x:Uid="Seconds5" Tag="5"/>
                 <ComboBoxItem x:Uid="Seconds10" Tag="10"/>
+            </ComboBox>
+
+            <TextBlock x:Uid="SettingsTransitionLabel" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,8"/>
+            <ComboBox x:Name="TransitionBox" Width="200" SelectionChanged="TransitionBox_SelectionChanged">
+                <ComboBoxItem x:Uid="TransitionFade" Tag="Fade"/>
+                <ComboBoxItem x:Uid="TransitionZoom" Tag="Zoom"/>
+                <ComboBoxItem x:Uid="TransitionPan" Tag="Pan"/>
+                <ComboBoxItem x:Uid="TransitionFlicker" Tag="Flicker"/>
             </ComboBox>
 
             <TextBlock x:Uid="SettingsBgLabel" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,8"/>
@@ -41,6 +56,11 @@
                 <ComboBoxItem x:Uid="BgDarkGray" Tag="DarkGray"/>
                 <ComboBoxItem x:Uid="BgWhite" Tag="White"/>
             </ComboBox>
+
+            <ToggleSwitch x:Name="ResetRotationSwitch"
+                          x:Uid="SettingsResetRotation"
+                          Margin="0,24,0,0"
+                          Toggled="ResetRotationSwitch_Toggled"/>
         </StackPanel>
     </Grid>
 </Page>

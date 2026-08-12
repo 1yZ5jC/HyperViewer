@@ -19,17 +19,544 @@
             <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="Padding" Value="2"/>
         </Style>
+        <!-- 视图布局资源: 项目宽高 -->
+        <ItemsPanelTemplate x:Key="AlbumPanelWide">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="240" ItemHeight="200"/>
+        </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="AlbumPanelNarrow">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="180" ItemHeight="150"/>
+        </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="PhotoPanelWide">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="160" ItemHeight="160"/>
+        </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="PhotoPanelNarrow">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="120" ItemHeight="120"/>
+        </ItemsPanelTemplate>
     </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <CommandBar Grid.Row="0" IsOpen="False" RequestedTheme="Dark">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="ResponsiveStates">
+                <VisualState x:Name="Wide">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="800"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="AlbumsGrid.ItemsPanel" Value="{StaticResource AlbumPanelWide}" />
+                        <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelWide}" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="Narrow">
+                    <VisualState.Setters>
+                        <Setter Target="AlbumsGrid.ItemsPanel" Value="{StaticResource AlbumPanelNarrow}" />
+                        <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+                <Grid Grid.Row="0" Background="{x:Bind Vm.MainBackground, Mode=OneWay}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="0"
+                                  x:Name="InfoColumn"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 主图区 -->
+            <Grid x:Name="ImageArea" Grid.Column="0"
+                  Tapped="ImageArea_Tapped"
+                  PointerMoved="ImageArea_PointerMoved">
+                <controls:ImageViewer x:Name="Viewer"
+                                      Source="{x:Bind Vm.DisplayImage, Mode=OneWay}"
+                                      ImageRotation="{x:Bind Vm.Rotation, Mode=OneWay}"
+                                      FlipH="{x:Bind Vm.FlipH, Mode=OneWay}"
+                                      FlipV="{x:Bind Vm.FlipV, Mode=OneWay}"
+                                      Background="{x:Bind Vm.MainBackground, Mode=OneWay}"/>
+
+                <!-- 加载中 -->
+                <ProgressRing x:Name="LoadingRing"
+                              IsActive="{x:Bind Vm.IsLoading, Mode=OneWay}"
+                              Width="48"
+                              Height="48"
+                              Visibility="{x:Bind Vm.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
+
+                <!-- 加载失败 -->
+                <StackPanel x:Name="FailedPanel"
+                            Visibility="{x:Bind Vm.LoadFailed, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock x:Uid="StatusLoadFailed" FontSize="20"
+                               Foreground="#FFFF6060"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="{x:Bind Vm.Current.Path, Mode=OneWay, FallbackValue=''}"
+                               FontSize="12"
+                               Margin="0,8,0,0"
+                               Foreground="#FFA0A0A0"
+                               HorizontalAlignment="Center"
+                               MaxWidth="600"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- 中央悬停导航箭头 -->
+                <Border x:Name="PrevArrow"
+                        Width="48" Height="48"
+                        CornerRadius="24"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Margin="16,0,0,0"
+                        Background="#A0000000"
+                        Opacity="0"
+                        IsHitTestVisible="False"
+                        Visibility="Collapsed">
+                    <Button Command="{x:Bind Vm.PrevCommand}"
+                            IsEnabled="{x:Bind Vm.CanGoPrev, Mode=OneWay}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center">
+                        <FontIcon Glyph="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="White"/>
+                    </Button>
+                </Border>
+                <Border x:Name="NextArrow"
+                        Width="48" Height="48"
+                        CornerRadius="24"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Margin="0,0,16,0"
+                        Background="#A0000000"
+                        Opacity="0"
+                        IsHitTestVisible="False"
+                        Visibility="Collapsed">
+                    <Button Command="{x:Bind Vm.NextCommand}"
+                            IsEnabled="{x:Bind Vm.CanGoNext, Mode=OneWay}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center">
+                        <FontIcon Glyph="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="White"/>
+                    </Button>
+                </Border>
+            </Grid>
+
+            <!-- 主页 (图库视图: Tab 切换 集锦/全部照片/文件夹) -->
+            <Grid Grid.Column="0"
+                  Background="{ThemeResource PanelBgBrush}"
+                  Visibility="{x:Bind Vm.HomeVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 顶部 Tab 栏 + 右侧操作按钮 -->
+                <Grid Grid.Row="0" Padding="16,10" Background="{ThemeResource ChromeBgBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <!-- Tab 栏 -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <StackPanel Margin="0,0,6,0">
+                            <Button x:Name="TabAlbums" x:Uid="LibTabAlbums"
+                                    Command="{x:Bind Vm.SelectAlbumsTabCommand}"
+                                    Padding="14,7"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    FontSize="14"
+                                    Foreground="{ThemeResource TextPrimaryBrush}"
+                                    AutomationProperties.Name="相册"/>
+                            <Border Height="3" Margin="8,2,8,0" CornerRadius="1.5"
+                                    Background="{ThemeResource AccentBrush}"
+                                    Visibility="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,6,0">
+                            <Button x:Name="TabAllPhotos" x:Uid="LibTabAllPhotos"
+                                    Command="{x:Bind Vm.SelectAllPhotosTabCommand}"
+                                    Padding="14,7"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    FontSize="14"
+                                    Foreground="{ThemeResource TextPrimaryBrush}"
+                                    AutomationProperties.Name="全部照片"/>
+                            <Border Height="3" Margin="8,2,8,0" CornerRadius="1.5"
+                                    Background="{ThemeResource AccentBrush}"
+                                    Visibility="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <Button x:Name="TabFolders" x:Uid="LibTabFolders"
+                                    Command="{x:Bind Vm.SelectFoldersTabCommand}"
+                                    Padding="14,7"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    FontSize="14"
+                                    Foreground="{ThemeResource TextPrimaryBrush}"
+                                    AutomationProperties.Name="文件夹"/>
+                            <Border Height="3" Margin="8,2,8,0" CornerRadius="1.5"
+                                    Background="{ThemeResource AccentBrush}"
+                                    Visibility="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <!-- 搜索框 -->
+                    <AutoSuggestBox x:Name="SearchBox"
+                                    Grid.Column="1"
+                                    Width="200"
+                                    Margin="12,0,0,0"
+                                    PlaceholderText="搜索相册 / 照片"
+                                    Text="{x:Bind Vm.SearchText, Mode=TwoWay}"
+                                    AutomationProperties.Name="搜索相册 / 照片" />
+                    <!-- 右侧操作按钮 -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button x:Uid="LibOpenImage"
+                                Command="{x:Bind Vm.OpenImageCommand}"
+                                Padding="14,7" Margin="0,0,8,0"
+                                Background="{ThemeResource BtnBgBrush}"
+                                Foreground="{ThemeResource TextPrimaryBrush}"
+                                BorderThickness="0"
+                                FontSize="13"
+                                AutomationProperties.Name="打开图片"/>
+                        <Button x:Uid="LibAddFolder"
+                                Command="{x:Bind Vm.OpenFolderCommand}"
+                                Padding="14,7" Margin="0,0,8,0"
+                                Background="{ThemeResource AccentBrush}"
+                                Foreground="White"
+                                BorderThickness="0"
+                                FontSize="13"
+                                AutomationProperties.Name="打开文件夹"/>
+                        <Button x:Uid="LibSettings"
+                                Click="SettingsButton_Click"
+                                Padding="14,7"
+                                Background="{ThemeResource BtnBgBrush}"
+                                Foreground="{ThemeResource TextPrimaryBrush}"
+                                BorderThickness="0"
+                                FontSize="13"
+                                AutomationProperties.Name="设置"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 内容: 三个 Tab 视图 + 空态 -->
+                <Grid Grid.Row="1">
+                    <!-- 集锦 Tab: 相册卡片网格 -->
+<GridView x:Name="AlbumsGrid" ItemsSource="{x:Bind Vm.Albums, Mode=OneWay}"
+                              Visibility="{x:Bind Vm.AlbumsContentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                              Padding="16"
+                              SelectionMode="None"
+                              IsItemClickEnabled="True"
+                              ItemClick="AlbumGrid_ItemClick"
+                              ScrollViewer.HorizontalScrollMode="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ItemsPanel="{StaticResource AlbumPanelWide}">
+                        <GridView.Transitions>
+                            <TransitionCollection>
+                                <EntranceThemeTransition />
+                            </TransitionCollection>
+                        </GridView.Transitions>
+                        <GridView.ItemContainerStyle>
+                            <Style TargetType="GridViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Margin" Value="8"/>
+                            </Style>
+                        </GridView.ItemContainerStyle>
+                        <GridView.ItemTemplate>
+                            <DataTemplate x:DataType="models:AlbumItem">
+                                <Border Width="240" Height="200" CornerRadius="14"
+                                        Background="{ThemeResource CardBgBrush}"
+                                        BorderBrush="{ThemeResource BtnBorderBrush}"
+                                        BorderThickness="1"
+                                        Padding="4">
+<Grid>
+                                        <Image Source="{x:Bind Cover, Mode=OneWay}"
+                                               Stretch="UniformToFill"
+                                               Margin="0,0,0,44"/>
+                                        <StackPanel VerticalAlignment="Bottom" Padding="10,10">
+                                            <TextBlock Text="{x:Bind Name}"
+                                                       Foreground="{ThemeResource TextPrimaryBrush}"
+                                                       FontSize="15"
+                                                       FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Foreground="{ThemeResource TextMutedBrush}" FontSize="11" Margin="0,3,0,0">
+                                                <Run Text="{x:Bind Count}"/>
+                                                <Run Text=" · "/>
+                                                <Run Text="{x:Bind DateRangeText}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </GridView.ItemTemplate>
+                    </GridView>
+
+                    <!-- 全部照片 Tab: 缩略图网格 -->
+                    <GridView x:Name="AllPhotosGrid" ItemsSource="{x:Bind Vm.AllPhotos, Mode=OneWay}"
+                              Visibility="{x:Bind Vm.AllPhotosContentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                              Padding="16"
+                              SelectionMode="None"
+                              IsItemClickEnabled="True"
+                              ItemClick="PhotoGrid_ItemClick"
+                              ScrollViewer.HorizontalScrollMode="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ItemsPanel="{StaticResource PhotoPanelWide}">
+                        <GridView.ItemContainerStyle>
+                            <Style TargetType="GridViewItem">
+                                <Setter Property="Margin" Value="4"/>
+                            </Style>
+                        </GridView.ItemContainerStyle>
+                        <GridView.ItemTemplate>
+                            <DataTemplate x:DataType="models:PhotoItem">
+                                <Border Width="160" Height="160" CornerRadius="10"
+                                        Background="{ThemeResource CardBgBrush}"
+                                        BorderBrush="{ThemeResource BtnBorderBrush}"
+                                        BorderThickness="1"
+                                        Padding="3">
+                                    <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
+                                           Stretch="UniformToFill"
+                                           Loaded="PhotoThumbnail_Loaded"/>
+                                </Border>
+                            </DataTemplate>
+                        </GridView.ItemTemplate>
+                    </GridView>
+
+                    <!-- 文件夹 Tab: 文件夹列表 -->
+                    <ScrollViewer Visibility="{x:Bind Vm.FoldersContentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                                  Padding="16"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{x:Bind Vm.RecentFolders, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="storage:StorageFolder">
+                                    <Button Tag="{x:Bind}"
+                                            Click="HomeRecent_Click"
+                                            Margin="0,0,0,8"
+                                            Padding="0"
+                                            MinWidth="280"
+                                            HorizontalContentAlignment="Stretch"
+                                            HorizontalAlignment="Stretch"
+                                            Background="Transparent"
+                                            BorderThickness="0">
+                                        <Border CornerRadius="12"
+                                                Background="{ThemeResource CardBgBrush}"
+                                                BorderBrush="{ThemeResource BtnBorderBrush}"
+                                                BorderThickness="1"
+                                                Padding="16,13">
+                                            <StackPanel>
+                                                <TextBlock Text="{x:Bind Name}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{ThemeResource TextPrimaryBrush}"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{x:Bind Path}"
+                                                           FontSize="11"
+                                                           Foreground="{ThemeResource TextMutedBrush}"
+                                                           Margin="0,4,0,0"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- 空态: 欢迎面板 -->
+                    <Border Visibility="{x:Bind Vm.LibraryEmptyVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            MaxWidth="560"
+                            Background="{ThemeResource PanelBgBrush}"
+                            CornerRadius="20"
+                            Padding="48,40">
+                        <Border.Transitions>
+                            <TransitionCollection>
+                                <EntranceThemeTransition />
+                            </TransitionCollection>
+                        </Border.Transitions>
+                        <StackPanel>
+                            <TextBlock Text="HyperViewer"
+                                       FontSize="38"
+                                       FontWeight="Bold"
+                                       Foreground="{ThemeResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock x:Uid="HomeSubtitle"
+                                       FontSize="14"
+                                       Foreground="{ThemeResource TextMutedBrush}"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,12,0,0"/>
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Center"
+                                        Margin="0,30,0,0">
+                                <Button x:Uid="HomeOpenImage"
+                                        Command="{x:Bind Vm.OpenImageCommand}"
+                                        Padding="28,12"
+                                        MinWidth="170"
+                                        FontSize="14"
+                                        Background="{ThemeResource AccentBrush}"
+                                        Foreground="White"
+                                        BorderThickness="0"/>
+                                <Button x:Uid="HomeOpenFolder"
+                                        Command="{x:Bind Vm.OpenFolderCommand}"
+                                        Padding="28,12"
+                                        MinWidth="170"
+                                        FontSize="14"
+                                        Margin="12,0,0,0"
+                                        Background="{ThemeResource BtnBgBrush}"
+                                        Foreground="{ThemeResource TextPrimaryBrush}"
+                                        BorderThickness="1"
+                                        BorderBrush="{ThemeResource BtnBorderBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- 信息侧边栏 -->
+<Border Grid.Column="1"
+                    x:Name="InfoPanel"
+                    Background="{ThemeResource ChromeBgBrush}"
+                    Visibility="{x:Bind Vm.InfoPanelOpen, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+    <Grid>
+                        <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Padding="12,10" Background="{ThemeResource ChromeBgAltBrush}">
+                        <TextBlock x:Uid="InfoPanelTitle"
+                                   Foreground="{ThemeResource TextPrimaryBrush}"
+                                   FontWeight="SemiBold"
+                                   FontSize="14"/>
+                    </Border>
+                    <ListView Grid.Row="1"
+                              ItemsSource="{x:Bind Vm.InfoRows, Mode=OneWay}"
+                              Padding="0,4"
+                              Background="{ThemeResource ChromeBgBrush}"
+                              IsItemClickEnabled="False"
+                              SelectionMode="None">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:InfoRow">
+                                <Grid Background="Transparent" Padding="12,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{x:Bind Key, Mode=OneWay}"
+                                               FontSize="12"
+                                               Foreground="{ThemeResource TextMutedBrush}"/>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{x:Bind Value, Mode=OneWay}"
+                                               FontSize="12"
+                                               Foreground="{ThemeResource TextPrimaryBrush}"
+                                               TextWrapping="Wrap"
+                                               TextTrimming="CharacterEllipsis"
+                                               IsTextSelectionEnabled="True"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- 缩略图栏 -->
+        <Grid x:Name="ThumbBar" Grid.Row="1"
+              Height="100"
+              Background="{ThemeResource ChromeBgStrongBrush}"
+              Visibility="{x:Bind Vm.ThumbnailVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0"
+                    x:Uid="RecentMenu"
+                    Background="{ThemeResource BtnBgBrush}"
+                    BorderBrush="{ThemeResource BtnBorderBrush}"
+                    BorderThickness="0"
+                    Padding="12,0"
+                    Foreground="{ThemeResource TextPrimaryBrush}"
+                    Click="RecentButton_Click"
+                    VerticalAlignment="Stretch"
+                    FontSize="13"/>
+            <ListView x:Name="ThumbList"
+                      Grid.Column="1"
+                      ItemsSource="{x:Bind Vm.Photos, Mode=OneWay}"
+                      SelectionChanged="ThumbList_SelectionChanged"
+                      IsItemClickEnabled="False"
+                      Padding="4,0"
+                      Background="Transparent"
+                      BorderThickness="0">
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Margin" Value="2,0"/>
+                        <Setter Property="MinWidth" Value="0"/>
+                        <Setter Property="MinHeight" Value="0"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="models:PhotoItem">
+                        <Border Width="90" Height="90"
+                                BorderBrush="Transparent"
+                                BorderThickness="2"
+                                Padding="0"
+                                Background="#FF2D2D2D">
+                            <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
+                                   Stretch="UniformToFill"
+                                   Width="86"
+                                   Height="86"
+                                   Loaded="PhotoThumbnail_Loaded"/>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+
+        <Border x:Name="StatusBar" Grid.Row="2" Background="{ThemeResource ChromeBgBrush}" Padding="12,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="{x:Bind Vm.StatusLeftText, Mode=OneWay}"
+                           Foreground="{ThemeResource TextSecondaryBrush}"
+                           FontSize="13"
+                           TextTrimming="CharacterEllipsis"
+                           VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1"
+                           Text="{x:Bind Vm.StatusRightText, Mode=OneWay}"
+                           Foreground="{ThemeResource TextMutedBrush}"
+                           FontSize="13"
+                           Margin="16,0,0,0"
+                           VerticalAlignment="Center"/>
+                <Slider x:Name="ZoomSlider"
+                        Grid.Column="2"
+                        Minimum="10"
+                        Maximum="800"
+                        StepFrequency="1"
+                        Width="140"
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
+            </Grid>
+        </Border>
+
+        <!-- 悬浮工具栏 (声明在最后, 保证 Z 序最上层) -->
+        <CommandBar x:Name="TopBar" Grid.Row="0" IsOpen="False"
+                    VerticalAlignment="Top"
+                    Background="{ThemeResource TopBarBgBrush}">
             <CommandBar.Content>
                 <TextBlock Text="HyperViewer"
                            Margin="12,0,0,0"
@@ -85,281 +612,5 @@
                 </AppBarButton.Flyout>
             </AppBarButton>
         </CommandBar>
-
-        <Grid Grid.Row="1" Background="{x:Bind Vm.MainBackground, Mode=OneWay}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="0"
-                                  x:Name="InfoColumn"/>
-            </Grid.ColumnDefinitions>
-
-            <!-- 主图区 -->
-            <Grid Grid.Column="0">
-                <controls:ImageViewer x:Name="Viewer"
-                                      Source="{x:Bind Vm.DisplayImage, Mode=OneWay}"
-                                      ImageRotation="{x:Bind Vm.Rotation, Mode=OneWay}"
-                                      FlipH="{x:Bind Vm.FlipH, Mode=OneWay}"
-                                      FlipV="{x:Bind Vm.FlipV, Mode=OneWay}"
-                                      Background="{x:Bind Vm.MainBackground, Mode=OneWay}"/>
-
-                <!-- 加载中 -->
-                <ProgressRing x:Name="LoadingRing"
-                              IsActive="{x:Bind Vm.IsLoading, Mode=OneWay}"
-                              Width="48"
-                              Height="48"
-                              Visibility="{x:Bind Vm.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVis}}"/>
-
-                <!-- 加载失败 -->
-                <StackPanel x:Name="FailedPanel"
-                            Visibility="{x:Bind Vm.LoadFailed, Mode=OneWay, Converter={StaticResource BoolToVis}}"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                    <TextBlock x:Uid="StatusLoadFailed" FontSize="20"
-                               Foreground="#FFFF6060"
-                               HorizontalAlignment="Center"/>
-                    <TextBlock Text="{x:Bind Vm.Current.Path, Mode=OneWay, FallbackValue=''}"
-                               FontSize="12"
-                               Margin="0,8,0,0"
-                               Foreground="#FFA0A0A0"
-                               HorizontalAlignment="Center"
-                               MaxWidth="600"
-                               TextWrapping="Wrap"/>
-                </StackPanel>
-            </Grid>
-
-            <!-- 主页 (无图片时的欢迎面板) -->
-            <Grid Grid.Column="0"
-                  Background="#E6101010"
-                  Visibility="{x:Bind Vm.HomeVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}">
-                <VisualStateManager.VisualStateGroups>
-                    <VisualStateGroup>
-                        <VisualState x:Name="Narrow">
-                            <VisualState.StateTriggers>
-                                <AdaptiveTrigger MinWindowWidth="0"/>
-                            </VisualState.StateTriggers>
-                            <VisualState.Setters>
-                                <Setter Target="HomeStack.Padding" Value="16,16"/>
-                                <Setter Target="HomeTitle.FontSize" Value="28"/>
-                                <Setter Target="HomeSub.FontSize" Value="13"/>
-                                <Setter Target="HomeSub.Margin" Value="0,8,0,0"/>
-                                <Setter Target="HomeButtons.Orientation" Value="Vertical"/>
-                                <Setter Target="HomeButtons.Margin" Value="0,22,0,0"/>
-                                <Setter Target="HomeOpenBtn.Padding" Value="24,12"/>
-                                <Setter Target="HomeOpenBtn.MinWidth" Value="0"/>
-                                <Setter Target="HomeOpenBtn.HorizontalAlignment" Value="Stretch"/>
-                                <Setter Target="HomeFolderBtn.Padding" Value="24,12"/>
-                                <Setter Target="HomeFolderBtn.MinWidth" Value="0"/>
-                                <Setter Target="HomeFolderBtn.Margin" Value="0,12,0,0"/>
-                                <Setter Target="HomeFolderBtn.HorizontalAlignment" Value="Stretch"/>
-                                <Setter Target="RecentSection.Margin" Value="0,26,0,0"/>
-                            </VisualState.Setters>
-                        </VisualState>
-                        <VisualState x:Name="Wide">
-                            <VisualState.StateTriggers>
-                                <AdaptiveTrigger MinWindowWidth="720"/>
-                            </VisualState.StateTriggers>
-                        </VisualState>
-                    </VisualStateGroup>
-                </VisualStateManager.VisualStateGroups>
-                <StackPanel x:Name="HomeStack"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            MaxWidth="960"
-                            Padding="32,28">
-                    <TextBlock x:Name="HomeTitle" Text="HyperViewer"
-                               FontSize="42"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               HorizontalAlignment="Center"/>
-                    <TextBlock x:Name="HomeSub" x:Uid="HomeSubtitle"
-                               FontSize="15"
-                               Foreground="#FFB0B0B0"
-                               HorizontalAlignment="Center"
-                               Margin="0,10,0,0"/>
-                    <StackPanel x:Name="HomeButtons"
-                                Orientation="Horizontal"
-                                HorizontalAlignment="Center"
-                                Margin="0,30,0,0">
-                        <Button x:Name="HomeOpenBtn"
-                                x:Uid="HomeOpenImage"
-                                Command="{x:Bind Vm.OpenImageCommand}"
-                                Padding="32,14"
-                                MinWidth="190"
-                                FontSize="16"
-                                Background="#FF3D7FEA"
-                                Foreground="White"
-                                BorderThickness="0"/>
-                        <Button x:Name="HomeFolderBtn"
-                                x:Uid="HomeOpenFolder"
-                                Command="{x:Bind Vm.OpenFolderCommand}"
-                                Padding="32,14"
-                                MinWidth="190"
-                                FontSize="16"
-                                Margin="14,0,0,0"
-                                Background="#FF2D2D2D"
-                                Foreground="White"
-                                BorderThickness="1"
-                                BorderBrush="#FF4A4A4A"/>
-                    </StackPanel>
-                    <StackPanel x:Name="RecentSection" Margin="0,40,0,0"
-                                Visibility="{x:Bind Vm.RecentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}">
-                        <TextBlock x:Uid="HomeRecent"
-                                   FontSize="15"
-                                   FontWeight="SemiBold"
-                                   Foreground="#FFD0D0D0"/>
-                        <ScrollViewer HorizontalScrollMode="Auto"
-                                      HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollMode="Disabled"
-                                      VerticalScrollBarVisibility="Disabled"
-                                      Margin="0,12,0,0">
-                            <ItemsControl ItemsSource="{x:Bind Vm.RecentFolders, Mode=OneWay}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="storage:StorageFolder">
-                                        <Button Tag="{x:Bind}"
-                                                Click="HomeRecent_Click"
-                                                Margin="0,0,12,0"
-                                                Padding="16,14"
-                                                MinWidth="210"
-                                                Background="#FF2A2A2A"
-                                                BorderThickness="1"
-                                                BorderBrush="#FF3D3D3D"
-                                                HorizontalContentAlignment="Stretch">
-                                            <StackPanel>
-                                                <TextBlock Text="{x:Bind Name}"
-                                                           FontSize="14"
-                                                           Foreground="White"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{x:Bind Path}"
-                                                           FontSize="11"
-                                                           Foreground="#FF909090"
-                                                           Margin="0,4,0,0"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                    </StackPanel>
-                </StackPanel>
-            </Grid>
-
-            <!-- 信息侧边栏 -->
-            <Border Grid.Column="1"
-                    x:Name="InfoPanel"
-                    Background="#FF1F1F1F"
-                    Visibility="{x:Bind Vm.InfoPanelOpen, Mode=OneWay, Converter={StaticResource BoolToVis}}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Padding="12,10" Background="#FF2A2A2A">
-                        <TextBlock x:Uid="InfoPanelTitle"
-                                   Foreground="White"
-                                   FontWeight="SemiBold"
-                                   FontSize="14"/>
-                    </Border>
-                    <ListView Grid.Row="1"
-                              ItemsSource="{x:Bind Vm.InfoRows, Mode=OneWay}"
-                              Padding="0,4"
-                              Background="#FF1F1F1F"
-                              IsItemClickEnabled="False"
-                              SelectionMode="None">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="models:InfoRow">
-                                <Grid Background="Transparent" Padding="12,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="100"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0"
-                                               Text="{x:Bind Key, Mode=OneWay}"
-                                               FontSize="12"
-                                               Foreground="#FFA0A0A0"/>
-                                    <TextBlock Grid.Column="1"
-                                               Text="{x:Bind Value, Mode=OneWay}"
-                                               FontSize="12"
-                                               Foreground="White"
-                                               TextWrapping="Wrap"
-                                               TextTrimming="CharacterEllipsis"
-                                               IsTextSelectionEnabled="True"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
-            </Border>
-        </Grid>
-
-        <!-- 缩略图栏 -->
-        <Grid Grid.Row="2"
-              Height="100"
-              Background="#FF1A1A1A"
-              Visibility="{x:Bind Vm.ThumbnailVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Button Grid.Column="0"
-                    x:Uid="RecentMenu"
-                    Background="#FF2D2D2D"
-                    BorderBrush="#FF3D3D3D"
-                    BorderThickness="0"
-                    Padding="12,0"
-                    Foreground="White"
-                    Click="RecentButton_Click"
-                    VerticalAlignment="Stretch"
-                    FontSize="13"/>
-            <ListView x:Name="ThumbList"
-                      Grid.Column="1"
-                      ItemsSource="{x:Bind Vm.Photos, Mode=OneWay}"
-                      SelectionChanged="ThumbList_SelectionChanged"
-                      IsItemClickEnabled="False"
-                      Padding="4,0"
-                      Background="Transparent"
-                      BorderThickness="0">
-                <ListView.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel Orientation="Horizontal"/>
-                    </ItemsPanelTemplate>
-                </ListView.ItemsPanel>
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="Padding" Value="0"/>
-                        <Setter Property="Margin" Value="2,0"/>
-                        <Setter Property="MinWidth" Value="0"/>
-                        <Setter Property="MinHeight" Value="0"/>
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-                    </Style>
-                </ListView.ItemContainerStyle>
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="models:PhotoItem">
-                        <Border Width="90" Height="90"
-                                BorderBrush="Transparent"
-                                BorderThickness="2"
-                                Padding="0"
-                                Background="#FF2D2D2D">
-                            <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
-                                   Stretch="UniformToFill"
-                                   Width="86"
-                                   Height="86"/>
-                        </Border>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </Grid>
-
-        <Border Grid.Row="3" Background="#FF1F1F1F" Padding="12,6">
-            <TextBlock Text="{x:Bind Vm.StatusText, Mode=OneWay}"
-                       Foreground="#FFCCCCCC"
-                       FontSize="13"/>
-        </Border>
     </Grid>
 </Page>

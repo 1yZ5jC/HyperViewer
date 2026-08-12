@@ -34,6 +34,7 @@ namespace HyperViewer
         /// </summary>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
+            ApplyTheme();
             var rootFrame = EnsureRootFrame();
             if (rootFrame.Content == null)
             {
@@ -48,10 +49,47 @@ namespace HyperViewer
         protected override void OnFileActivated(FileActivatedEventArgs e)
         {
             base.OnFileActivated(e);
+            ApplyTheme();
             var rootFrame = EnsureRootFrame();
             StorageFile file = e.Files != null && e.Files.Count > 0 ? e.Files[0] as StorageFile : null;
             rootFrame.Navigate(typeof(MainPage), file);
             Window.Current.Activate();
+        }
+
+        private void ApplyTheme()
+        {
+            ApplyThemeNow();
+        }
+
+        /// <summary>
+        /// 应用主题: 优先 Application 级 (打包环境), 再设置根 Frame 级 (稳定,
+        /// 影响子树 ThemeResource 解析, ElementTheme.Default 可还原跟随系统)。
+        /// </summary>
+        public static void ApplyThemeNow()
+        {
+            var theme = Helpers.SettingsService.AppTheme;
+            try
+            {
+                var appTarget = theme == "Light" ? ApplicationTheme.Light
+                              : theme == "Dark" ? ApplicationTheme.Dark
+                              : (ApplicationTheme)(-1);
+                if (appTarget != (ApplicationTheme)(-1)
+                    && Application.Current.RequestedTheme != appTarget)
+                {
+                    Application.Current.RequestedTheme = appTarget;
+                }
+            }
+            catch
+            {
+                // 部分运行环境不支持 Application 级切换, 忽略
+            }
+
+            if (Window.Current?.Content is Frame frame)
+            {
+                frame.RequestedTheme = theme == "Light" ? ElementTheme.Light
+                                     : theme == "Dark" ? ElementTheme.Dark
+                                     : ElementTheme.Default;
+            }
         }
 
         private Frame EnsureRootFrame()

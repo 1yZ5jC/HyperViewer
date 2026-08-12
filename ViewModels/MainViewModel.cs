@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using HyperViewer.Helpers;
 using HyperViewer.Models;
 using HyperViewer.Services;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
+using Windows.Storage.Streams;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 
@@ -33,7 +36,8 @@ namespace HyperViewer.ViewModels
                     RaisePropertyChanged(nameof(CanGoPrev));
                     RaisePropertyChanged(nameof(CanGoNext));
                     RaisePropertyChanged(nameof(HasImage));
-                    RaisePropertyChanged(nameof(StatusText));
+                    RaisePropertyChanged(nameof(StatusLeftText));
+                    RaisePropertyChanged(nameof(StatusRightText));
                     RaisePropertyChanged(nameof(ThumbnailVisible));
                     RaisePropertyChanged(nameof(HomeVisible));
                     RefreshFavorite();
@@ -59,7 +63,8 @@ namespace HyperViewer.ViewModels
                 {
                     RaisePropertyChanged(nameof(CanGoPrev));
                     RaisePropertyChanged(nameof(CanGoNext));
-                    RaisePropertyChanged(nameof(StatusText));
+                    RaisePropertyChanged(nameof(StatusLeftText));
+                    RaisePropertyChanged(nameof(StatusRightText));
                 }
             }
         }
@@ -109,6 +114,104 @@ namespace HyperViewer.ViewModels
         {
             get => _recentVisible;
             private set => SetProperty(ref _recentVisible, value);
+        }
+
+        /// <summary>图库视图当前 Tab。</summary>
+        public enum LibraryTabKind { Albums, AllPhotos, Folders }
+        private LibraryTabKind _libraryTab = LibraryTabKind.Albums;
+        public LibraryTabKind LibraryTab
+        {
+            get => _libraryTab;
+            set
+            {
+                if (SetProperty(ref _libraryTab, value))
+                {
+                    RaiseTabVisibilities();
+                }
+            }
+        }
+        public bool AlbumsVisible => LibraryTab == LibraryTabKind.Albums;
+        public bool AllPhotosVisible => LibraryTab == LibraryTabKind.AllPhotos;
+        public bool FoldersVisible => LibraryTab == LibraryTabKind.Folders;
+
+        // Tab 内容视图可见性 (空态显示时全部隐藏, 避免与空态面板重叠)
+        public bool AlbumsContentVisible => AlbumsVisible && !LibraryEmptyVisible;
+        public bool AllPhotosContentVisible => AllPhotosVisible && !LibraryEmptyVisible;
+        public bool FoldersContentVisible => FoldersVisible && !LibraryEmptyVisible;
+
+        public ObservableCollection<AlbumItem> Albums { get; } = new ObservableCollection<AlbumItem>();
+        public ObservableCollection<PhotoItem> AllPhotos { get; } = new ObservableCollection<PhotoItem>();
+
+        // ---- Search support ----
+        private List<AlbumItem> _masterAlbums = new List<AlbumItem>();
+        private List<PhotoItem> _masterAllPhotos = new List<PhotoItem>();
+        private string _searchText = string.Empty;
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                if (SetProperty(ref _searchText, value))
+                {
+                    ApplySearch();
+                }
+            }
+        }
+
+        private void ApplySearch()
+        {
+            try
+            {
+                var term = (_searchText ?? string.Empty).Trim().ToLowerInvariant();
+                bool filtering = !string.IsNullOrEmpty(term);
+
+                Albums.Clear();
+                AllPhotos.Clear();
+
+                if (filtering)
+                {
+                    foreach (var a in _masterAlbums.Where(a => a.Name?.ToLowerInvariant().Contains(term) == true))
+                        Albums.Add(a);
+                    foreach (var p in _masterAllPhotos.Where(p => p.Name?.ToLowerInvariant().Contains(term) == true))
+                        AllPhotos.Add(p);
+                }
+                else
+                {
+                    foreach (var a in _masterAlbums) Albums.Add(a);
+                    foreach (var p in _masterAllPhotos) AllPhotos.Add(p);
+                }
+                // Update empty-state visibility based on filtered results
+                LibraryEmptyVisible = Albums.Count == 0 && AllPhotos.Count == 0 && !RecentVisible;
+            }
+            catch (Exception ex)
+            {
+                // 搜索异常时静默忽略，保持原列表
+                System.Diagnostics.Debug.WriteLine($"ApplySearch error: {ex.Message}");
+            }
+        }
+
+        /// <summary>图库空态 (没有任何相册): 显示欢迎/添加提示。</summary>
+        private bool _libraryEmptyVisible = true;
+        public bool LibraryEmptyVisible
+        {
+            get => _libraryEmptyVisible;
+            private set
+            {
+                if (SetProperty(ref _libraryEmptyVisible, value))
+                {
+                    RaiseTabVisibilities();
+                }
+            }
+        }
+
+        private void RaiseTabVisibilities()
+        {
+            RaisePropertyChanged(nameof(AlbumsVisible));
+            RaisePropertyChanged(nameof(AllPhotosVisible));
+            RaisePropertyChanged(nameof(FoldersVisible));
+            RaisePropertyChanged(nameof(AlbumsContentVisible));
+            RaisePropertyChanged(nameof(AllPhotosContentVisible));
+            RaisePropertyChanged(nameof(FoldersContentVisible));
         }
 
         private bool _loadFailed;
@@ -224,10 +327,11 @@ namespace HyperViewer.ViewModels
         public void UpdateZoomFactor(double value)
         {
             ZoomFactor = value;
-            RaisePropertyChanged(nameof(StatusText));
+            RaisePropertyChanged(nameof(StatusLeftText));
+            RaisePropertyChanged(nameof(StatusRightText));
         }
 
-        public string StatusText
+        public string StatusLeftText
         {
             get
             {
@@ -235,7 +339,17 @@ namespace HyperViewer.ViewModels
                 var size = (Current.PixelWidth > 0 && Current.PixelHeight > 0)
                     ? $"  ·  {Current.PixelWidth:0}x{Current.PixelHeight:0}"
                     : string.Empty;
-                return $"{Current.Name}  ·  {CurrentIndex + 1}/{_photos.Count}{size}  ·  {ZoomFactor:0%}{(Rotation != 0 ? "  " + Rotation + "°" : "")}{(FlipH < 0 ? "  " + Loc.Get("FlipHState") : "")}{(FlipV < 0 ? "  " + Loc.Get("FlipVState") : "")}";
+                return $"{Current.Name}  ·  {CurrentIndex + 1}/{_photos.Count}{size}";
+            }
+        }
+
+        // 状态栏右侧: 缩放 / 旋转 / 翻转 状态
+        public string StatusRightText
+        {
+            get
+            {
+                if (Current == null) return string.Empty;
+                return $"{ZoomFactor:0%}{(Rotation != 0 ? "  " + Rotation + "°" : "")}{(FlipH < 0 ? "  " + Loc.Get("FlipHState") : "")}{(FlipV < 0 ? "  " + Loc.Get("FlipVState") : "")}";
             }
         }
 
@@ -276,17 +390,121 @@ namespace HyperViewer.ViewModels
             ToggleSlideShowCommand = new RelayCommand(ToggleSlideShow, () => _photos.Count > 0);
             ToggleInfoPanelCommand = new RelayCommand(() => InfoPanelOpen = !InfoPanelOpen);
             ToggleFavoriteCommand = new RelayCommand(ToggleFavorite);
+            SelectAlbumsTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.Albums));
+            SelectAllPhotosTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.AllPhotos));
+            SelectFoldersTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.Folders));
 
             _recent = new RecentFoldersService();
             _recent.Changed += (_, __) =>
             {
                 RaisePropertyChanged(nameof(RecentFolders));
                 RecentVisible = _recent.Folders.Count > 0;
+                _ = RefreshLibraryAsync();
             };
             RaisePropertyChanged(nameof(RecentFolders));
             RecentVisible = _recent.Folders.Count > 0;
+            _ = RefreshLibraryAsync();
             RefreshSettings();
+            // 恢复上一次的 Tab 选择
+            var savedTab = SettingsService.LastTab;
+            if (Enum.TryParse<LibraryTabKind>(savedTab, out var tab))
+                LibraryTab = tab;
         }
+
+        private CancellationTokenSource _libraryCts;
+
+        /// <summary>
+        /// 扫描最近文件夹, 重建 Albums/AllPhotos, 后台懒加载封面缩略图。
+        /// </summary>
+        public async Task RefreshLibraryAsync()
+        {
+            _libraryCts?.Cancel();
+            _libraryCts = new CancellationTokenSource();
+            var token = _libraryCts.Token;
+            try
+            {
+                var folders = _recent.Folders;
+                if (folders == null || folders.Count == 0)
+                {
+                    Albums.Clear();
+                    AllPhotos.Clear();
+                    _masterAlbums.Clear();
+                    _masterAllPhotos.Clear();
+                    LibraryEmptyVisible = true;
+                    return;
+                }
+                var result = await LibraryScanService.ScanAsync(folders, token);
+                if (token.IsCancellationRequested) return;
+
+Albums.Clear();
+                    AllPhotos.Clear();
+                    // Keep master copies for search/filter
+                    _masterAlbums = new List<AlbumItem>(result.Albums);
+                    _masterAllPhotos = new List<PhotoItem>(result.AllPhotos);
+                    // Populate filtered collections based on current search text
+                    ApplySearch();
+                    LibraryEmptyVisible = _masterAlbums.Count == 0 && _masterAllPhotos.Count == 0;
+
+                // 后台懒加载相册封面
+                _ = Task.Run(async () =>
+                {
+                    foreach (var album in Albums)
+                    {
+                        if (token.IsCancellationRequested) break;
+                        await LibraryScanService.EnsureAlbumCoverAsync(album);
+                    }
+                }, token);
+            }
+            catch
+            {
+                // 扫描失败留空
+            }
+        }
+
+        /// <summary>点击相册卡片: 加载文件夹, 进入单图浏览模式。</summary>
+        public async Task OpenAlbumAsync(AlbumItem album)
+        {
+            if (album?.Folder == null) return;
+            await LoadFolderAsync(album.Folder);
+        }
+
+        /// <summary>点击全部照片中的缩略图: 加载所在文件夹并定位到该图。</summary>
+        public async Task OpenPhotoFromLibraryAsync(PhotoItem photo)
+        {
+            if (photo?.File == null) return;
+            try
+            {
+                var folder = await photo.File.GetParentAsync();
+                if (folder == null) return;
+                await LoadFolderAsync(folder);
+                for (int i = 0; i < _photos.Count; i++)
+                {
+                    if (string.Equals(_photos[i].Path, photo.Path, StringComparison.OrdinalIgnoreCase))
+                    {
+                        CurrentIndex = i;
+                        Current = _photos[i];
+                        ApplyNavigationReset();
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+                // 文件可能已删除, 静默忽略
+            }
+        }
+
+        /// <summary>切换图库 Tab (供 XAML 命令绑定)。</summary>
+        public void SelectLibraryTab(LibraryTabKind kind)
+        {
+            LibraryTab = kind;
+            // 持久化到本地设置
+            SettingsService.LastTab = kind.ToString();
+        }
+
+        public RelayCommand SelectAlbumsTabCommand { get; }
+        public RelayCommand SelectAllPhotosTabCommand { get; }
+        public RelayCommand SelectFoldersTabCommand { get; }
 
         private async Task OpenImageAsync()
         {
@@ -299,7 +517,7 @@ namespace HyperViewer.ViewModels
             Current = photo;
             CurrentFolder = null;
             RaisePropertyChanged(nameof(ThumbnailVisible));
-            _ = PreloadThumbnailsAsync();
+            // PreloadThumbnailsAsync removed for lazy loading
         }
 
         private async Task OpenFolderAsync()
@@ -333,7 +551,7 @@ namespace HyperViewer.ViewModels
                     Current = null;
                 }
                 RaisePropertyChanged(nameof(ThumbnailVisible));
-                _ = PreloadThumbnailsAsync();
+                // PreloadThumbnailsAsync removed for lazy loading
             }
             catch { /* 文件夹可能已被删除或失去访问权 */ }
         }
@@ -361,29 +579,44 @@ namespace HyperViewer.ViewModels
             await ImageLoaderService.PreloadThumbnailsAsync(_photos);
         }
 
+        /// <summary>切换图片后按设置重置旋转/翻转 (设置开启时恢复原始方向)。</summary>
+        private void ApplyNavigationReset()
+        {
+            if (SettingsService.ResetRotationOnNavigate)
+            {
+                Rotation = 0;
+                FlipH = 1;
+                FlipV = 1;
+            }
+        }
+
         public void Next()
         {
             if (!CanGoNext) return;
             CurrentIndex++;
             Current = _photos[CurrentIndex];
+            ApplyNavigationReset();
         }
         public void Prev()
         {
             if (!CanGoPrev) return;
             CurrentIndex--;
             Current = _photos[CurrentIndex];
+            ApplyNavigationReset();
         }
         public void First()
         {
             if (_photos.Count == 0) return;
             CurrentIndex = 0;
             Current = _photos[0];
+            ApplyNavigationReset();
         }
         public void Last()
         {
             if (_photos.Count == 0) return;
             CurrentIndex = _photos.Count - 1;
             Current = _photos[CurrentIndex];
+            ApplyNavigationReset();
         }
 
         private void ResetTransform()
@@ -391,7 +624,8 @@ namespace HyperViewer.ViewModels
             Rotation = 0;
             FlipH = 1;
             FlipV = 1;
-            RaisePropertyChanged(nameof(StatusText));
+            RaisePropertyChanged(nameof(StatusLeftText));
+            RaisePropertyChanged(nameof(StatusRightText));
         }
 
         /// <summary>
@@ -403,6 +637,7 @@ namespace HyperViewer.ViewModels
             {
                 CurrentIndex = idx;
                 Current = _photos[idx];
+                ApplyNavigationReset();
             }
         }
 
@@ -415,7 +650,7 @@ namespace HyperViewer.ViewModels
             Current = photo;
             CurrentFolder = null;
             RaisePropertyChanged(nameof(ThumbnailVisible));
-            _ = PreloadThumbnailsAsync();
+            // PreloadThumbnailsAsync removed for lazy loading
         }
 
         // ====== 收藏 ======
@@ -438,32 +673,52 @@ namespace HyperViewer.ViewModels
         {
             IsCurrentFavorite = Current != null && FavoritesService.IsFavorite(Current.Path);
         }
+// ====== 文件操作 ======
 
-        // ====== 文件操作 ======
+        /// <summary>上次删除是否进入回收站 (供 UI 提示)。</summary>
+        public bool LastDeleteToRecycleBin { get; private set; }
 
         /// <summary>
         /// 删除当前文件并移除列表项 (返回是否成功)。
+        /// UWP 无回收站 API, 优先 P/Invoke SHFileOperation, 失败则永久删除。
         /// </summary>
         public async Task<bool> DeleteCurrentAsync()
         {
             if (Current == null) return false;
             var file = Current.File;
             var targetIndex = CanGoNext ? CurrentIndex : (CanGoPrev ? CurrentIndex - 1 : -1);
+            bool recycled = false;
+            bool removed = false;
             try
             {
-                await file.DeleteAsync();
+                recycled = TryRecycle(file.Path);
+                if (recycled) removed = true;
             }
             catch
             {
-                return false;
+                recycled = false;
+            }
+            if (!recycled)
+            {
+                try
+                {
+                    await file.DeleteAsync();
+                    removed = true;
+                }
+                catch
+                {
+                    return false;
+                }
             }
 
+            LastDeleteToRecycleBin = recycled;
             FavoritesService.Remove(file.Path);
             _photos.RemoveAt(CurrentIndex);
             if (targetIndex >= 0 && targetIndex < _photos.Count)
             {
                 CurrentIndex = targetIndex;
                 Current = _photos[targetIndex];
+                ApplyNavigationReset();
             }
             else
             {
@@ -471,8 +726,64 @@ namespace HyperViewer.ViewModels
                 Current = null;
             }
             RaisePropertyChanged(nameof(ThumbnailVisible));
-            RaisePropertyChanged(nameof(StatusText));
-            return true;
+            RaisePropertyChanged(nameof(StatusLeftText));
+            RaisePropertyChanged(nameof(StatusRightText));
+
+            return removed;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct SHFILEOPSTRUCTW
+        {
+            public IntPtr hwnd;
+            public uint wFunc;
+            public string pFrom;
+            public string pTo;
+            public ushort fFlags;
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool fAnyOperationsAborted;
+            public IntPtr hNameMappings;
+            public string lpszProgressTitle;
+        }
+
+        private const uint FO_DELETE = 0x0003;
+        private const ushort FOF_ALLOWUNDO = 0x0040;
+        private const ushort FOF_NOCONFIRMATION = 0x0010;
+        private const ushort FOF_SILENT = 0x0004;
+        private const ushort FOF_NOERRORUI = 0x0400;
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        private static extern int SHFileOperation(ref SHFILEOPSTRUCTW lpFileOp);
+
+        /// <summary>尝试将文件移入回收站 (不可用时返回 false)。</summary>
+        private static bool TryRecycle(string path)
+        {
+            var op = new SHFILEOPSTRUCTW
+            {
+                wFunc = FO_DELETE,
+                pFrom = path + "\0\0",
+                fFlags = (ushort)(FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI)
+            };
+            return SHFileOperation(ref op) == 0;
+        }
+
+        /// <summary>
+        /// 复制当前图片到剪贴板 (懒加载流, 复制时不阻塞 UI)。
+        /// </summary>
+        public void CopyCurrentToClipboard()
+        {
+            if (Current == null) return;
+            try
+            {
+                var package = new DataPackage();
+                package.RequestedOperation = DataPackageOperation.Copy;
+                package.SetBitmap(RandomAccessStreamReference.CreateFromFile(Current.File));
+                Clipboard.SetContentWithOptions(package, null);
+            }
+            catch
+            {
+                // 剪贴板不可用时静默失败
+            }
         }
 
         /// <summary>
@@ -530,7 +841,8 @@ namespace HyperViewer.ViewModels
             ResetTransform();
             NextCommand?.NotifyCanExecuteChanged();
             PrevCommand?.NotifyCanExecuteChanged();
-            RaisePropertyChanged(nameof(StatusText));
+            RaisePropertyChanged(nameof(StatusLeftText));
+            RaisePropertyChanged(nameof(StatusRightText));
 
             // 预取相邻 ±2 张低清版
             _ = PrefetchNeighborsAsync(CurrentIndex);
@@ -549,7 +861,8 @@ namespace HyperViewer.ViewModels
                 {
                     InfoRows = null;
                 }
-                RaisePropertyChanged(nameof(StatusText));
+                RaisePropertyChanged(nameof(StatusLeftText));
+                RaisePropertyChanged(nameof(StatusRightText));
             }
             catch
             {

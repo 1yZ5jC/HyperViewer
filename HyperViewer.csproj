@@ -136,6 +136,7 @@
     <Compile Include="Models\ImageInfoModel.cs" />
     <Compile Include="Models\TimelineGroup.cs" />
     <Compile Include="Models\TimelineRequest.cs" />
+    <Compile Include="Models\AlbumItem.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\TimelineViewModel.cs" />
     <Compile Include="Services\FilePickerService.cs" />
@@ -143,6 +144,7 @@
     <Compile Include="Services\ImageInfoService.cs" />
     <Compile Include="Services\ImageEditService.cs" />
     <Compile Include="Services\RecentFoldersService.cs" />
+    <Compile Include="Services\LibraryScanService.cs" />
     <Compile Include="Controls\ImageViewer.xaml.cs">
       <DependentUpon>ImageViewer.xaml</DependentUpon>
     </Compile>

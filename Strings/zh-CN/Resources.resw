@@ -135,6 +135,9 @@
   <data name="DeleteFailMessage" xml:space="preserve">
     <value>文件可能正被占用或被系统保护。</value>
   </data>
+  <data name="DeleteRecycleFallbackMessage" xml:space="preserve">
+    <value>无法移入回收站，已永久删除该文件。</value>
+  </data>
   <data name="RenameTitle" xml:space="preserve">
     <value>重命名</value>
   </data>
@@ -242,6 +245,60 @@
   </data>
   <data name="SettingsBgLabel.Text" xml:space="preserve">
     <value>主视图背景</value>
+  </data>
+  <data name="SettingsThemeLabel.Text" xml:space="preserve">
+    <value>应用主题</value>
+  </data>
+  <data name="ThemeDefault.Content" xml:space="preserve">
+    <value>跟随系统</value>
+  </data>
+  <data name="ThemeDark.Content" xml:space="preserve">
+    <value>深色</value>
+  </data>
+  <data name="ThemeLight.Content" xml:space="preserve">
+    <value>浅色</value>
+  </data>
+  <data name="SettingsTransitionLabel.Text" xml:space="preserve">
+    <value>幻灯片过渡效果</value>
+  </data>
+  <data name="TransitionFade.Content" xml:space="preserve">
+    <value>淡入</value>
+  </data>
+  <data name="TransitionZoom.Content" xml:space="preserve">
+    <value>缩放</value>
+  </data>
+  <data name="TransitionPan.Content" xml:space="preserve">
+    <value>平移</value>
+  </data>
+  <data name="TransitionFlicker.Content" xml:space="preserve">
+    <value>闪动</value>
+  </data>
+  <data name="SettingsResetRotation.Header" xml:space="preserve">
+    <value>切换图片时重置旋转方向</value>
+  </data>
+  <data name="SettingsResetRotation.OnContent" xml:space="preserve">
+    <value>恢复原始方向</value>
+  </data>
+  <data name="SettingsResetRotation.OffContent" xml:space="preserve">
+    <value>保持方向</value>
+  </data>
+  <data name="LibTabAlbums.Content" xml:space="preserve">
+    <value>集锦</value>
+  </data>
+  <data name="LibTabAllPhotos.Content" xml:space="preserve">
+    <value>全部照片</value>
+  </data>
+  <data name="LibTabFolders.Content" xml:space="preserve">
+    <value>文件夹</value>
+  </data>
+  <data name="LibAddFolder.Content" xml:space="preserve">
+    <value>添加文件夹</value>
+  </data>
+  <data name="LibOpenImage.Content" xml:space="preserve">
+    <value>打开图片</value>
+  </data>
+  <data name="LibSettings.Content" xml:space="preserve">
+    <value>设置</value>
   </data>
   <data name="Seconds1.Content" xml:space="preserve">
     <value>1 秒</value>

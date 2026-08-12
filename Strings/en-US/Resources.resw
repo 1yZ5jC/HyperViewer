@@ -135,6 +135,9 @@
   <data name="DeleteFailMessage" xml:space="preserve">
     <value>The file may be in use or protected by the system.</value>
   </data>
+  <data name="DeleteRecycleFallbackMessage" xml:space="preserve">
+    <value>Could not move to Recycle Bin. The file was permanently deleted.</value>
+  </data>
   <data name="RenameTitle" xml:space="preserve">
     <value>Rename</value>
   </data>
@@ -242,6 +245,60 @@
   </data>
   <data name="SettingsBgLabel.Text" xml:space="preserve">
     <value>Main view background</value>
+  </data>
+  <data name="SettingsThemeLabel.Text" xml:space="preserve">
+    <value>App theme</value>
+  </data>
+  <data name="ThemeDefault.Content" xml:space="preserve">
+    <value>System default</value>
+  </data>
+  <data name="ThemeDark.Content" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="ThemeLight.Content" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="SettingsTransitionLabel.Text" xml:space="preserve">
+    <value>Slideshow transition</value>
+  </data>
+  <data name="TransitionFade.Content" xml:space="preserve">
+    <value>Fade</value>
+  </data>
+  <data name="TransitionZoom.Content" xml:space="preserve">
+    <value>Zoom</value>
+  </data>
+  <data name="TransitionPan.Content" xml:space="preserve">
+    <value>Pan</value>
+  </data>
+  <data name="TransitionFlicker.Content" xml:space="preserve">
+    <value>Flicker</value>
+  </data>
+  <data name="SettingsResetRotation.Header" xml:space="preserve">
+    <value>Reset rotation when navigating between images</value>
+  </data>
+  <data name="SettingsResetRotation.OnContent" xml:space="preserve">
+    <value>Restore original orientation</value>
+  </data>
+  <data name="SettingsResetRotation.OffContent" xml:space="preserve">
+    <value>Keep current orientation</value>
+  </data>
+  <data name="LibTabAlbums.Content" xml:space="preserve">
+    <value>Albums</value>
+  </data>
+  <data name="LibTabAllPhotos.Content" xml:space="preserve">
+    <value>All photos</value>
+  </data>
+  <data name="LibTabFolders.Content" xml:space="preserve">
+    <value>Folders</value>
+  </data>
+  <data name="LibAddFolder.Content" xml:space="preserve">
+    <value>Add folder</value>
+  </data>
+  <data name="LibOpenImage.Content" xml:space="preserve">
+    <value>Open image</value>
+  </data>
+  <data name="LibSettings.Content" xml:space="preserve">
+    <value>Settings</value>
   </data>
   <data name="Seconds1.Content" xml:space="preserve">
     <value>1 second</value>

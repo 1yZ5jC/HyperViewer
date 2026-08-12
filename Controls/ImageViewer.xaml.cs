@@ -6,6 +6,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 
 namespace HyperViewer.Controls
@@ -76,13 +77,27 @@ namespace HyperViewer.Controls
 
         public event EventHandler ZoomFactorChanged;
 
+        /// <summary>图片源变化时触发 (用于换图淡入)。</summary>
+        public event EventHandler ImageChanged;
+
+        /// <summary>双击触发 (透传给页面, 页面用它区分单击/双击)。</summary>
+        public event EventHandler DoubleTappedOccurred;
+
         private bool _suppressViewChange;
         private readonly CompositeTransform _imageTransform = new CompositeTransform();
+        private readonly ScaleTransform _transitionScale = new ScaleTransform();
+        private readonly TranslateTransform _transitionTranslate = new TranslateTransform();
+        private TransformGroup _transitionGroup;
+        private Storyboard _fadeStoryboard;
 
         public ImageViewer()
         {
             InitializeComponent();
-            TheImage.RenderTransform = _imageTransform;
+            _transitionGroup = new TransformGroup();
+            _transitionGroup.Children.Add(_imageTransform);
+            _transitionGroup.Children.Add(_transitionScale);
+            _transitionGroup.Children.Add(_transitionTranslate);
+            TheImage.RenderTransform = _transitionGroup;
             TheImage.RenderTransformOrigin = new Point(0.5, 0.5);
         }
 
@@ -92,7 +107,71 @@ namespace HyperViewer.Controls
             {
                 v.TheImage.Source = e.NewValue as BitmapImage;
                 v.ResetView();
+                v.ImageChanged?.Invoke(v, EventArgs.Empty);
             }
+        }
+
+        /// <summary>
+        /// 换图过渡动画 (按设置选择: Fade / Zoom / Pan / Flicker)。
+        /// 先把透明度归零, 图片解码完成后执行。
+        /// </summary>
+        public void FadeIn(string transition = null)
+        {
+            var kind = string.IsNullOrEmpty(transition) ? Helpers.SettingsService.SlideTransition : transition;
+            TheImage.Opacity = 0;
+            _fadeStoryboard?.Stop();
+            var sb = new Storyboard();
+            var add = new Action<string, double, double, double>((prop, from, to, ms) =>
+            {
+                var anim = new DoubleAnimation { From = from, To = to, Duration = TimeSpan.FromMilliseconds(ms) };
+                Storyboard.SetTarget(anim, TheImage);
+                Storyboard.SetTargetProperty(anim, prop);
+                sb.Children.Add(anim);
+            });
+
+            switch (kind)
+            {
+                case "Zoom":
+                    _transitionScale.ScaleX = _transitionScale.ScaleY = 1.08;
+                    add("Opacity", 0, 1, 220);
+                    sb.Children.Add(CreateAnim("ScaleX", 1.08, 1, 220, _transitionScale));
+                    sb.Children.Add(CreateAnim("ScaleY", 1.08, 1, 220, _transitionScale));
+                    break;
+                case "Pan":
+                    _transitionTranslate.X = 48;
+                    add("Opacity", 0, 1, 220);
+                    sb.Children.Add(CreateAnim("X", 48, 0, 220, _transitionTranslate));
+                    break;
+                case "Flicker":
+                    _transitionScale.ScaleX = _transitionScale.ScaleY = 1.02;
+                    add("Opacity", 0, 1, 80);
+                    sb.Children.Add(CreateOpacityAnim(80, 0.3, 55));
+                    sb.Children.Add(CreateOpacityAnim(135, 1, 100));
+                    sb.Children.Add(CreateAnim("ScaleX", 1.02, 1, 235, _transitionScale));
+                    sb.Children.Add(CreateAnim("ScaleY", 1.02, 1, 235, _transitionScale));
+                    break;
+                default: // Fade
+                    add("Opacity", 0, 1, 160);
+                    break;
+            }
+            _fadeStoryboard = sb;
+            _fadeStoryboard.Begin();
+        }
+
+        private static DoubleAnimation CreateAnim(string prop, double from, double to, double ms, DependencyObject target)
+        {
+            var anim = new DoubleAnimation { From = from, To = to, Duration = TimeSpan.FromMilliseconds(ms) };
+            Storyboard.SetTarget(anim, target);
+            Storyboard.SetTargetProperty(anim, prop);
+            return anim;
+        }
+
+        private DoubleAnimation CreateOpacityAnim(double ms, double to, double dur)
+        {
+            var anim = new DoubleAnimation { To = to, Duration = TimeSpan.FromMilliseconds(dur) };
+            Storyboard.SetTarget(anim, TheImage);
+            Storyboard.SetTargetProperty(anim, "Opacity");
+            return anim;
         }
 
         private static void OnTransformChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -112,6 +191,7 @@ namespace HyperViewer.Controls
             var p = e.GetPosition(Scroller);
             ToggleZoom(p);
             e.Handled = true;
+            DoubleTappedOccurred?.Invoke(this, EventArgs.Empty);
         }
 
         private void Scroller_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
@@ -156,6 +236,19 @@ namespace HyperViewer.Controls
             var offsetY = (center.Y * newZoom) - (Scroller.ViewportHeight / 2);
             _suppressViewChange = true;
             Scroller.ChangeView(Math.Max(0, offsetX), Math.Max(0, offsetY), newZoom);
+            _suppressViewChange = false;
+            ZoomFactorChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// 直接设置缩放级别 (缩放滑块用, 以视口中心为锚点)。
+        /// </summary>
+        public void SetZoomFactor(float zoom)
+        {
+            var clamped = Math.Max(Scroller.MinZoomFactor,
+                                   Math.Min(Scroller.MaxZoomFactor, zoom));
+            _suppressViewChange = true;
+            Scroller.ChangeView(null, null, clamped, true);
             _suppressViewChange = false;
             ZoomFactorChanged?.Invoke(this, EventArgs.Empty);
         }
