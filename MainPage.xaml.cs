@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
@@ -35,7 +36,6 @@ namespace HyperViewer
         private DispatcherTimer _tapTimer;
         private bool _doubleTapPending;
         private readonly Windows.UI.Xaml.Media.TranslateTransform _thumbBarTransform = new Windows.UI.Xaml.Media.TranslateTransform();
-        private Storyboard _chromeAnim;
 
         // 中央导航箭头: 鼠标移动显示, 空闲 2s 隐藏
         private DispatcherTimer _navTimer;
@@ -81,9 +81,37 @@ namespace HyperViewer
             _navTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
             _navTimer.Tick += (_, __) => SetNavArrows(false);
             ZoomSlider.ValueChanged += ZoomSlider_ValueChanged;
-            // 键盘快捷键注册
-            CoreWindow.GetForCurrentThread().Dispatcher.AcceleratorKeyActivated += CoreWindow_AcceleratorKeyActivated;
             UpdateZoomSlider();
+            SetupTitleBar();
+            // 返回时复用页面实例 (UWP 默认 Disabled 会在 GoBack 时重建页面,
+            // 新 VM 的 Current=null, 导致"退出编辑/设置后回到主页"而非图片视图)
+            this.NavigationCacheMode = NavigationCacheMode.Required;
+        }
+
+        // 标题栏集成 (Win11 Photos 风格): 顶栏占满标题栏区域, 可拖拽, 右上角保留系统窗口按钮
+        private bool _titleBarHooked;
+
+        private void SetupTitleBar()
+        {
+            var titleBar = CoreApplication.GetCurrentView().TitleBar;
+            titleBar.ExtendViewIntoTitleBar = true;
+            Window.Current.SetTitleBar(TitleBarDragRegion);
+            if (!_titleBarHooked)
+            {
+                _titleBarHooked = true;
+                titleBar.LayoutMetricsChanged += (_, __) => UpdateTitleBarInsets();
+                Window.Current.SizeChanged += (_, __) => UpdateTitleBarInsets();
+            }
+            UpdateTitleBarInsets();
+        }
+
+        private void UpdateTitleBarInsets()
+        {
+            double inset = 0;
+            try { inset = CoreApplication.GetCurrentView().TitleBar.SystemOverlayRightInset; }
+            catch { }
+            if (HomePad != null) HomePad.Width = new GridLength(inset);
+            if (ImagePad != null) ImagePad.Width = new GridLength(inset);
         }
 
         private void UpdateZoomSlider()
@@ -179,7 +207,9 @@ namespace HyperViewer
 
         private void ApplyChrome()
         {
-            _chromeAnim?.Stop();
+            // 注意: 不要在此处 Stop 上一个 Storyboard —— UWP 中 Stop() 会把动画属性回退到基值,
+            // 缩略图条滑入动画(基值 Y=92, 屏幕外)一旦被中断就永久卡在屏幕外。
+            // 新动画会自动接管同一属性的旧动画, 保持状态一致性。
 
             var showThumb = _chromeVisible && _thumbStripEnabled && Vm.ThumbnailVisible;
             var sb = new Storyboard();
@@ -194,52 +224,69 @@ namespace HyperViewer
                 sb.Children.Add(anim);
             }
 
-            // 缩略图栏: 滑入/滑出
-            if (showThumb && ThumbBar.Visibility != Visibility.Visible)
+            // 缩略图栏: 滑入/滑出 (基于状态而非 Visibility 判断, 中断后仍能回到正确位置)
+            if (showThumb)
             {
-                ThumbBar.Visibility = Visibility.Visible;
-                ThumbBar.RenderTransform = _thumbBarTransform;
-                _thumbBarTransform.Y = 92;
-                ThumbBar.Opacity = 0;
-                Anim(_thumbBarTransform, "Y", 0);
-                Anim(ThumbBar, "Opacity", 1);
+                var wasHidden = ThumbBar.Visibility != Visibility.Visible;
+                if (wasHidden)
+                {
+                    ThumbBar.Visibility = Visibility.Visible;
+                    ThumbBar.RenderTransform = _thumbBarTransform;
+                    _thumbBarTransform.Y = 92;
+                    ThumbBar.Opacity = 0;
+                }
+                if (wasHidden || _thumbBarTransform.Y != 0 || ThumbBar.Opacity != 1)
+                {
+                    Anim(_thumbBarTransform, "Y", 0);
+                    Anim(ThumbBar, "Opacity", 1);
+                }
             }
-            else if (!showThumb && ThumbBar.Visibility == Visibility.Visible)
+            else if (ThumbBar.Visibility == Visibility.Visible)
             {
                 Anim(_thumbBarTransform, "Y", 92);
                 Anim(ThumbBar, "Opacity", 0);
             }
 
-            // 悬浮工具栏 / 状态栏: 淡入淡出
+            // 顶栏 / 状态栏: 淡入淡出 (图片顶栏只在图片模式显示)
+            var home = Vm.HomeVisible;
             if (_chromeVisible)
             {
-                FloatingBar.Visibility = Visibility.Visible;
+                if (!home && ImageTopBar.Visibility != Visibility.Visible)
+                {
+                    ImageTopBar.Visibility = Visibility.Visible;
+                }
                 StatusBar.Visibility = Visibility.Visible;
-                if (FloatingBar.Opacity < 1.0) Anim(FloatingBar, "Opacity", 1);
+                if (!home && ImageTopBar.Opacity < 1.0) Anim(ImageTopBar, "Opacity", 1);
                 if (StatusBar.Opacity < 1.0) Anim(StatusBar, "Opacity", 1);
             }
             else
             {
-                Anim(FloatingBar, "Opacity", 0);
+                if (!home) Anim(ImageTopBar, "Opacity", 0);
                 Anim(StatusBar, "Opacity", 0);
             }
+
+            // 全屏(chrome 隐藏)时整条标题栏区域放行指针事件, 便于图片交互与顶部悬停唤出
+            TitleBarHost.IsHitTestVisible = home || _chromeVisible;
 
             if (sb.Children.Count > 0)
             {
                 sb.Completed += (_, __) =>
                 {
-                    if (!showThumb)
+                    // 不能用闭包里的 showThumb/home: 进入图片视图时 Current 连续触发两次
+                    // ApplyChrome, 第一个 Storyboard(showThumb=false)完成时第二个已把胶片条显示出来,
+                    // 用过期闭包会把它重新折叠。这里按完成时刻的当前状态重新计算。
+                    var shouldShowThumb = _chromeVisible && _thumbStripEnabled && Vm.ThumbnailVisible;
+                    if (!shouldShowThumb)
                     {
                         ThumbBar.Visibility = Visibility.Collapsed;
                         ThumbBar.Opacity = 0;
                     }
                     if (!_chromeVisible)
                     {
-                        FloatingBar.Visibility = Visibility.Collapsed;
+                        if (!Vm.HomeVisible) ImageTopBar.Visibility = Visibility.Collapsed;
                         StatusBar.Visibility = Visibility.Collapsed;
                     }
                 };
-                _chromeAnim = sb;
                 sb.Begin();
             }
         }
@@ -257,11 +304,35 @@ namespace HyperViewer
             ApplyChrome();
         }
 
+        private void ThumbToggle_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleThumbStrip();
+            UpdateThumbToggleState();
+        }
+
+        private void UpdateThumbToggleState()
+        {
+            var on = _thumbStripEnabled;
+            ThumbToggleBtn.Background = on
+                ? (Windows.UI.Xaml.Media.Brush)Application.Current.Resources["AccentBrush"]
+                : new Windows.UI.Xaml.Media.SolidColorBrush(Windows.UI.Colors.Transparent);
+            ThumbToggleBtn.Foreground = on
+                ? new Windows.UI.Xaml.Media.SolidColorBrush(Windows.UI.Colors.White)
+                : (Windows.UI.Xaml.Media.Brush)Application.Current.Resources["TextMutedBrush"];
+            Windows.UI.Xaml.Automation.AutomationProperties.SetName(ThumbToggleBtn, on ? "隐藏缩略图" : "显示缩略图");            ToolTipService.SetToolTip(ThumbToggleBtn, on ? "隐藏缩略图" : "显示缩略图");
+        }
+
         // ====== 中央导航箭头 ======
 
         private void ImageArea_PointerMoved(object sender, PointerRoutedEventArgs e)
         {
             if (!Vm.HasImage) return;
+            // 顶部悬停唤出标题栏 (Photos 行为)
+            if (!_chromeVisible && e.GetCurrentPoint(ImageArea).Position.Y <= 3)
+            {
+                SetChrome(true);
+                return;
+            }
             if (!_navArrowsVisible)
             {
                 SetNavArrows(true);
@@ -332,6 +403,8 @@ namespace HyperViewer
             }
             // 全屏时按 Esc 退出
             Window.Current.CoreWindow.Dispatcher.AcceleratorKeyActivated += CoreWindow_AcceleratorKeyActivated;
+            // 从设置/编辑/时间线页返回时恢复标题栏扩展
+            SetupTitleBar();
         }
 
         private async System.Threading.Tasks.Task HandleTimelineRequestAsync(TimelineRequest req)
@@ -345,6 +418,11 @@ namespace HyperViewer
             if (Vm.Current == null) return;
             Vm.StopSlideShow();
             Frame.Navigate(typeof(EditPage), Vm.Current);
+        }
+
+        private void BackToLibrary_Click(object sender, RoutedEventArgs e)
+        {
+            Vm.GoHome();
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
@@ -543,7 +621,7 @@ namespace HyperViewer
                     ZoomByKeys(1f / 1.2f);
                     return true;
                 case "ToggleChrome":
-                    ToggleThumbStrip();
+                    ToggleChrome();
                     return true;
                 case "SlideShow":
                     Vm.ToggleSlideShow();

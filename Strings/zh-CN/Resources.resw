@@ -60,6 +60,12 @@
   <data name="MenuFavorite.Text" xml:space="preserve">
     <value>收藏</value>
   </data>
+  <data name="MenuOpenImage.Text" xml:space="preserve">
+    <value>打开图片</value>
+  </data>
+  <data name="MenuOpenFolder.Text" xml:space="preserve">
+    <value>打开文件夹</value>
+  </data>
   <data name="MenuTimeline.Text" xml:space="preserve">
     <value>时间轴</value>
   </data>
@@ -191,6 +197,18 @@
   </data>
   <data name="EditApplyAdjust.Content" xml:space="preserve">
     <value>应用调色</value>
+  </data>
+  <data name="EditInkToggle.Content" xml:space="preserve">
+    <value>墨迹</value>
+  </data>
+  <data name="EditInkUndo.Content" xml:space="preserve">
+    <value>撤销</value>
+  </data>
+  <data name="EditInkClear.Content" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="EditInkHint.Text" xml:space="preserve">
+    <value>在图片上绘制涂鸦, 保存时合成到图片</value>
   </data>
   <data name="EditLoaded" xml:space="preserve">
     <value>已加载 {0}x{1}</value>

@@ -948,6 +948,19 @@ namespace HyperViewer.ViewModels
         // ====== 幻灯片 ======
         private CancellationTokenSource _slideShowCts;
 
+        /// <summary>
+        /// 返回图库主页 (清除当前图片)。
+        /// </summary>
+        public void GoHome()
+        {
+            StopSlideShow();
+            if (Current != null)
+            {
+                Current = null;
+            }
+            InfoPanelOpen = false;
+        }
+
         public void ToggleSlideShow()
         {
             if (SlideShowRunning) StopSlideShow();

@@ -60,6 +60,12 @@
   <data name="MenuFavorite.Text" xml:space="preserve">
     <value>Favorite</value>
   </data>
+  <data name="MenuOpenImage.Text" xml:space="preserve">
+    <value>Open image</value>
+  </data>
+  <data name="MenuOpenFolder.Text" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
   <data name="MenuTimeline.Text" xml:space="preserve">
     <value>Timeline</value>
   </data>
@@ -191,6 +197,18 @@
   </data>
   <data name="EditApplyAdjust.Content" xml:space="preserve">
     <value>Apply adjustments</value>
+  </data>
+  <data name="EditInkToggle.Content" xml:space="preserve">
+    <value>Ink</value>
+  </data>
+  <data name="EditInkUndo.Content" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="EditInkClear.Content" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="EditInkHint.Text" xml:space="preserve">
+    <value>Draw on the image; composited when saved</value>
   </data>
   <data name="EditLoaded" xml:space="preserve">
     <value>Loaded {0}x{1}</value>

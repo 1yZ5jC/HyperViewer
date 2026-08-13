@@ -12,6 +12,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -43,6 +44,7 @@
         <Grid Grid.Row="1" Padding="8,6" Background="{ThemeResource ChromeBgBrush}">
             <StackPanel Orientation="Horizontal">
                 <ToggleButton x:Name="CropToggle" x:Uid="EditCropToggle" Click="CropToggle_Click" MinWidth="72"/>
+                <ToggleButton x:Name="InkToggle" x:Uid="EditInkToggle" Click="InkToggle_Click" MinWidth="72" Margin="8,0,0,0"/>
                 <Button x:Uid="EditApplyCrop" Click="ApplyCrop_Click" MinWidth="88" Margin="8,0,0,0"/>
                 <Button x:Uid="EditReset" Click="Reset_Click" MinWidth="72" Margin="8,0,0,0"/>
                 <Button x:Uid="EditSave" Click="Save_Click" MinWidth="72" Margin="8,0,0,0"/>
@@ -80,13 +82,25 @@
          </StackPanel>
      </Grid>
 
+        <!-- 墨迹工具条 -->
+        <Grid x:Name="InkBar" Grid.Row="3" Padding="8,6" Background="{ThemeResource ChromeBgBrush}" Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal">
+                <InkToolbar x:Name="InkTools" TargetInkCanvas="{x:Bind InkHost}"/>
+                <Button x:Uid="EditInkUndo" Click="InkUndo_Click" MinWidth="64" Margin="8,0,0,0"/>
+                <Button x:Uid="EditInkClear" Click="InkClear_Click" MinWidth="64" Margin="8,0,0,0"/>
+                <TextBlock x:Uid="EditInkHint" VerticalAlignment="Center" Margin="12,0,0,0"
+                           Foreground="{ThemeResource TextMutedBrush}"/>
+            </StackPanel>
+        </Grid>
+
         <!-- 预览区 -->
-        <Grid Grid.Row="3" Background="Black">
+        <Grid Grid.Row="4" Background="Black">
             <Grid x:Name="HostSizer">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                     <Grid x:Name="ImageHost" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Image x:Name="PreviewImage" Stretch="Fill"/>
+                        <InkCanvas x:Name="InkHost" IsHitTestVisible="False"/>
                         <Canvas x:Name="CropCanvas" Background="Transparent"
                                 PointerPressed="CropCanvas_PointerPressed"
                                 PointerMoved="CropCanvas_PointerMoved"

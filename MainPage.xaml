@@ -83,6 +83,69 @@
                </Setter.Value>
            </Setter>
        </Style>
+        <!-- 标题栏图标按钮样式 (Win11 Photos 风格) -->
+        <Style x:Key="TitleBarIconButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="38"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextPrimaryBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootBorder.Background" Value="{ThemeResource BtnBgBrush}"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootBorder.Background" Value="{ThemeResource AccentBrush}"/>
+                                            <Setter Target="ContentPresenter.Foreground" Value="White"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootBorder.Opacity" Value="0.35"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="FocusStates">
+                                    <VisualState x:Name="Focused">
+                                        <VisualState.Setters>
+                                            <Setter Target="FocusRing.Visibility" Value="Visible"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Unfocused"/>
+                                    <VisualState x:Name="PointerFocused"/>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Border x:Name="RootBorder" CornerRadius="8" Background="{TemplateBinding Background}">
+                                <Grid>
+                                    <Border x:Name="FocusRing"
+                                            BorderBrush="{ThemeResource AccentBrush}"
+                                            BorderThickness="2"
+                                            CornerRadius="8"
+                                            Visibility="Collapsed"
+                                            IsHitTestVisible="False"/>
+                                    <ContentPresenter x:Name="ContentPresenter"
+                                                      Content="{TemplateBinding Content}"
+                                                      Foreground="{TemplateBinding Foreground}"
+                                                      FontSize="{TemplateBinding FontSize}"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <!-- 视图布局资源: 项目宽高 -->
         <ItemsPanelTemplate x:Key="AlbumPanelWide">
             <ItemsWrapGrid Orientation="Horizontal" ItemWidth="224" ItemHeight="220"/>
@@ -140,7 +203,7 @@
                     <VisualState.Setters>
                         <Setter Target="AlbumsGrid.ItemsPanel" Value="{StaticResource AlbumPanelWide}" />
                         <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelWide}" />
-                        <Setter Target="SearchBox.Width" Value="240" />
+                        <Setter Target="FileNameText.MaxWidth" Value="280" />
                         <Setter Target="LibOpenImageBtn.Visibility" Value="Visible" />
                         <Setter Target="TabPanel.Visibility" Value="Visible" />
                         <Setter Target="ActionPanel.Visibility" Value="Visible" />
@@ -154,7 +217,7 @@
                     <VisualState.Setters>
                         <Setter Target="AlbumsGrid.ItemsPanel" Value="{StaticResource AlbumPanelNarrow}" />
                         <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
-                        <Setter Target="SearchBox.Width" Value="160" />
+                        <Setter Target="FileNameText.MaxWidth" Value="160" />
                         <Setter Target="LibOpenImageBtn.Visibility" Value="Collapsed" />
                         <Setter Target="TabPanel.Visibility" Value="Visible" />
                         <Setter Target="ActionPanel.Visibility" Value="Visible" />
@@ -165,7 +228,7 @@
                     <VisualState.Setters>
                         <Setter Target="AlbumsGrid.ItemsPanel" Value="{StaticResource AlbumPanelNarrow}" />
                         <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
-                        <Setter Target="SearchBox.Width" Value="120" />
+                        <Setter Target="FileNameText.MaxWidth" Value="100" />
                         <Setter Target="LibOpenImageBtn.Visibility" Value="Collapsed" />
                         <Setter Target="TabPanel.Visibility" Value="Collapsed" />
                         <Setter Target="ActionPanel.Visibility" Value="Collapsed" />
@@ -284,130 +347,16 @@
                   Background="{ThemeResource PanelBgBrush}"
                   Visibility="{x:Bind Vm.HomeVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="48"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- 顶部 Tab 栏 + 右侧操作按钮 (Win11 Photos Pill 风格) -->
-                <Grid Grid.Row="0" Padding="16,8" Background="{ThemeResource ChromeBgBrush}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                   </Grid.ColumnDefinitions>
-                    <!-- Tab 栏 (Pill 风格) -->
-                    <StackPanel x:Name="TabPanel" Grid.Column="0" Orientation="Horizontal">
-                        <Button x:Name="TabAlbums" x:Uid="LibTabAlbums"
-                                Style="{StaticResource TabPillButtonStyle}"
-                                Command="{x:Bind Vm.SelectAlbumsTabCommand}"
-                                Background="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
-                                Foreground="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
-                                AutomationProperties.Name="相册"
-                                Margin="0,0,2,0"/>
-                        <Button x:Name="TabAllPhotos" x:Uid="LibTabAllPhotos"
-                                Style="{StaticResource TabPillButtonStyle}"
-                                Command="{x:Bind Vm.SelectAllPhotosTabCommand}"
-                                Background="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
-                                Foreground="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
-                                AutomationProperties.Name="全部照片"
-                                Margin="0,0,2,0"/>
-                        <Button x:Name="TabFolders" x:Uid="LibTabFolders"
-                                Style="{StaticResource TabPillButtonStyle}"
-                                Command="{x:Bind Vm.SelectFoldersTabCommand}"
-                                Background="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
-                                Foreground="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
-                                AutomationProperties.Name="文件夹"/>
-                   </StackPanel>
-                    <!-- 窄窗口溢出菜单 (Tab + 操作按钮收进 ... ) -->
-                    <Button x:Name="LibOverflowBtn"
-                            Grid.Column="0"
-                            Visibility="Collapsed"
-                            Padding="12,7"
-                            Margin="0,0,8,0"
-                            Background="{ThemeResource BtnBgBrush}"
-                            Foreground="{ThemeResource TextPrimaryBrush}"
-                            BorderThickness="0"
-                            FontSize="13"
-                            VerticalAlignment="Center"
-                            AutomationProperties.Name="更多操作">
-                        <Button.Flyout>
-                            <MenuFlyout>
-                                <MenuFlyoutItem x:Uid="LibTabAlbumsFlyout"
-                                                Command="{x:Bind Vm.SelectAlbumsTabCommand}"
-                                                Background="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
-                                                Foreground="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"/>
-                                <MenuFlyoutItem x:Uid="LibTabAllPhotosFlyout"
-                                                Command="{x:Bind Vm.SelectAllPhotosTabCommand}"
-                                                Background="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
-                                                Foreground="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"/>
-                                <MenuFlyoutItem x:Uid="LibTabFoldersFlyout"
-                                                Command="{x:Bind Vm.SelectFoldersTabCommand}"
-                                                Background="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
-                                                Foreground="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"/>
-                                <MenuFlyoutSeparator/>
-                                <MenuFlyoutItem x:Uid="LibOpenImageFlyout" Command="{x:Bind Vm.OpenImageCommand}"/>
-                                <MenuFlyoutItem x:Uid="LibAddFolderFlyout" Command="{x:Bind Vm.OpenFolderCommand}"/>
-                                <MenuFlyoutSeparator/>
-                                <MenuFlyoutItem x:Uid="LibSettingsFlyout" Click="SettingsButton_Click"/>
-                            </MenuFlyout>
-                        </Button.Flyout>
-                        <FontIcon Glyph="&#xE712;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
-                    </Button>
-                    <!-- 搜索框 -->
-                    <AutoSuggestBox x:Name="SearchBox"
-                                    Grid.Column="2"
-                                    Width="240"
-                                    MaxWidth="400"
-                                    HorizontalAlignment="Right"
-                                    Margin="0,0,12,0"
-                                    PlaceholderText="搜索相册 / 照片"
-                                    Text="{x:Bind Vm.SearchText, Mode=TwoWay}"
-                                    QueryIcon="Find"
-                                    AutomationProperties.Name="搜索相册 / 照片"
-                                    QuerySubmitted="SearchBox_QuerySubmitted"
-                                    SuggestionChosen="SearchBox_SuggestionChosen"
-                                    TextChanged="SearchBox_TextChanged">
-                        <AutoSuggestBox.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <TextBlock Text="{x:Bind}" />
-                           </DataTemplate>
-                        </AutoSuggestBox.ItemTemplate>
-                   </AutoSuggestBox>
-                    <!-- 右侧操作按钮 -->
-                    <StackPanel x:Name="ActionPanel" Grid.Column="3" Orientation="Horizontal">
-                        <Button x:Uid="LibOpenImage"
-                                x:Name="LibOpenImageBtn"
-                                Command="{x:Bind Vm.OpenImageCommand}"
-                                Padding="14,7"
-                                Background="{ThemeResource BtnBgBrush}"
-                                Foreground="{ThemeResource TextPrimaryBrush}"
-                                BorderThickness="0"
-                                FontSize="13"
-                                AutomationProperties.Name="打开图片"/>
-                        <Button x:Uid="LibAddFolder"
-                                Command="{x:Bind Vm.OpenFolderCommand}"
-                                Padding="14,7" Margin="8,0,8,0"
-                                Background="{ThemeResource AccentBrush}"
-                                Foreground="White"
-                                BorderThickness="0"
-                                FontSize="13"
-                                AutomationProperties.Name="打开文件夹"/>
-                        <Button x:Uid="LibSettings"
-                                Click="SettingsButton_Click"
-                                Padding="14,7" Margin="8,0,0,0"
-                                Background="{ThemeResource BtnBgBrush}"
-                                Foreground="{ThemeResource TextPrimaryBrush}"
-                                BorderThickness="0"
-                                FontSize="13"
-                                AutomationProperties.Name="设置"/>
-                   </StackPanel>
-                </Grid>
+                <!-- 顶部 48px 为标题栏占位 (HomeTopBar 已移到 TitleBarHost) -->
 
                 <!-- 内容: 三个 Tab 视图 + 空态 -->
                 <Grid Grid.Row="1">
                     <!-- 集锦 Tab: 相册卡片网格 -->
-<GridView x:Name="AlbumsGrid" ItemsSource="{x:Bind Vm.Albums, Mode=OneWay}"
+ <GridView x:Name="AlbumsGrid" ItemsSource="{x:Bind Vm.Albums, Mode=OneWay}"
                               Visibility="{x:Bind Vm.AlbumsContentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
                               Padding="16"
                               SelectionMode="None"
@@ -837,6 +786,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0"
                            Text="{x:Bind Vm.StatusLeftText, Mode=OneWay}"
@@ -859,81 +809,274 @@
                         Margin="12,0,0,0"
                         VerticalAlignment="Center"
                         IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
+                <!-- 缩略图栏开关 -->
+                <Button x:Name="ThumbToggleBtn"
+                        Grid.Column="3"
+                        Style="{StaticResource TitleBarIconButtonStyle}"
+                        Click="ThumbToggle_Click"
+                        Margin="12,0,0,0"
+                        IsEnabled="{x:Bind Vm.ThumbnailVisible, Mode=OneWay}"
+                        ToolTipService.ToolTip="隐藏缩略图"
+                        AutomationProperties.Name="隐藏缩略图"
+                        Background="{ThemeResource AccentBrush}"
+                        Foreground="White">
+                    <FontIcon Glyph="&#xE890;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                </Button>
             </Grid>
         </Border>
 
-        <!-- 底部悬浮工具栏 (声明在最后, 保证 Z 序最上层) -->
-        <Border x:Name="FloatingBar"
-                Grid.RowSpan="3"
-                VerticalAlignment="Bottom"
-                HorizontalAlignment="Center"
-                Margin="0,0,0,14"
-                CornerRadius="12"
-                Padding="4,2"
-                Background="{ThemeResource TopBarBgBrush}"
-                BorderThickness="1"
-                BorderBrush="{ThemeResource BtnBorderBrush}"
-                MinWidth="260"
-                MaxWidth="440"
-                Visibility="{x:Bind Vm.HomeVisible, Mode=OneWay, Converter={StaticResource InvBoolToVis}}">
-            <CommandBar x:Name="TopBar" IsOpen="False"
-                        Background="Transparent">
-            <AppBarButton Icon="OpenFile" x:Uid="CmdOpenImage" Command="{x:Bind Vm.OpenImageCommand}"/>
-            <AppBarButton Icon="Folder" x:Uid="CmdOpenFolder" Command="{x:Bind Vm.OpenFolderCommand}"/>
-            <AppBarSeparator/>
-            <AppBarButton Icon="Previous" x:Uid="CmdPrev"
-                          Command="{x:Bind Vm.PrevCommand}"
-                          IsEnabled="{x:Bind Vm.CanGoPrev, Mode=OneWay}"/>
-            <AppBarButton Icon="Next" x:Uid="CmdNext"
-                          Command="{x:Bind Vm.NextCommand}"
-                          IsEnabled="{x:Bind Vm.CanGoNext, Mode=OneWay}"/>
-            <AppBarSeparator/>
-            <AppBarButton x:Name="SlideShowButton"
-                          Icon="Play"
-                          Label="{x:Bind Vm.SlideShowLabel, Mode=OneWay}"
-                          Command="{x:Bind Vm.ToggleSlideShowCommand}"/>
-            <AppBarButton x:Uid="CmdEdit" IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"
-                          Click="EditButton_Click">
-                <AppBarButton.Icon>
-                    <FontIcon Glyph="&#xE70F;" FontFamily="Segoe MDL2 Assets"/>
-                </AppBarButton.Icon>
-            </AppBarButton>
-            <AppBarSeparator/>
-            <AppBarButton x:Uid="CmdMore">
-                <AppBarButton.Flyout>
-                    <MenuFlyout>
-                        <MenuFlyoutSubItem x:Uid="MenuRotate">
-                            <MenuFlyoutItem x:Uid="MenuRotateCW" Command="{x:Bind Vm.RotateCommand}"/>
-                            <MenuFlyoutItem x:Uid="MenuRotateCCW" Command="{x:Bind Vm.RotateBackCommand}"/>
-                            <MenuFlyoutItem x:Uid="MenuRotate180" Command="{x:Bind Vm.Rotate180Command}"/>
-                        </MenuFlyoutSubItem>
-                        <MenuFlyoutItem x:Uid="MenuFlipH" Command="{x:Bind Vm.FlipHCommand}"/>
-                        <MenuFlyoutItem x:Uid="MenuFlipV" Command="{x:Bind Vm.FlipVCommand}"/>
-                        <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Uid="MenuInfo" Command="{x:Bind Vm.ToggleInfoPanelCommand}"/>
-                        <MenuFlyoutItem x:Uid="MenuFavorite"
-                                        Command="{x:Bind Vm.ToggleFavoriteCommand}"/>
-                        <MenuFlyoutItem x:Uid="MenuTimeline" Click="TimelineButton_Click"
-                                        IsEnabled="{x:Bind Vm.CanOpenTimeline, Mode=OneWay}"/>
-                        <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Uid="MenuShare" Click="Share_Click"
-                                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
-                        <MenuFlyoutItem x:Uid="MenuSaveAs" Click="SaveAs_Click"
-                                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
-                        <MenuFlyoutItem x:Uid="MenuPrint" Click="Print_Click"
-                                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
-                        <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Uid="CmdDelete" Click="Delete_Click"
-                                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
-                        <MenuFlyoutItem x:Uid="CmdRename" Click="Rename_Click"
-                                        IsEnabled="{x:Bind Vm.CanRenameCurrent, Mode=OneWay}"/>
-                        <MenuFlyoutSeparator/>
-                        <MenuFlyoutItem x:Uid="MenuFullScreen" Click="ToggleFullScreen_Click"/>
-                        <MenuFlyoutItem x:Uid="MenuSettings" Click="SettingsButton_Click"/>
-                    </MenuFlyout>
-                </AppBarButton.Flyout>
-            </AppBarButton>
-        </CommandBar>
-        </Border>
+        <!-- 标题栏集成顶栏 (Win11 Photos 风格): 声明在最后保证 Z 序最上层。
+             拖拽层 TitleBarDragRegion 是唯一 SetTitleBar 目标 (官方示例模式:
+             交互控件若位于 SetTitleBar 元素的子树内将收不到任何指针输入) -->
+        <Grid x:Name="TitleBarHost"
+              Grid.RowSpan="3"
+              VerticalAlignment="Top"
+              Height="48"
+              Background="Transparent">
+
+            <!-- 拖拽层 (Z 序最底, 透明背景可命中): 空白区域按住拖动 = 移动窗口 -->
+            <Grid x:Name="TitleBarDragRegion" Background="Transparent"/>
+
+            <!-- 图库顶栏: Tab + 搜索 + 操作按钮。无底色 (透明浮于内容上, 也不挡下方拖拽层);
+                 按钮等控件在拖拽层之上, 可正常点击 -->
+            <Grid x:Name="HomeTopBar"
+                  Padding="16,8"
+                  Visibility="{x:Bind Vm.HomeVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition x:Name="HomePad" Width="0"/>
+                </Grid.ColumnDefinitions>
+                <!-- 应用名 (拖拽区域) -->
+                <TextBlock Grid.Column="0"
+                           Text="HyperViewer"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Foreground="{ThemeResource TextPrimaryBrush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,16,0"/>
+                <!-- Tab 栏 (Pill 风格) -->
+                <StackPanel x:Name="TabPanel" Grid.Column="1" Orientation="Horizontal">
+                    <Button x:Name="TabAlbums" x:Uid="LibTabAlbums"
+                            Style="{StaticResource TabPillButtonStyle}"
+                            Command="{x:Bind Vm.SelectAlbumsTabCommand}"
+                            Background="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                            Foreground="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                            AutomationProperties.Name="相册"
+                            Margin="0,0,2,0"/>
+                    <Button x:Name="TabAllPhotos" x:Uid="LibTabAllPhotos"
+                            Style="{StaticResource TabPillButtonStyle}"
+                            Command="{x:Bind Vm.SelectAllPhotosTabCommand}"
+                            Background="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                            Foreground="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                            AutomationProperties.Name="全部照片"
+                            Margin="0,0,2,0"/>
+                    <Button x:Name="TabFolders" x:Uid="LibTabFolders"
+                            Style="{StaticResource TabPillButtonStyle}"
+                            Command="{x:Bind Vm.SelectFoldersTabCommand}"
+                            Background="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                            Foreground="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                            AutomationProperties.Name="文件夹"/>
+                </StackPanel>
+                <!-- 窄窗口溢出菜单 (Tab + 操作按钮收进 ... ) -->
+                <Button x:Name="LibOverflowBtn"
+                        Grid.Column="1"
+                        Visibility="Collapsed"
+                        Padding="12,7"
+                        Margin="0,0,8,0"
+                        Background="{ThemeResource BtnBgBrush}"
+                        Foreground="{ThemeResource TextPrimaryBrush}"
+                        BorderThickness="0"
+                        FontSize="13"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="更多操作">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem x:Uid="LibTabAlbumsFlyout"
+                                            Command="{x:Bind Vm.SelectAlbumsTabCommand}"
+                                            Background="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                            Foreground="{x:Bind Vm.AlbumsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"/>
+                            <MenuFlyoutItem x:Uid="LibTabAllPhotosFlyout"
+                                            Command="{x:Bind Vm.SelectAllPhotosTabCommand}"
+                                            Background="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                            Foreground="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"/>
+                            <MenuFlyoutItem x:Uid="LibTabFoldersFlyout"
+                                            Command="{x:Bind Vm.SelectFoldersTabCommand}"
+                                            Background="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                            Foreground="{x:Bind Vm.FoldersVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem x:Uid="LibOpenImageFlyout" Command="{x:Bind Vm.OpenImageCommand}"/>
+                            <MenuFlyoutItem x:Uid="LibAddFolderFlyout" Command="{x:Bind Vm.OpenFolderCommand}"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem x:Uid="LibSettingsFlyout" Click="SettingsButton_Click"/>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                    <FontIcon Glyph="&#xE712;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                </Button>
+                <!-- 搜索框 (占星号列: 随窗口宽度伸缩, 窄窗口不裁切) -->
+                <AutoSuggestBox x:Name="SearchBox"
+                                Grid.Column="2"
+                                HorizontalAlignment="Stretch"
+                                MaxWidth="320"
+                                MinWidth="90"
+                                Margin="0,0,12,0"
+                                PlaceholderText="搜索相册 / 照片"
+                                Text="{x:Bind Vm.SearchText, Mode=TwoWay}"
+                                QueryIcon="Find"
+                                AutomationProperties.Name="搜索相册 / 照片"
+                                QuerySubmitted="SearchBox_QuerySubmitted"
+                                SuggestionChosen="SearchBox_SuggestionChosen"
+                                TextChanged="SearchBox_TextChanged">
+                    <AutoSuggestBox.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <TextBlock Text="{x:Bind}"/>
+                        </DataTemplate>
+                    </AutoSuggestBox.ItemTemplate>
+                </AutoSuggestBox>
+                <!-- 右侧操作按钮 -->
+                <StackPanel x:Name="ActionPanel" Grid.Column="3" Orientation="Horizontal">
+                    <Button x:Uid="LibOpenImage"
+                            x:Name="LibOpenImageBtn"
+                            Command="{x:Bind Vm.OpenImageCommand}"
+                            Padding="14,7"
+                            Background="{ThemeResource BtnBgBrush}"
+                            Foreground="{ThemeResource TextPrimaryBrush}"
+                            BorderThickness="0"
+                            FontSize="13"
+                            AutomationProperties.Name="打开图片"/>
+                    <Button x:Uid="LibAddFolder"
+                            Command="{x:Bind Vm.OpenFolderCommand}"
+                            Padding="14,7" Margin="8,0,8,0"
+                            Background="{ThemeResource AccentBrush}"
+                            Foreground="White"
+                            BorderThickness="0"
+                            FontSize="13"
+                            AutomationProperties.Name="打开文件夹"/>
+                    <Button x:Uid="LibSettings"
+                            Click="SettingsButton_Click"
+                            Padding="14,7" Margin="8,0,0,0"
+                            Background="{ThemeResource BtnBgBrush}"
+                            Foreground="{ThemeResource TextPrimaryBrush}"
+                            BorderThickness="0"
+                            FontSize="13"
+                            AutomationProperties.Name="设置"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- 图片顶栏: 返回 / 文件名 / 旋转 / 编辑 / 信息 / 收藏 / 更多 -->
+            <Grid x:Name="ImageTopBar"
+                  Visibility="{x:Bind Vm.HomeVisible, Mode=OneWay, Converter={StaticResource InvBoolToVis}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition x:Name="ImagePad" Width="0"/>
+                </Grid.ColumnDefinitions>
+                <!-- 背景 (视觉层, 不参与命中, 不挡拖拽层; 需跨满全部列) -->
+                <Grid IsHitTestVisible="False" Background="{ThemeResource TopBarBgBrush}" Grid.ColumnSpan="9"/>
+                <!-- 返回图库 -->
+                <Button Grid.Column="0"
+                        Style="{StaticResource TitleBarIconButtonStyle}"
+                        Click="BackToLibrary_Click"
+                        Margin="8,5,0,5"
+                        AutomationProperties.Name="返回">
+                    <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                </Button>
+                <!-- 文件名 -->
+                <TextBlock x:Name="FileNameText"
+                           Grid.Column="1"
+                           Text="{x:Bind Vm.Current.Name, Mode=OneWay, FallbackValue=''}"
+                           VerticalAlignment="Center"
+                           FontSize="13"
+                           MaxWidth="280"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="{ThemeResource TextPrimaryBrush}"
+                           Margin="12,0,0,0"/>
+                <Grid Grid.Column="2"/>
+                <!-- 旋转 -->
+                <Button Grid.Column="3"
+                        Style="{StaticResource TitleBarIconButtonStyle}"
+                        Command="{x:Bind Vm.RotateCommand}"
+                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"
+                        AutomationProperties.Name="旋转">
+                    <FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                </Button>
+                <!-- 编辑 -->
+                <Button Grid.Column="4"
+                        Style="{StaticResource TitleBarIconButtonStyle}"
+                        Click="EditButton_Click"
+                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"
+                        AutomationProperties.Name="编辑">
+                    <FontIcon Glyph="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                </Button>
+                <!-- 信息 -->
+                <Button Grid.Column="5"
+                        Style="{StaticResource TitleBarIconButtonStyle}"
+                        Command="{x:Bind Vm.ToggleInfoPanelCommand}"
+                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"
+                        AutomationProperties.Name="信息">
+                    <FontIcon Glyph="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                </Button>
+                <!-- 收藏 -->
+                <Button Grid.Column="6"
+                        Style="{StaticResource TitleBarIconButtonStyle}"
+                        Command="{x:Bind Vm.ToggleFavoriteCommand}"
+                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"
+                        AutomationProperties.Name="收藏">
+                    <FontIcon Glyph="{x:Bind Vm.FavoriteGlyph, Mode=OneWay}"
+                              FontFamily="Segoe MDL2 Assets"
+                              FontSize="16"/>
+                </Button>
+                <!-- 更多 -->
+                <Button Grid.Column="7"
+                        Style="{StaticResource TitleBarIconButtonStyle}"
+                        Margin="4,5,0,5"
+                        AutomationProperties.Name="更多">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem x:Uid="MenuOpenImage" Command="{x:Bind Vm.OpenImageCommand}"/>
+                            <MenuFlyoutItem x:Uid="MenuOpenFolder" Command="{x:Bind Vm.OpenFolderCommand}"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem Text="{x:Bind Vm.SlideShowLabel, Mode=OneWay}"
+                                            Command="{x:Bind Vm.ToggleSlideShowCommand}"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutSubItem x:Uid="MenuRotate">
+                                <MenuFlyoutItem x:Uid="MenuRotateCW" Command="{x:Bind Vm.RotateCommand}"/>
+                                <MenuFlyoutItem x:Uid="MenuRotateCCW" Command="{x:Bind Vm.RotateBackCommand}"/>
+                                <MenuFlyoutItem x:Uid="MenuRotate180" Command="{x:Bind Vm.Rotate180Command}"/>
+                            </MenuFlyoutSubItem>
+                            <MenuFlyoutItem x:Uid="MenuFlipH" Command="{x:Bind Vm.FlipHCommand}"/>
+                            <MenuFlyoutItem x:Uid="MenuFlipV" Command="{x:Bind Vm.FlipVCommand}"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem x:Uid="MenuTimeline" Click="TimelineButton_Click"
+                                            IsEnabled="{x:Bind Vm.CanOpenTimeline, Mode=OneWay}"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem x:Uid="MenuShare" Click="Share_Click"
+                                            IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
+                            <MenuFlyoutItem x:Uid="MenuSaveAs" Click="SaveAs_Click"
+                                            IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
+                            <MenuFlyoutItem x:Uid="MenuPrint" Click="Print_Click"
+                                            IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem x:Uid="CmdDelete" Click="Delete_Click"
+                                            IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
+                            <MenuFlyoutItem x:Uid="CmdRename" Click="Rename_Click"
+                                            IsEnabled="{x:Bind Vm.CanRenameCurrent, Mode=OneWay}"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem x:Uid="MenuFullScreen" Click="ToggleFullScreen_Click"/>
+                            <MenuFlyoutItem x:Uid="MenuSettings" Click="SettingsButton_Click"/>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                    <FontIcon Glyph="&#xE712;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                </Button>
+            </Grid>
+        </Grid>
     </Grid>
 </Page>

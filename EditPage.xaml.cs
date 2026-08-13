@@ -9,6 +9,9 @@ using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.UI;
+using Windows.UI.Core;
+using Windows.UI.Input.Inking;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -28,6 +31,7 @@ namespace HyperViewer
         private EditableImage _previewBase; // 调色预览用的降采样基图
 
         private bool _cropMode;
+        private bool _inkMode;
         private Rect _cropRect;
         private Point _dragStart;
         private bool _dragging;
@@ -42,6 +46,9 @@ namespace HyperViewer
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            InkHost.InkPresenter.InputDeviceTypes = CoreInputDeviceTypes.Mouse
+                | CoreInputDeviceTypes.Touch
+                | CoreInputDeviceTypes.Pen;
             _photo = e.Parameter as PhotoItem;
             TitleText.Text = _photo?.Name ?? Loc.Get("EditTitle");
             if (_photo != null)
@@ -153,6 +160,124 @@ namespace HyperViewer
             CropToggle.IsChecked = _cropMode;
             HintText.Visibility = _cropMode ? Visibility.Visible : Visibility.Collapsed;
             if (!_cropMode) ClearCropUi();
+            if (_cropMode) SetInkActive(false);
+        }
+
+        // ===== 墨迹 (ink) =====
+
+        private void SetInkActive(bool on)
+        {
+            _inkMode = on;
+            InkToggle.IsChecked = on;
+            InkBar.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+            InkHost.IsHitTestVisible = on;
+            CropCanvas.IsHitTestVisible = !on;
+        }
+
+        private void InkToggle_Click(object sender, RoutedEventArgs e)
+        {
+            SetInkActive(InkToggle.IsChecked == true);
+            if (_inkMode && _cropMode)
+            {
+                _cropMode = false;
+                CropToggle.IsChecked = false;
+                ClearCropUi();
+            }
+        }
+
+        private void InkUndo_Click(object sender, RoutedEventArgs e)
+        {
+            var container = InkHost.InkPresenter.StrokeContainer;
+            var strokes = container.GetStrokes();
+            if (strokes.Count == 0) return;
+            var last = strokes[strokes.Count - 1];
+            var r = last.BoundingRect;
+            container.SelectWithPolyLine(new List<Point>
+            {
+                new Point(r.Left, r.Top),
+                new Point(r.Right, r.Top),
+                new Point(r.Right, r.Bottom),
+                new Point(r.Left, r.Bottom)
+            });
+            container.DeleteSelected();
+        }
+
+        private void InkClear_Click(object sender, RoutedEventArgs e)
+        {
+            InkHost.InkPresenter.StrokeContainer.Clear();
+        }
+
+        /// <summary>把墨迹笔画按比例合成到全分辨率像素缓冲 (BGRA8)。</summary>
+        private void CompositeInk()
+        {
+            if (_image == null) return;
+            var strokes = InkHost.InkPresenter.StrokeContainer.GetStrokes();
+            if (strokes.Count == 0) return;
+            double sx = _image.Width / Math.Max(1, InkHost.ActualWidth);
+            double sy = _image.Height / Math.Max(1, InkHost.ActualHeight);
+            foreach (var st in strokes)
+            {
+                var pts = st.GetInkPoints();
+                if (pts.Count == 0) continue;
+                var attrs = st.DrawingAttributes;
+                byte a = 255;
+                if (attrs.Kind == InkDrawingAttributesKind.Pencil && attrs.PencilProperties != null)
+                {
+                    a = (byte)Math.Round(255 * Math.Max(0.0, Math.Min(1.0, attrs.PencilProperties.Opacity)));
+                }
+                var color = attrs.Color;
+                for (int i = 0; i < pts.Count; i++)
+                {
+                    double px = pts[i].Position.X * sx;
+                    double py = pts[i].Position.Y * sy;
+                    double r = Math.Max(1, attrs.Size.Width * 0.5 * (sx + sy) / 2);
+                    if (i == 0)
+                    {
+                        StampCircle(px, py, r, color, a);
+                    }
+                    else
+                    {
+                        double fx = pts[i - 1].Position.X * sx;
+                        double fy = pts[i - 1].Position.Y * sy;
+                        DrawThickSegment(fx, fy, px, py, r, color, a);
+                    }
+                }
+            }
+        }
+
+        private void DrawThickSegment(double x0, double y0, double x1, double y1, double r, Color color, byte a)
+        {
+            double dx = x1 - x0, dy = y1 - y0;
+            double len = Math.Sqrt(dx * dx + dy * dy);
+            int steps = Math.Max(1, (int)Math.Ceiling(len));
+            for (int s = 0; s <= steps; s++)
+            {
+                double t = s / (double)steps;
+                StampCircle(x0 + dx * t, y0 + dy * t, r, color, a);
+            }
+        }
+
+        private void StampCircle(double cx, double cy, double r, Color color, byte a)
+        {
+            int x0 = (int)Math.Floor(cx - r), x1 = (int)Math.Ceiling(cx + r);
+            int y0 = (int)Math.Floor(cy - r), y1 = (int)Math.Ceiling(cy + r);
+            double r2 = r * r;
+            double alphaN = a / 255.0;
+            var px = _image.Pixels;
+            int w = _image.Width, h = _image.Height;
+            for (int y = y0; y <= y1; y++)
+            {
+                for (int x = x0; x <= x1; x++)
+                {
+                    if (x < 0 || y < 0 || x >= w || y >= h) continue;
+                    double dx = x - cx, dy = y - cy;
+                    if (dx * dx + dy * dy > r2) continue;
+                    int idx = (y * w + x) * 4;
+                    px[idx] = (byte)(px[idx] * (1 - alphaN) + color.B * alphaN);
+                    px[idx + 1] = (byte)(px[idx + 1] * (1 - alphaN) + color.G * alphaN);
+                    px[idx + 2] = (byte)(px[idx + 2] * (1 - alphaN) + color.R * alphaN);
+                }
+            }
         }
 
         private void ClearCropUi()
@@ -293,6 +418,7 @@ namespace HyperViewer
                 : BitmapEncoder.PngEncoderId;
             try
             {
+                await Task.Run(() => CompositeInk());
                 await ImageEditService.SaveAsync(file, _image.Pixels, _image.Width, _image.Height, encoderId);
                 StatusText.Text = Loc.Format("EditSaved", file.Name);
             }
