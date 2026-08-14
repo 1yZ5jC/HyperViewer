@@ -234,6 +234,111 @@
   <data name="EditProcessFailed" xml:space="preserve">
     <value>Processing failed</value>
   </data>
+  <data name="EditMosaicToggle.Content" xml:space="preserve">
+    <value>Mosaic</value>
+  </data>
+  <data name="EditTextToggle.Content" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="EditUndo.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="EditRedo.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="EditCompare.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Compare (hold to see original)</value>
+  </data>
+  <data name="EditHistoToggle.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Histogram</value>
+  </data>
+  <data name="EditRotateCw.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Rotate 90° CW</value>
+  </data>
+  <data name="EditRotateCcw.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Rotate 90° CCW</value>
+  </data>
+  <data name="EditFlipH.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Flip horizontal</value>
+  </data>
+  <data name="EditFlipV.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Flip vertical</value>
+  </data>
+  <data name="EditMoreAdjust.Content" xml:space="preserve">
+    <value>More Adjust</value>
+  </data>
+  <data name="EditWBTemp.Text" xml:space="preserve">
+    <value>Temperature</value>
+  </data>
+  <data name="EditWBTint.Text" xml:space="preserve">
+    <value>Tint</value>
+  </data>
+  <data name="EditApplyWb.Content" xml:space="preserve">
+    <value>Apply WB</value>
+  </data>
+  <data name="EditBlur.Text" xml:space="preserve">
+    <value>Blur</value>
+  </data>
+  <data name="EditSharpen.Text" xml:space="preserve">
+    <value>Sharpen</value>
+  </data>
+  <data name="EditApplyBlurSharpen.Content" xml:space="preserve">
+    <value>Apply Blur/Sharpen</value>
+  </data>
+  <data name="EditBorder.Content" xml:space="preserve">
+    <value>Border</value>
+  </data>
+  <data name="EditBorderWidth.Text" xml:space="preserve">
+    <value>Border width (%)</value>
+  </data>
+  <data name="EditBorderColor.Text" xml:space="preserve">
+    <value>Border color</value>
+  </data>
+  <data name="EditApplyBorder.Content" xml:space="preserve">
+    <value>Apply border</value>
+  </data>
+  <data name="EditMosaicSize.Text" xml:space="preserve">
+    <value>Block size</value>
+  </data>
+  <data name="EditMosaicHint.Text" xml:space="preserve">
+    <value>Drag on the image to mosaic</value>
+  </data>
+  <data name="EditTextSize.Text" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="EditTextColor.Text" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="EditTextHint.Text" xml:space="preserve">
+    <value>Drag a text box, type inside, click outside to finish</value>
+  </data>
+  <data name="EditCompareLabel.Text" xml:space="preserve">
+    <value>Original</value>
+  </data>
+  <data name="EditHistoTitle.Text" xml:space="preserve">
+    <value>Histogram</value>
+  </data>
+  <data name="FilterWarm.Content" xml:space="preserve">
+    <value>Warm</value>
+  </data>
+  <data name="FilterCool.Content" xml:space="preserve">
+    <value>Cool</value>
+  </data>
+  <data name="FilterFilm.Content" xml:space="preserve">
+    <value>Film</value>
+  </data>
+  <data name="FilterVignette.Content" xml:space="preserve">
+    <value>Vignette</value>
+  </data>
+  <data name="EditAppliedDone" xml:space="preserve">
+    <value>Applied</value>
+  </data>
+  <data name="EditCroppedDone" xml:space="preserve">
+    <value>Cropped</value>
+  </data>
+  <data name="InfoHistogramTitle.Text" xml:space="preserve">
+    <value>Histogram</value>
+  </data>
   <data name="BackToolTip.ToolTipService.ToolTip" xml:space="preserve">
     <value>Back</value>
   </data>

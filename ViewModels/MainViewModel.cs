@@ -10,6 +10,7 @@ using HyperViewer.Helpers;
 using HyperViewer.Models;
 using HyperViewer.Services;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml.Media;
@@ -892,6 +893,54 @@ namespace HyperViewer.ViewModels
             catch
             {
                 InfoRows = null;
+            }
+
+            _ = LoadHistogramAsync(Current);
+        }
+
+        // 直方图 (信息面板底部)
+        private Windows.UI.Xaml.Media.Imaging.WriteableBitmap _histogramImage;
+        public Windows.UI.Xaml.Media.Imaging.WriteableBitmap HistogramImage
+        {
+            get => _histogramImage;
+            private set => SetProperty(ref _histogramImage, value);
+        }
+
+        private async Task LoadHistogramAsync(PhotoItem photo)
+        {
+            try
+            {
+                using (var stream = await photo.File.OpenReadAsync())
+                {
+                    var decoder = await BitmapDecoder.CreateAsync(stream);
+                    uint dw = decoder.PixelWidth, dh = decoder.PixelHeight;
+                    uint maxEdge = 512;
+                    while (Math.Max(dw, dh) > maxEdge)
+                    {
+                        dw = (dw + 1) / 2;
+                        dh = (dh + 1) / 2;
+                    }
+                    var data = await decoder.GetPixelDataAsync(
+                        BitmapPixelFormat.Bgra8,
+                        BitmapAlphaMode.Ignore,
+                        new BitmapTransform
+                        {
+                            ScaledWidth = Math.Max(1, dw),
+                            ScaledHeight = Math.Max(1, dh),
+                            InterpolationMode = BitmapInterpolationMode.Linear,
+                        },
+                        ExifOrientationMode.IgnoreExifOrientation,
+                        ColorManagementMode.DoNotColorManage);
+                    var px = data.DetachPixelData();
+                    if (Current == photo && px != null)
+                    {
+                        HistogramImage = ImageEditService.BuildHistogram(px, (int)dw, (int)dh);
+                    }
+                }
+            }
+            catch
+            {
+                if (Current == photo) HistogramImage = null;
             }
         }
 

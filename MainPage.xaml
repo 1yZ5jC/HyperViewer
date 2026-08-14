@@ -714,6 +714,27 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
+                    <Border Grid.Row="1"
+                            VerticalAlignment="Bottom"
+                            Padding="8,6"
+                            Background="{ThemeResource ChromeBgAltBrush}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Uid="InfoHistogramTitle"
+                                       Grid.Row="0"
+                                       FontSize="12"
+                                       Foreground="{ThemeResource TextMutedBrush}"/>
+                            <Image x:Name="HistogramImage"
+                                   Grid.Row="1"
+                                   Width="280"
+                                   Height="80"
+                                   Stretch="Uniform"
+                                   Source="{x:Bind Vm.HistogramImage, Mode=OneWay}"/>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Border>
         </Grid>

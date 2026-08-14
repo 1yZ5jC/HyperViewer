@@ -234,6 +234,111 @@
   <data name="EditProcessFailed" xml:space="preserve">
     <value>处理失败</value>
   </data>
+  <data name="EditMosaicToggle.Content" xml:space="preserve">
+    <value>马赛克</value>
+  </data>
+  <data name="EditTextToggle.Content" xml:space="preserve">
+    <value>文字</value>
+  </data>
+  <data name="EditUndo.ToolTipService.ToolTip" xml:space="preserve">
+    <value>撤销</value>
+  </data>
+  <data name="EditRedo.ToolTipService.ToolTip" xml:space="preserve">
+    <value>重做</value>
+  </data>
+  <data name="EditCompare.ToolTipService.ToolTip" xml:space="preserve">
+    <value>对比 (按住查看原图)</value>
+  </data>
+  <data name="EditHistoToggle.ToolTipService.ToolTip" xml:space="preserve">
+    <value>直方图</value>
+  </data>
+  <data name="EditRotateCw.ToolTipService.ToolTip" xml:space="preserve">
+    <value>右转 90°</value>
+  </data>
+  <data name="EditRotateCcw.ToolTipService.ToolTip" xml:space="preserve">
+    <value>左转 90°</value>
+  </data>
+  <data name="EditFlipH.ToolTipService.ToolTip" xml:space="preserve">
+    <value>水平翻转</value>
+  </data>
+  <data name="EditFlipV.ToolTipService.ToolTip" xml:space="preserve">
+    <value>垂直翻转</value>
+  </data>
+  <data name="EditMoreAdjust.Content" xml:space="preserve">
+    <value>更多调整</value>
+  </data>
+  <data name="EditWBTemp.Text" xml:space="preserve">
+    <value>色温</value>
+  </data>
+  <data name="EditWBTint.Text" xml:space="preserve">
+    <value>色调</value>
+  </data>
+  <data name="EditApplyWb.Content" xml:space="preserve">
+    <value>应用白平衡</value>
+  </data>
+  <data name="EditBlur.Text" xml:space="preserve">
+    <value>模糊</value>
+  </data>
+  <data name="EditSharpen.Text" xml:space="preserve">
+    <value>锐化</value>
+  </data>
+  <data name="EditApplyBlurSharpen.Content" xml:space="preserve">
+    <value>应用模糊锐化</value>
+  </data>
+  <data name="EditBorder.Content" xml:space="preserve">
+    <value>画布</value>
+  </data>
+  <data name="EditBorderWidth.Text" xml:space="preserve">
+    <value>边框宽度 (%)</value>
+  </data>
+  <data name="EditBorderColor.Text" xml:space="preserve">
+    <value>边框颜色</value>
+  </data>
+  <data name="EditApplyBorder.Content" xml:space="preserve">
+    <value>应用边框</value>
+  </data>
+  <data name="EditMosaicSize.Text" xml:space="preserve">
+    <value>方块大小</value>
+  </data>
+  <data name="EditMosaicHint.Text" xml:space="preserve">
+    <value>在图片上按住涂抹马赛克</value>
+  </data>
+  <data name="EditTextSize.Text" xml:space="preserve">
+    <value>字号</value>
+  </data>
+  <data name="EditTextColor.Text" xml:space="preserve">
+    <value>颜色</value>
+  </data>
+  <data name="EditTextHint.Text" xml:space="preserve">
+    <value>拖出文本框后输入, 点击框外完成</value>
+  </data>
+  <data name="EditCompareLabel.Text" xml:space="preserve">
+    <value>原图</value>
+  </data>
+  <data name="EditHistoTitle.Text" xml:space="preserve">
+    <value>直方图</value>
+  </data>
+  <data name="FilterWarm.Content" xml:space="preserve">
+    <value>暖色</value>
+  </data>
+  <data name="FilterCool.Content" xml:space="preserve">
+    <value>冷色</value>
+  </data>
+  <data name="FilterFilm.Content" xml:space="preserve">
+    <value>胶片</value>
+  </data>
+  <data name="FilterVignette.Content" xml:space="preserve">
+    <value>暗角</value>
+  </data>
+  <data name="EditAppliedDone" xml:space="preserve">
+    <value>已应用</value>
+  </data>
+  <data name="EditCroppedDone" xml:space="preserve">
+    <value>已裁剪</value>
+  </data>
+  <data name="InfoHistogramTitle.Text" xml:space="preserve">
+    <value>直方图</value>
+  </data>
   <data name="BackToolTip.ToolTipService.ToolTip" xml:space="preserve">
     <value>返回</value>
   </data>

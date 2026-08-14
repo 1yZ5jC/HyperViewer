@@ -13,7 +13,9 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- 顶栏 -->
@@ -22,13 +24,14 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
-         </Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Click="BackButton_Click" Padding="10,4"
                     Background="Transparent" BorderThickness="0"
                     x:Uid="BackToolTip">
                 <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"
                           Foreground="{ThemeResource TextPrimaryBrush}"/>
-         </Button>
+            </Button>
             <TextBlock x:Name="TitleText" Grid.Column="1" VerticalAlignment="Center"
                        FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
                        Foreground="{ThemeResource TextPrimaryBrush}"
@@ -37,49 +40,162 @@
                 <ProgressRing x:Name="BusyRing" IsActive="False" Width="20" Height="20" Margin="0,0,8,0"/>
                 <TextBlock x:Name="StatusText" VerticalAlignment="Center"
                            Foreground="{ThemeResource TextMutedBrush}"/>
-         </StackPanel>
-     </Grid>
+            </StackPanel>
+            <Grid x:Name="TitleInsetPad" Grid.Column="3"/>
+        </Grid>
 
         <!-- 工具条 -->
         <Grid Grid.Row="1" Padding="8,6" Background="{ThemeResource ChromeBgBrush}">
-            <StackPanel Orientation="Horizontal">
-                <ToggleButton x:Name="CropToggle" x:Uid="EditCropToggle" Click="CropToggle_Click" MinWidth="72"/>
-                <ToggleButton x:Name="InkToggle" x:Uid="EditInkToggle" Click="InkToggle_Click" MinWidth="72" Margin="8,0,0,0"/>
-                <Button x:Uid="EditApplyCrop" Click="ApplyCrop_Click" MinWidth="88" Margin="8,0,0,0"/>
-                <Button x:Uid="EditReset" Click="Reset_Click" MinWidth="72" Margin="8,0,0,0"/>
-                <Button x:Uid="EditSave" Click="Save_Click" MinWidth="72" Margin="8,0,0,0"/>
-                <TextBlock x:Name="HintText" x:Uid="EditCropHint"
-                           VerticalAlignment="Center" Margin="16,0,0,0"
-                           Foreground="{ThemeResource TextMutedBrush}"
-                           Visibility="Collapsed"/>
-         </StackPanel>
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Horizontal">
+                    <ToggleButton x:Name="CropToggle" x:Uid="EditCropToggle" Click="CropToggle_Click" MinWidth="60"/>
+                    <ToggleButton x:Name="InkToggle" x:Uid="EditInkToggle" Click="InkToggle_Click" MinWidth="60" Margin="6,0,0,0"/>
+                    <ToggleButton x:Name="MosaicToggle" x:Uid="EditMosaicToggle" Click="MosaicToggle_Click" MinWidth="60" Margin="6,0,0,0"/>
+                    <ToggleButton x:Name="TextToggle" x:Uid="EditTextToggle" Click="TextToggle_Click" MinWidth="60" Margin="6,0,0,0"/>
+                    <Border Width="1" Background="{ThemeResource ChromeBgStrongBrush}" Margin="10,4"/>
+                    <Button x:Name="UndoBtn" x:Uid="EditUndo" Click="Undo_Click" Width="40" Padding="6" IsEnabled="False">
+                        <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                    </Button>
+                    <Button x:Name="RedoBtn" x:Uid="EditRedo" Click="Redo_Click" Width="40" Padding="6" Margin="6,0,0,0" IsEnabled="False"
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                        <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="14" RenderTransformOrigin="0.5,0.5">
+                            <FontIcon.RenderTransform>
+                                <ScaleTransform ScaleX="-1"/>
+                            </FontIcon.RenderTransform>
+                        </FontIcon>
+                    </Button>
+                    <Button x:Name="CompareBtn" x:Uid="EditCompare" Width="40" Padding="6" Margin="6,0,0,0"
+                            PointerPressed="Compare_PointerPressed" PointerReleased="Compare_PointerReleased"
+                            PointerCanceled="Compare_PointerReleased" PointerCaptureLost="Compare_PointerReleased">
+                        <FontIcon Glyph="&#xE890;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                    </Button>
+                    <ToggleButton x:Name="HistoToggle" x:Uid="EditHistoToggle" Click="HistoToggle_Click" Width="40" Padding="6" Margin="6,0,0,0">
+                        <PathIcon Data="M2,8 L6,8 L6,14 L2,14 Z M7,4 L11,4 L11,14 L7,14 Z M12,6 L16,6 L16,14 L12,14 Z"/>
+                    </ToggleButton>
+                    <Border Width="1" Background="{ThemeResource ChromeBgStrongBrush}" Margin="10,4"/>
+                    <Button x:Uid="EditRotateCw" Click="RotateCw_Click" Width="40" Padding="6">
+                        <FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                    </Button>
+                    <Button x:Uid="EditRotateCcw" Click="RotateCcw_Click" Width="40" Padding="6" Margin="6,0,0,0"
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                        <FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets" FontSize="14" RenderTransformOrigin="0.5,0.5">
+                            <FontIcon.RenderTransform>
+                                <ScaleTransform ScaleX="-1"/>
+                            </FontIcon.RenderTransform>
+                        </FontIcon>
+                    </Button>
+                    <Button x:Uid="EditFlipH" Click="FlipH_Click" Width="40" Padding="6" Margin="6,0,0,0">
+                        <PathIcon Data="M2,5 L6,8 L2,11 Z M14,5 L10,8 L14,11 Z M7.6,2 L8.4,2 L8.4,14 L7.6,14 Z"/>
+                    </Button>
+                    <Button x:Uid="EditFlipV" Click="FlipV_Click" Width="40" Padding="6" Margin="6,0,0,0">
+                        <PathIcon Data="M5,2 L8,6 L11,2 Z M5,14 L8,10 L11,14 Z M2,7.6 L2,8.4 L14,8.4 L14,7.6 Z"/>
+                    </Button>
+                    <Border Width="1" Background="{ThemeResource ChromeBgStrongBrush}" Margin="10,4"/>
+                    <Button x:Uid="EditApplyCrop" Click="ApplyCrop_Click" MinWidth="80"/>
+                    <Button x:Uid="EditReset" Click="Reset_Click" MinWidth="60" Margin="6,0,0,0"/>
+                    <Button x:Uid="EditSave" Click="Save_Click" MinWidth="60" Margin="6,0,0,0"/>
+                    <TextBlock x:Name="HintText" x:Uid="EditCropHint"
+                               VerticalAlignment="Center" Margin="10,0,0,0"
+                               Foreground="{ThemeResource TextMutedBrush}"
+                               Visibility="Collapsed"/>
+             </StackPanel>
+            </ScrollViewer>
      </Grid>
 
         <!-- 调色条 -->
         <Grid Grid.Row="2" Padding="8,0,8,6" Background="{ThemeResource ChromeBgBrush}">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock x:Uid="EditBrightness" VerticalAlignment="Center"
-                           Foreground="{ThemeResource TextPrimaryBrush}"/>
-                <Slider x:Name="BrightnessSlider" Minimum="-100" Maximum="100" StepFrequency="1" Width="140"
-                        ValueChanged="Adjust_Changed" Margin="6,0,14,0"/>
-                <TextBlock x:Uid="EditContrast" VerticalAlignment="Center"
-                           Foreground="{ThemeResource TextPrimaryBrush}"/>
-                <Slider x:Name="ContrastSlider" Minimum="-100" Maximum="100" StepFrequency="1" Width="140"
-                        ValueChanged="Adjust_Changed" Margin="6,0,14,0"/>
-                <TextBlock x:Uid="EditSaturation" VerticalAlignment="Center"
-                           Foreground="{ThemeResource TextPrimaryBrush}"/>
-                <Slider x:Name="SaturationSlider" Minimum="-100" Maximum="100" StepFrequency="1" Width="140"
-                        ValueChanged="Adjust_Changed" Margin="6,0,14,0"/>
-                <TextBlock x:Uid="EditFilter" VerticalAlignment="Center"
-                           Foreground="{ThemeResource TextPrimaryBrush}"/>
-                <ComboBox x:Name="FilterBox" Width="110" SelectionChanged="Filter_Changed" Margin="6,0,14,0">
-                    <ComboBoxItem x:Uid="FilterNone"/>
-                    <ComboBoxItem x:Uid="FilterGrayscale"/>
-                    <ComboBoxItem x:Uid="FilterInvert"/>
-                    <ComboBoxItem x:Uid="FilterSepia"/>
-             </ComboBox>
-                <Button x:Uid="EditApplyAdjust" Click="ApplyAdjust_Click" MinWidth="88"/>
-         </StackPanel>
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Uid="EditBrightness" VerticalAlignment="Center"
+                               Foreground="{ThemeResource TextPrimaryBrush}"/>
+                    <Slider x:Name="BrightnessSlider" Minimum="-100" Maximum="100" StepFrequency="1" Width="100"
+                            ValueChanged="Adjust_Changed" Margin="6,0,10,0"/>
+                    <TextBlock x:Uid="EditContrast" VerticalAlignment="Center"
+                               Foreground="{ThemeResource TextPrimaryBrush}"/>
+                    <Slider x:Name="ContrastSlider" Minimum="-100" Maximum="100" StepFrequency="1" Width="100"
+                            ValueChanged="Adjust_Changed" Margin="6,0,10,0"/>
+                    <TextBlock x:Uid="EditSaturation" VerticalAlignment="Center"
+                               Foreground="{ThemeResource TextPrimaryBrush}"/>
+                    <Slider x:Name="SaturationSlider" Minimum="-100" Maximum="100" StepFrequency="1" Width="100"
+                            ValueChanged="Adjust_Changed" Margin="6,0,10,0"/>
+                    <TextBlock x:Uid="EditFilter" VerticalAlignment="Center"
+                               Foreground="{ThemeResource TextPrimaryBrush}"/>
+                    <ComboBox x:Name="FilterBox" Width="100" SelectionChanged="Filter_Changed" Margin="6,0,10,0">
+                        <ComboBoxItem x:Uid="FilterNone"/>
+                        <ComboBoxItem x:Uid="FilterGrayscale"/>
+                        <ComboBoxItem x:Uid="FilterInvert"/>
+                        <ComboBoxItem x:Uid="FilterSepia"/>
+                        <ComboBoxItem x:Uid="FilterWarm"/>
+                        <ComboBoxItem x:Uid="FilterCool"/>
+                        <ComboBoxItem x:Uid="FilterFilm"/>
+                        <ComboBoxItem x:Uid="FilterVignette"/>
+                 </ComboBox>
+                    <Button x:Uid="EditApplyAdjust" Click="ApplyAdjust_Click" MinWidth="76"/>
+                    <Border Width="1" Background="{ThemeResource ChromeBgStrongBrush}" Margin="12,4"/>
+                    <Button x:Uid="EditMoreAdjust" MinWidth="80" VerticalAlignment="Center">
+                        <Button.Flyout>
+                            <Flyout>
+                                <StackPanel Width="300" Padding="4">
+                                    <TextBlock x:Uid="EditWBTemp" FontSize="12"
+                                               Foreground="{ThemeResource TextPrimaryBrush}"/>
+                                    <Slider x:Name="TempSlider" Minimum="-100" Maximum="100" StepFrequency="1"
+                                            ValueChanged="Wb_Changed" Margin="0,4,0,2"/>
+                                    <TextBlock x:Uid="EditWBTint" FontSize="12"
+                                               Foreground="{ThemeResource TextPrimaryBrush}"/>
+                                    <Slider x:Name="TintSlider" Minimum="-100" Maximum="100" StepFrequency="1"
+                                            ValueChanged="Wb_Changed" Margin="0,4,0,2"/>
+                                    <Button x:Uid="EditApplyWb" Click="ApplyWb_Click" MinWidth="80"
+                                            HorizontalAlignment="Left" Margin="0,2,0,12"/>
+                                    <TextBlock x:Uid="EditBlur" FontSize="12"
+                                               Foreground="{ThemeResource TextPrimaryBrush}"/>
+                                    <Slider x:Name="BlurSlider" Minimum="0" Maximum="100" StepFrequency="1"
+                                            ValueChanged="BlurSharpen_Changed" Margin="0,4,0,2"/>
+                                    <TextBlock x:Uid="EditSharpen" FontSize="12"
+                                               Foreground="{ThemeResource TextPrimaryBrush}"/>
+                                    <Slider x:Name="SharpenSlider" Minimum="0" Maximum="100" StepFrequency="1"
+                                            ValueChanged="BlurSharpen_Changed" Margin="0,4,0,2"/>
+                                    <Button x:Uid="EditApplyBlurSharpen" Click="ApplyBlurSharpen_Click" MinWidth="80"
+                                            HorizontalAlignment="Left" Margin="0,2,0,12"/>
+                                    <TextBlock x:Uid="EditBorderWidth" FontSize="12"
+                                               Foreground="{ThemeResource TextPrimaryBrush}"/>
+                                    <Slider x:Name="BorderWidthSlider" Minimum="0" Maximum="20" StepFrequency="1"
+                                            Margin="0,4,0,2"/>
+                                    <TextBlock x:Uid="EditBorderColor" FontSize="12"
+                                               Foreground="{ThemeResource TextPrimaryBrush}"/>
+                                    <ComboBox x:Name="BorderColorCombo" Margin="0,4,0,8">
+                                        <ComboBoxItem>
+                                            <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#FFFFFF" Width="40" Height="22"/></Grid>
+                                        </ComboBoxItem>
+                                        <ComboBoxItem>
+                                            <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#000000" Width="40" Height="22"/></Grid>
+                                        </ComboBoxItem>
+                                        <ComboBoxItem>
+                                            <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#808080" Width="40" Height="22"/></Grid>
+                                        </ComboBoxItem>
+                                        <ComboBoxItem>
+                                            <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#E53935" Width="40" Height="22"/></Grid>
+                                        </ComboBoxItem>
+                                        <ComboBoxItem>
+                                            <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#1E88E5" Width="40" Height="22"/></Grid>
+                                        </ComboBoxItem>
+                                        <ComboBoxItem>
+                                            <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#43A047" Width="40" Height="22"/></Grid>
+                                        </ComboBoxItem>
+                                        <ComboBoxItem>
+                                            <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#FDD835" Width="40" Height="22"/></Grid>
+                                        </ComboBoxItem>
+                                        <ComboBoxItem>
+                                            <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#8E24AA" Width="40" Height="22"/></Grid>
+                                        </ComboBoxItem>
+                                    </ComboBox>
+                                    <Button x:Uid="EditApplyBorder" Click="ApplyBorder_Click" MinWidth="80"
+                                            HorizontalAlignment="Left"/>
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+             </StackPanel>
+            </ScrollViewer>
      </Grid>
 
         <!-- 墨迹工具条 -->
@@ -93,8 +209,56 @@
             </StackPanel>
         </Grid>
 
+        <!-- 马赛克 / 文字 参数条 -->
+        <Grid Grid.Row="4" Padding="8,6" Background="{ThemeResource ChromeBgBrush}">
+            <StackPanel x:Name="MosaicPanel" Orientation="Horizontal" Visibility="Collapsed">
+                <TextBlock x:Uid="EditMosaicSize" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextPrimaryBrush}"/>
+                <Slider x:Name="MosaicSizeSlider" Minimum="1" Maximum="30" StepFrequency="1" Width="140"
+                        Margin="6,0,10,0"/>
+                <TextBlock x:Uid="EditMosaicHint" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextMutedBrush}"/>
+            </StackPanel>
+            <StackPanel x:Name="TextPanel" Orientation="Horizontal" Visibility="Collapsed">
+                <TextBlock x:Uid="EditTextSize" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextPrimaryBrush}"/>
+                <Slider x:Name="TextSizeSlider" Minimum="12" Maximum="200" StepFrequency="1" Width="120"
+                        ValueChanged="TextSize_Changed" Margin="6,0,10,0"/>
+                <TextBlock x:Uid="EditTextColor" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextPrimaryBrush}"/>
+                <ComboBox x:Name="TextColorCombo" SelectionChanged="TextColor_Changed" Margin="6,0,10,0">
+                    <ComboBoxItem>
+                        <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#FFFFFF" Width="40" Height="22"/></Grid>
+                    </ComboBoxItem>
+                    <ComboBoxItem>
+                        <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#000000" Width="40" Height="22"/></Grid>
+                    </ComboBoxItem>
+                    <ComboBoxItem>
+                        <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#808080" Width="40" Height="22"/></Grid>
+                    </ComboBoxItem>
+                    <ComboBoxItem>
+                        <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#E53935" Width="40" Height="22"/></Grid>
+                    </ComboBoxItem>
+                    <ComboBoxItem>
+                        <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#1E88E5" Width="40" Height="22"/></Grid>
+                    </ComboBoxItem>
+                    <ComboBoxItem>
+                        <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#43A047" Width="40" Height="22"/></Grid>
+                    </ComboBoxItem>
+                    <ComboBoxItem>
+                        <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#FDD835" Width="40" Height="22"/></Grid>
+                    </ComboBoxItem>
+                    <ComboBoxItem>
+                        <Grid><Border BorderBrush="#808080" BorderThickness="1" Background="#8E24AA" Width="40" Height="22"/></Grid>
+                    </ComboBoxItem>
+                </ComboBox>
+                <TextBlock x:Uid="EditTextHint" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextMutedBrush}"/>
+            </StackPanel>
+        </Grid>
+
         <!-- 预览区 -->
-        <Grid Grid.Row="4" Background="Black">
+        <Grid Grid.Row="5" Background="Black">
             <Grid x:Name="HostSizer">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                               HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
@@ -109,9 +273,49 @@
                             <Rectangle x:Name="CropRectVisual" Stroke="White" StrokeThickness="2"
                                        Fill="{ThemeResource CropLineBrush}" Visibility="Collapsed"/>
                         </Canvas>
+                        <Canvas x:Name="StickerHost">
+                            <Rectangle x:Name="TextBoxMarquee" Stroke="White" StrokeThickness="1.5"
+                                       StrokeDashArray="4,2" IsHitTestVisible="False" Visibility="Collapsed"/>
+                            <Grid x:Name="TextSticker" Visibility="Collapsed">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Border x:Name="StickerGrip" Grid.Row="0" HorizontalAlignment="Center"
+                                        Background="#66000000" CornerRadius="3,3,0,0" Padding="6,1"
+                                        PointerPressed="StickerGrip_PointerPressed"
+                                        PointerMoved="StickerGrip_PointerMoved"
+                                        PointerReleased="StickerGrip_PointerReleased"
+                                        PointerCanceled="StickerGrip_PointerReleased">
+                                    <PathIcon Data="M8,1 L11,4 L9,4 L9,7 L12,7 L12,5 L15,8 L12,11 L12,9 L9,9 L9,12 L11,12 L8,15 L5,12 L7,12 L7,9 L4,9 L4,11 L1,8 L4,5 L4,7 L7,7 L7,4 L5,4 Z"
+                                              Foreground="White" Width="12" Height="12"/>
+                                </Border>
+                                <TextBox x:Name="StickerBox" Grid.Row="1"
+                                         TextChanged="StickerBox_TextChanged" KeyDown="StickerBox_KeyDown"
+                                         TextAlignment="Center" MinWidth="60" MaxWidth="500"
+                                         Background="#B3FFFFFF" Foreground="Black" BorderBrush="#66FFFFFF"
+                                         BorderThickness="1" Padding="6,3"/>
+                            </Grid>
+                        </Canvas>
                     </Grid>
                 </ScrollViewer>
             </Grid>
+            <Border x:Name="CompareLabel" HorizontalAlignment="Center" VerticalAlignment="Center"
+                IsHitTestVisible="False" Visibility="Collapsed"
+                Background="#88000000" CornerRadius="4" Padding="14,8">
+                <TextBlock x:Uid="EditCompareLabel" Foreground="White" FontSize="16" FontWeight="SemiBold"/>
+            </Border>
+            <Canvas x:Name="TextRenderHost" Margin="-20000,-20000,0,0" IsHitTestVisible="False"/>
+        </Grid>
+
+        <!-- 直方图条 -->
+        <Grid x:Name="HistoBar" Grid.Row="6" Padding="8,4" Background="{ThemeResource ChromeBgBrush}"
+              Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <TextBlock x:Uid="EditHistoTitle" VerticalAlignment="Center" Margin="0,0,12,0"
+                           Foreground="{ThemeResource TextMutedBrush}"/>
+                <Image x:Name="EditHistoImage" Width="256" Height="80" Stretch="Uniform"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </Page>
