@@ -10,7 +10,7 @@
   <Identity
     Name="YoungZhouCorp.HyperViewer"
     Publisher="CN=Alan"
-    Version="0.0.1.0" />
+    Version="0.0.2.0" />
 
   <mp:PhoneIdentity PhoneProductId="d2e38be3-0c72-4cea-84ab-9064ef712fd5" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
