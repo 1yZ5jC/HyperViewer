@@ -114,6 +114,32 @@
                               Toggled="SlideBlurSwitch_Toggled"/>
                 <TextBlock Style="{StaticResource SettingHintStyle}" x:Uid="SettingsSlideBlurHint"/>
 
+                <!-- 动态磁贴 -->
+                <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsLiveTileLabel" Margin="0,24,0,0"/>
+                <ToggleSwitch x:Name="LiveTileSwitch"
+                              x:Uid="SettingsLiveTile"
+                              Toggled="LiveTileSwitch_Toggled"/>
+                <TextBlock Style="{StaticResource SettingHintStyle}" x:Uid="SettingsLiveTileHint"/>
+
+                <ToggleSwitch x:Name="TileSingleSwitch"
+                              x:Uid="SettingsTileSingle"
+                              Margin="0,8,0,0"
+                              Toggled="TileSingleSwitch_Toggled"/>
+                <TextBlock Style="{StaticResource SettingHintStyle}" x:Uid="SettingsTileSingleHint"/>
+
+                <ToggleSwitch x:Name="TileRotationSwitch"
+                              x:Uid="SettingsTileRotation"
+                              Margin="0,8,0,0"
+                              Toggled="TileRotationSwitch_Toggled"/>
+                <TextBlock Style="{StaticResource SettingHintStyle}" x:Uid="SettingsTileRotationHint"/>
+                <ComboBox x:Name="TileRotationBox" Width="200" Margin="0,8,0,0"
+                          SelectionChanged="TileRotationBox_SelectionChanged">
+                    <ComboBoxItem x:Uid="RotateInterval30" Tag="30"/>
+                    <ComboBoxItem x:Uid="RotateInterval60" Tag="60"/>
+                    <ComboBoxItem x:Uid="RotateInterval300" Tag="300"/>
+                    <ComboBoxItem x:Uid="RotateInterval600" Tag="600"/>
+                </ComboBox>
+
                 <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsBgLabel" Margin="0,24,0,0"/>
                 <ComboBox x:Name="BackgroundBox" Width="200" SelectionChanged="BackgroundBox_SelectionChanged">
                     <ComboBoxItem x:Uid="BgBlack" Tag="Black"/>

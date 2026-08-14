@@ -468,6 +468,57 @@
   <data name="SettingsSlideBlurHint.Text" xml:space="preserve">
     <value>背景跟随当前图片的色彩模糊显示</value>
   </data>
+  <data name="SettingsLiveTileLabel.Text" xml:space="preserve">
+    <value>动态磁贴</value>
+  </data>
+  <data name="SettingsLiveTile.Header" xml:space="preserve">
+    <value>在开始菜单磁贴上显示最近照片</value>
+  </data>
+  <data name="SettingsLiveTile.OnContent" xml:space="preserve">
+    <value>开</value>
+  </data>
+  <data name="SettingsLiveTile.OffContent" xml:space="preserve">
+    <value>关</value>
+  </data>
+  <data name="SettingsLiveTileHint.Text" xml:space="preserve">
+    <value>图库内容变化时自动用最近照片刷新磁贴</value>
+  </data>
+  <data name="SettingsTileSingle.Header" xml:space="preserve">
+    <value>磁贴仅显示一张图片</value>
+  </data>
+  <data name="SettingsTileSingle.OnContent" xml:space="preserve">
+    <value>开</value>
+  </data>
+  <data name="SettingsTileSingle.OffContent" xml:space="preserve">
+    <value>关</value>
+  </data>
+  <data name="SettingsTileSingleHint.Text" xml:space="preserve">
+    <value>所有尺寸磁贴共用同一张最近照片</value>
+  </data>
+  <data name="SettingsTileRotation.Header" xml:space="preserve">
+    <value>磁贴轮换显示图片</value>
+  </data>
+  <data name="SettingsTileRotation.OnContent" xml:space="preserve">
+    <value>开</value>
+  </data>
+  <data name="SettingsTileRotation.OffContent" xml:space="preserve">
+    <value>关</value>
+  </data>
+  <data name="SettingsTileRotationHint.Text" xml:space="preserve">
+    <value>轮换当前文件夹/图库的所有图片:应用运行时按所选间隔,应用退出后系统每 15 分钟在后台更新</value>
+  </data>
+  <data name="RotateInterval30.Content" xml:space="preserve">
+    <value>30 秒</value>
+  </data>
+  <data name="RotateInterval60.Content" xml:space="preserve">
+    <value>1 分钟</value>
+  </data>
+  <data name="RotateInterval300.Content" xml:space="preserve">
+    <value>5 分钟</value>
+  </data>
+  <data name="RotateInterval600.Content" xml:space="preserve">
+    <value>10 分钟</value>
+  </data>
   <data name="LibTabAlbums.Content" xml:space="preserve">
     <value>集锦</value>
   </data>

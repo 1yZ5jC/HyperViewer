@@ -84,6 +84,7 @@ namespace HyperViewer.Controls
         public event EventHandler DoubleTappedOccurred;
 
         private bool _suppressViewChange;
+        private float _lastFitZoom = -1f;
         private readonly CompositeTransform _imageTransform = new CompositeTransform();
         private readonly ScaleTransform _transitionScale = new ScaleTransform();
         private readonly TranslateTransform _transitionTranslate = new TranslateTransform();
@@ -322,12 +323,58 @@ namespace HyperViewer.Controls
             _zoomBadgeTimer.Start();
         }
 
+        /// <summary>
+        /// 复位视图: 新图加载 / 重置缩放 (数字0) 时调用, 切换到"适应窗口"档。
+        /// </summary>
         public void ResetView()
         {
-            _suppressViewChange = true;
-            Scroller.ChangeView(null, null, 1.0f, true);
-            _suppressViewChange = false;
+            _lastFitZoom = -1f;
+            FitToWindow();
         }
+
+        /// <summary>
+        /// 适应窗口: 按图片尺寸 (含旋转) 计算缩放, 使整图恰好放入视口。
+        /// </summary>
+        public void FitToWindow()
+        {
+            double iw, ih;
+            if (TheImage.Source is BitmapImage bmp && bmp.PixelWidth > 0 && bmp.PixelHeight > 0)
+            {
+                iw = bmp.PixelWidth;
+                ih = bmp.PixelHeight;
+            }
+            else
+            {
+                iw = TheImage.ActualWidth;
+                ih = TheImage.ActualHeight;
+            }
+            if (iw <= 0 || ih <= 0) return;
+
+            // 旋转 90/270 时宽高互换 (RenderTransform 不影响布局尺寸)
+            var rot = ImageRotation % 360;
+            if (rot < 0) rot += 360;
+            if (Math.Abs(rot - 90) < 0.5 || Math.Abs(rot - 270) < 0.5)
+            {
+                var t = iw;
+                iw = ih;
+                ih = t;
+            }
+
+            var vw = Scroller.ViewportWidth;
+            var vh = Scroller.ViewportHeight;
+            if (vw <= 0 || vh <= 0) return;
+
+            var fit = (float)Math.Min(vw / iw, vh / ih);
+            fit = Math.Max(Scroller.MinZoomFactor, Math.Min(Scroller.MaxZoomFactor, fit));
+            _lastFitZoom = fit;
+            _suppressViewChange = true;
+            Scroller.ChangeView(null, null, fit, true);
+            _suppressViewChange = false;
+            ZoomFactorChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>当前是否仍处于"适应窗口"档 (窗口尺寸变化时据此自动重新适应)。</summary>
+        public bool IsAtFitZoom => _lastFitZoom > 0 && Math.Abs(Scroller.ZoomFactor - _lastFitZoom) < 0.01f;
 
         public float CurrentZoomFactor => Scroller.ZoomFactor;
     }

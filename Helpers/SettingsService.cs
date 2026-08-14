@@ -18,6 +18,10 @@ namespace HyperViewer.Helpers
         private const string KeyLastTab = "LastTab";
         private const string KeyRestoreLastFolder = "RestoreLastFolder";
         private const string KeyLastFolderPath = "LastFolderPath";
+        private const string KeyLiveTileEnabled = "LiveTileEnabled";
+        private const string KeyTileSingleImage = "TileSingleImage";
+        private const string KeyTileRotationEnabled = "TileRotationEnabled";
+        private const string KeyTileRotationSeconds = "TileRotationSeconds";
 
         private static readonly ApplicationDataContainer Store =
             ApplicationData.Current.LocalSettings;
@@ -104,6 +108,34 @@ namespace HyperViewer.Helpers
         {
             get { return GetString(KeyLastFolderPath, null); }
             set { Store.Values[KeyLastFolderPath] = value; }
+        }
+
+        /// <summary>是否在开始菜单动态磁贴上显示最近照片 (自动刷新)。</summary>
+        public static bool LiveTileEnabled
+        {
+            get { return GetBool(KeyLiveTileEnabled, true); }
+            set { Store.Values[KeyLiveTileEnabled] = value; }
+        }
+
+        /// <summary>磁贴仅显示一张图片 (所有尺寸共用同一张最近照片)。</summary>
+        public static bool TileSingleImage
+        {
+            get { return GetBool(KeyTileSingleImage, false); }
+            set { Store.Values[KeyTileSingleImage] = value; }
+        }
+
+        /// <summary>磁贴轮换: 在当前文件夹图片中定时轮换显示。</summary>
+        public static bool TileRotationEnabled
+        {
+            get { return GetBool(KeyTileRotationEnabled, false); }
+            set { Store.Values[KeyTileRotationEnabled] = value; }
+        }
+
+        /// <summary>磁贴轮换间隔 (秒): 30 / 60 / 300 / 600。</summary>
+        public static int TileRotationSeconds
+        {
+            get { return GetInt(KeyTileRotationSeconds, 60); }
+            set { Store.Values[KeyTileRotationSeconds] = value; }
         }
 
         private static bool GetBool(string key, bool def)

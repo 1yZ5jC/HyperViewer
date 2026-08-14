@@ -10,7 +10,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-    KeyDown="Page_KeyDown"
     SizeChanged="Page_SizeChanged">
 
     <Page.Resources>
@@ -365,7 +364,7 @@
                     <!-- 集锦 Tab: 相册卡片网格 -->
  <GridView x:Name="AlbumsGrid" ItemsSource="{x:Bind Vm.Albums, Mode=OneWay}"
                               Visibility="{x:Bind Vm.AlbumsContentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
-                              Padding="16"
+                              Padding="16,0,16,16"
                               SelectionMode="None"
                               IsItemClickEnabled="True"
                               ItemClick="AlbumGrid_ItemClick"
@@ -480,7 +479,7 @@
                     <!-- 全部照片 Tab: 缩略图网格 -->
                     <GridView x:Name="AllPhotosGrid" ItemsSource="{x:Bind Vm.AllPhotos, Mode=OneWay}"
                               Visibility="{x:Bind Vm.AllPhotosContentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
-                              Padding="16"
+                              Padding="16,0,16,16"
                               SelectionMode="None"
                               IsItemClickEnabled="True"
                               ItemClick="PhotoGrid_ItemClick"
@@ -581,7 +580,7 @@
                     <!-- 收藏 Tab: 缩略图网格 (可拖拽排序) -->
                     <GridView x:Name="FavoritesGrid" ItemsSource="{x:Bind Vm.Favorites, Mode=OneWay}"
                               Visibility="{x:Bind Vm.FavoritesContentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
-                              Padding="16"
+                              Padding="16,0,16,16"
                               SelectionMode="None"
                               IsItemClickEnabled="True"
                               CanReorderItems="True"
@@ -658,8 +657,24 @@
 
                     <!-- 文件夹 Tab: 文件夹列表 -->
                     <ScrollViewer x:Name="FoldersGrid" Visibility="{x:Bind Vm.FoldersContentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
-                                  Padding="16"
+                                  Padding="16,0,16,16"
                                   VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <Button Click="AddFolder_Click"
+                                    Padding="14,8"
+                                    Margin="0,0,0,12"
+                                    HorizontalAlignment="Left"
+                                    Background="{ThemeResource AccentBrush}"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    FontSize="13"
+                                    AutomationProperties.Name="添加文件夹">
+                                <StackPanel Orientation="Horizontal">
+                                    <FontIcon Glyph="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                                    <TextBlock x:Uid="LibAddFolderTxt"
+                                               VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                </StackPanel>
+                            </Button>
                         <ItemsControl ItemsSource="{x:Bind Vm.RecentFolders, Mode=OneWay}">
 <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="storage:StorageFolder">
@@ -714,6 +729,7 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        </StackPanel>
                     </ScrollViewer>
 
                     <!-- 空态: 欢迎面板 -->
@@ -963,6 +979,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0"
                            Text="{x:Bind Vm.StatusLeftText, Mode=OneWay}"
@@ -985,9 +1002,20 @@
                         Margin="12,0,0,0"
                         VerticalAlignment="Center"
                         IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"/>
+                <!-- 适应窗口 -->
+                <Button x:Name="FitBtn"
+                        Grid.Column="3"
+                        Style="{StaticResource TitleBarIconButtonStyle}"
+                        Click="Fit_Click"
+                        Margin="12,0,0,0"
+                        IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"
+                        ToolTipService.ToolTip="适应"
+                        AutomationProperties.Name="适应">
+                    <FontIcon Glyph="&#xE9D5;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                </Button>
                 <!-- 缩略图栏开关 -->
                 <Button x:Name="ThumbToggleBtn"
-                        Grid.Column="3"
+                        Grid.Column="4"
                         Style="{StaticResource TitleBarIconButtonStyle}"
                         Click="ThumbToggle_Click"
                         Margin="12,0,0,0"
@@ -1016,12 +1044,12 @@
             <!-- 图库顶栏: Tab + 搜索 + 操作按钮。无底色 (透明浮于内容上, 也不挡下方拖拽层);
                  按钮等控件在拖拽层之上, 可正常点击 -->
             <Grid x:Name="HomeTopBar"
-                  Padding="16,8"
+                  Padding="0"
                   Visibility="{x:Bind Vm.HomeVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition x:Name="SearchColumn" Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition x:Name="HomePad" Width="0"/>
                 </Grid.ColumnDefinitions>
@@ -1033,7 +1061,7 @@
                            FontWeight="SemiBold"
                            Foreground="{ThemeResource TextPrimaryBrush}"
                            VerticalAlignment="Center"
-                           Margin="0,0,16,0"/>
+                           Margin="16,0,16,0"/>
                 <!-- Tab 栏 (Pill 风格) -->
                 <StackPanel x:Name="TabPanel" Grid.Column="1" Orientation="Horizontal">
                     <Button x:Name="TabAlbums" x:Uid="LibTabAlbums"
@@ -1103,7 +1131,7 @@
                     </Button.Flyout>
                     <FontIcon Glyph="&#xE712;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
                 </Button>
-                <!-- 搜索框 (占星号列: 随窗口宽度伸缩, 窄窗口不裁切) -->
+                <!-- 搜索框 (占星号列: 随窗口宽度伸缩, 实际宽度过窄时自动收起为按钮) -->
                 <AutoSuggestBox x:Name="SearchBox"
                                 Grid.Column="2"
                                 HorizontalAlignment="Stretch"
@@ -1125,9 +1153,10 @@
                         </DataTemplate>
                     </AutoSuggestBox.ItemTemplate>
                 </AutoSuggestBox>
-                <!-- 很窄时搜索收起为图标按钮 -->
+                <!-- 搜索框过窄时收起为图标按钮 (UpdateSearchBarCollapse 自动切换) -->
                 <Button x:Name="SearchBtn"
                         Grid.Column="2"
+                        HorizontalAlignment="Right"
                         Visibility="Collapsed"
                         Style="{StaticResource TitleBarIconButtonStyle}"
                         Margin="0,0,8,0"

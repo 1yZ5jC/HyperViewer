@@ -471,6 +471,8 @@ namespace HyperViewer.ViewModels
 
                 // 动态磁贴: 最近照片 (按日期降序的列表头部)
                 _ = TileService.UpdateAsync(_masterAllPhotos.Take(4).Select(p => p.Path));
+                // 磁贴轮换: 图库全部照片
+                TileRotationService.Start(_masterAllPhotos.Select(p => p.Path));
 
                 // 后台懒加载相册封面
                 _ = Task.Run(async () =>
@@ -600,6 +602,17 @@ namespace HyperViewer.ViewModels
         }
 
         /// <summary>
+        /// 图库文件夹管理器: 选择文件夹加入图库 (不进入查看器), 并刷新图库。
+        /// </summary>
+        public async Task AddLibraryFolderAsync()
+        {
+            var folder = await FilePickerService.PickFolderAsync();
+            if (folder == null) return;
+            await _recent.AddAsync(folder);
+            await RefreshLibraryAsync();
+        }
+
+        /// <summary>
         /// 装载文件夹图片列表 (打开文件夹 / 最近打开 / 时间轴跳转共用)。
         /// </summary>
         public async Task LoadFolderAsync(StorageFolder folder)
@@ -623,6 +636,8 @@ namespace HyperViewer.ViewModels
                     Current = null;
                 }
                 RaisePropertyChanged(nameof(ThumbnailVisible));
+                // 磁贴轮换: 当前文件夹内全部图片
+                TileRotationService.Start(_photos.Select(p => p.Path));
                 // PreloadThumbnailsAsync removed for lazy loading
             }
             catch { /* 文件夹可能已被删除或失去访问权 */ }
@@ -664,6 +679,7 @@ namespace HyperViewer.ViewModels
 
         public void Next()
         {
+            System.Diagnostics.Debug.WriteLine($"[VM] Next ({CurrentIndex}->{CurrentIndex + 1})");
             if (!CanGoNext) return;
             CurrentIndex++;
             Current = _photos[CurrentIndex];
@@ -671,6 +687,7 @@ namespace HyperViewer.ViewModels
         }
         public void Prev()
         {
+            System.Diagnostics.Debug.WriteLine($"[VM] Prev ({CurrentIndex}->{CurrentIndex - 1})");
             if (!CanGoPrev) return;
             CurrentIndex--;
             Current = _photos[CurrentIndex];
@@ -707,6 +724,7 @@ namespace HyperViewer.ViewModels
         {
             if (parameter is int idx && idx >= 0 && idx < _photos.Count)
             {
+                System.Diagnostics.Debug.WriteLine($"[VM] SelectByIndex {idx} (from thumbstrip)");
                 CurrentIndex = idx;
                 Current = _photos[idx];
                 ApplyNavigationReset();

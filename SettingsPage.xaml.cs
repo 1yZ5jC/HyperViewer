@@ -94,6 +94,19 @@ namespace HyperViewer
             SlideRandomOrderSwitch.IsOn = SettingsService.SlideRandomOrder;
             SlideRandomTransitionSwitch.IsOn = SettingsService.SlideRandomTransition;
             SlideBlurSwitch.IsOn = SettingsService.SlideBlurBackground;
+            LiveTileSwitch.IsOn = SettingsService.LiveTileEnabled;
+            TileSingleSwitch.IsOn = SettingsService.TileSingleImage;
+            TileRotationSwitch.IsOn = SettingsService.TileRotationEnabled;
+            int rotSeconds = SettingsService.TileRotationSeconds;
+            for (int i = 0; i < TileRotationBox.Items.Count; i++)
+            {
+                if (TileRotationBox.Items[i] is ComboBoxItem item
+                    && item.Tag?.ToString() == rotSeconds.ToString())
+                {
+                    TileRotationBox.SelectedIndex = i;
+                    break;
+                }
+            }
             CacheInfoText.Text = Loc.Format("CacheInfo", ImageLoaderService.CacheCount);
             BuildShortcutPanel();
 
@@ -137,13 +150,27 @@ namespace HyperViewer
                 };
                 if (await dlg.ShowAsync() == ContentDialogResult.Primary)
                 {
-                    try
+                    // RequestRestartAsync 需 1709 (UniversalApiContract v5) 及以上
+                    if (Windows.Foundation.Metadata.ApiInformation.IsApiContractPresent(
+                            "Windows.Foundation.UniversalApiContract", 5))
                     {
-                        await CoreApplication.RequestRestartAsync(string.Empty);
+                        try
+                        {
+                            await CoreApplication.RequestRestartAsync(string.Empty);
+                        }
+                        catch
+                        {
+                            // 重启失败则下次启动生效
+                        }
                     }
-                    catch
+                    else
                     {
-                        // 重启失败则下次启动生效
+                        await new ContentDialog
+                        {
+                            Title = Loc.Get("RestartTitle"),
+                            Content = Loc.Get("RestartMessage"),
+                            CloseButtonText = Loc.Get("RestartLater")
+                        }.ShowAsync();
                     }
                 }
             }
@@ -196,6 +223,36 @@ namespace HyperViewer
         {
             if (_loading) return;
             SettingsService.SlideBlurBackground = SlideBlurSwitch.IsOn;
+        }
+
+        private void LiveTileSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_loading) return;
+            SettingsService.LiveTileEnabled = LiveTileSwitch.IsOn;
+        }
+
+        private void TileSingleSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_loading) return;
+            SettingsService.TileSingleImage = TileSingleSwitch.IsOn;
+            TileRotationService.Restart();
+        }
+
+        private void TileRotationSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_loading) return;
+            SettingsService.TileRotationEnabled = TileRotationSwitch.IsOn;
+            TileRotationService.Restart();
+        }
+
+        private void TileRotationBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loading) return;
+            if (TileRotationBox.SelectedItem is ComboBoxItem item && item.Tag is string seconds)
+            {
+                SettingsService.TileRotationSeconds = int.Parse(seconds);
+                TileRotationService.Restart();
+            }
         }
 
         private void ResetRotationSwitch_Toggled(object sender, RoutedEventArgs e)

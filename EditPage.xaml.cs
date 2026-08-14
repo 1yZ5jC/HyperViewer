@@ -20,6 +20,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using Windows.Foundation.Metadata;
 
 namespace HyperViewer
 {
@@ -106,6 +107,8 @@ namespace HyperViewer
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            // InkToolbar 需周年更新 (14393) 及以上, 低版本动态创建会被系统忽略
+            EnsureInkToolbar();
             InkHost.InkPresenter.InputDeviceTypes = CoreInputDeviceTypes.Mouse
                 | CoreInputDeviceTypes.Touch
                 | CoreInputDeviceTypes.Pen;
@@ -115,6 +118,20 @@ namespace HyperViewer
             {
                 _ = LoadOriginalAsync();
             }
+        }
+
+        private void EnsureInkToolbar()
+        {
+            if (InkBarPanel.Children.Count > 0 && InkBarPanel.Children[0] is InkToolbar) return;
+            if (!ApiInformation.IsTypePresent("Windows.UI.Xaml.Controls.InkToolbar")) return;
+            InkBarPanel.Children.Insert(0, new InkToolbar { TargetInkCanvas = InkHost });
+        }
+
+        /// <summary>设备像素缩放 (XamlRoot 属 1703+ 才有, 低版本回退 1.0)。</summary>
+        private static double DevScaleOf(UIElement e)
+        {
+            if (!ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 4)) return 1.0;
+            try { return e.XamlRoot?.RasterizationScale ?? 1.0; } catch { return 1.0; }
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -676,7 +693,7 @@ namespace HyperViewer
         {
             if (StickerBox == null || _previewW < 1) return;
             double hostScale = ImageHost.Width / Math.Max(1, _previewW);
-            double devScale = StickerBox.XamlRoot?.RasterizationScale ?? 1.0;
+            double devScale = DevScaleOf(StickerBox);
             StickerBox.FontSize = Math.Max(8, TextSizeSlider.Value * hostScale / Math.Max(1.0, devScale));
             StickerBox.Foreground = new SolidColorBrush(ColorFromCombo(TextColorCombo));
         }
@@ -742,7 +759,7 @@ namespace HyperViewer
                 FontFamily = new FontFamily("Segoe UI"),
                 IsHitTestVisible = false,
             };
-            double scale = tb.XamlRoot?.RasterizationScale ?? 1.0;
+            double scale = DevScaleOf(tb);
             tb.FontSize = Math.Max(8, fontSizePx / Math.Max(1.0, scale));
             tb.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
             tb.Arrange(new Rect(0, 0, tb.DesiredSize.Width, tb.DesiredSize.Height));

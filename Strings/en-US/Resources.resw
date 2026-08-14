@@ -468,6 +468,57 @@
   <data name="SettingsSlideBlurHint.Text" xml:space="preserve">
     <value>Background follows the current photo with a blur effect</value>
   </data>
+  <data name="SettingsLiveTileLabel.Text" xml:space="preserve">
+    <value>Live tile</value>
+  </data>
+  <data name="SettingsLiveTile.Header" xml:space="preserve">
+    <value>Show recent photos on the Start tile</value>
+  </data>
+  <data name="SettingsLiveTile.OnContent" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="SettingsLiveTile.OffContent" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="SettingsLiveTileHint.Text" xml:space="preserve">
+    <value>Auto-refreshes with your most recent photos when the library changes</value>
+  </data>
+  <data name="SettingsTileSingle.Header" xml:space="preserve">
+    <value>Show a single photo on the tile</value>
+  </data>
+  <data name="SettingsTileSingle.OnContent" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="SettingsTileSingle.OffContent" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="SettingsTileSingleHint.Text" xml:space="preserve">
+    <value>All tile sizes use the same most recent photo</value>
+  </data>
+  <data name="SettingsTileRotation.Header" xml:space="preserve">
+    <value>Rotate photos on the tile</value>
+  </data>
+  <data name="SettingsTileRotation.OnContent" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="SettingsTileRotation.OffContent" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="SettingsTileRotationHint.Text" xml:space="preserve">
+    <value>Cycles through all photos in the current folder / library: at the chosen interval while the app is running, and every 15 minutes in the background after you close it</value>
+  </data>
+  <data name="RotateInterval30.Content" xml:space="preserve">
+    <value>30 seconds</value>
+  </data>
+  <data name="RotateInterval60.Content" xml:space="preserve">
+    <value>1 minute</value>
+  </data>
+  <data name="RotateInterval300.Content" xml:space="preserve">
+    <value>5 minutes</value>
+  </data>
+  <data name="RotateInterval600.Content" xml:space="preserve">
+    <value>10 minutes</value>
+  </data>
   <data name="LibTabAlbums.Content" xml:space="preserve">
     <value>Albums</value>
   </data>

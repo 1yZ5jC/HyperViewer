@@ -41,6 +41,8 @@ namespace HyperViewer
             {
                 rootFrame.Navigate(typeof(MainPage), e.Arguments);
             }
+            // 磁贴轮换后台任务: 按设置注册/注销
+            Services.TileRotationService.SyncBackgroundTask();
             Window.Current.Activate();
         }
 

@@ -10,6 +10,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 using HyperViewer.Helpers;
 using HyperViewer.Models;
@@ -47,6 +48,14 @@ namespace HyperViewer
         public MainPage()
         {
             this.InitializeComponent();
+            // 胶卷横向滚动: 鼠标滚轮 / 触摸板双指手势 (含内部 ScrollViewer 已处理的事件)
+            ThumbList.AddHandler(PointerWheelChangedEvent,
+                                 new PointerEventHandler(ThumbList_PointerWheelChanged),
+                                 true);
+            // 鼠标手势: 中键按住拖拽平移胶片
+            ThumbList.PointerPressed += ThumbList_PointerPressed;
+            ThumbList.PointerMoved += ThumbList_PointerMoved;
+            ThumbList.PointerReleased += ThumbList_PointerReleased;
             this.DataContext = Vm;
             Vm.PropertyChanged += OnVmPropertyChanged;
             Vm.LibraryTabChanged += OnLibraryTabChanged;
@@ -117,21 +126,22 @@ namespace HyperViewer
         {
             UpdateTitleBarInsets();
             ApplyResponsiveLayout(Window.Current.Bounds.Width);
+            // 处于"适应"档时窗口变化后重新适应, 避免图片被裁切
+            if (Viewer != null && Vm.HasImage && Viewer.IsAtFitZoom)
+            {
+                Viewer.FitToWindow();
+            }
         }
-
-        private double _overlayInset;
 
         private void UpdateTitleBarInsets()
         {
             double inset = 0;
             try { inset = CoreApplication.GetCurrentView().TitleBar.SystemOverlayRightInset; }
             catch { }
-            _overlayInset = inset;
             if (HomePad != null) HomePad.Width = new GridLength(inset);
             if (ImagePad != null) ImagePad.Width = new GridLength(inset);
-            // 系统窗口按钮区必须作为右内边距预留, 否则窄窗口下内容溢出会被挤到按钮下面
-            if (HomeTopBar != null) HomeTopBar.Padding = new Thickness(16, 8, inset, 8);
-            if (ImageTopBar != null) ImageTopBar.Padding = new Thickness(12, 6, inset, 6);
+            // 系统按钮区宽度变化影响星号列, 重新测量搜索栏收起状态
+            _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, UpdateSearchBarCollapse);
         }
 
         private void UpdateZoomSlider()
@@ -332,6 +342,11 @@ namespace HyperViewer
             UpdateThumbToggleState();
         }
 
+        private void Fit_Click(object sender, RoutedEventArgs e)
+        {
+            Viewer.FitToWindow();
+        }
+
         private void UpdateThumbToggleState()
         {
             var on = _thumbStripEnabled;
@@ -512,7 +527,11 @@ namespace HyperViewer
             // args.EventType 是 CoreAcceleratorKeyEventType.KeyDown (==1)
             if (args.EventType == CoreAcceleratorKeyEventType.KeyDown)
             {
-                HandleKey(args.VirtualKey);
+                var handled = HandleKey(args.VirtualKey);
+                // 已处理则阻止按键继续派发给 XAML 焦点控件,
+                // 否则缩略图 ListView 等控件会把方向键再消费一次 → 一次按键换两张
+                if (handled) args.Handled = true;
+                System.Diagnostics.Debug.WriteLine($"[KEY] {args.VirtualKey} handled={handled}");
             }
         }
 
@@ -541,9 +560,85 @@ namespace HyperViewer
             }
         }
 
-        private void Page_KeyDown(object sender, KeyRoutedEventArgs e)
+        // ====== 胶卷滚轮 / 触摸板手势 / 中键拖拽 ======
+
+        private const double WheelStepThreshold = 120.0;
+        private const double ThumbStep = 84.0; // 缩略图 80 + 左右间距 4
+        private double _thumbWheelAccum;
+
+        private bool _thumbDragging;
+        private double _thumbDragStartX;
+        private double _thumbDragOffset;
+
+        private void ThumbList_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
         {
-            if (HandleKey(e.Key)) e.Handled = true;
+            var props = e.GetCurrentPoint(ThumbList).Properties;
+            double delta = props.MouseWheelDelta;
+            bool horizontal = false;
+            try { horizontal = props.IsHorizontalMouseWheel; } catch { }
+            if (!horizontal)
+            {
+                // 垂直滚轮/纵向双指手势: 上=向左 (前一张), 下=向右 (后一张)
+                delta = -delta;
+            }
+            // 触摸板平滑小幅增量加倍, 滚动更灵敏
+            if (Math.Abs(delta) < 60) delta *= 2;
+
+            // 累积到一格阈值滚一个缩略图: 鼠标滚轮一格一图, 触摸板平滑逐格跟进
+            _thumbWheelAccum += delta;
+            double steps = Math.Floor(_thumbWheelAccum / WheelStepThreshold);
+            if (steps == 0) return;
+            _thumbWheelAccum -= steps * WheelStepThreshold;
+
+            var scroller = FindChild<ScrollViewer>(ThumbList);
+            if (scroller != null)
+            {
+                scroller.ChangeView(scroller.HorizontalOffset + steps * ThumbStep, null, null, true);
+                e.Handled = true;
+            }
+        }
+
+        private void ThumbList_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            if (!e.GetCurrentPoint(ThumbList).Properties.IsMiddleButtonPressed) return;
+            _thumbDragging = true;
+            _thumbDragStartX = e.GetCurrentPoint(ThumbList).Position.X;
+            _thumbDragOffset = FindChild<ScrollViewer>(ThumbList)?.HorizontalOffset ?? 0;
+            ThumbList.CapturePointer(e.Pointer);
+            e.Handled = true;
+        }
+
+        private void ThumbList_PointerMoved(object sender, PointerRoutedEventArgs e)
+        {
+            if (!_thumbDragging) return;
+            double dx = e.GetCurrentPoint(ThumbList).Position.X - _thumbDragStartX;
+            var scroller = FindChild<ScrollViewer>(ThumbList);
+            if (scroller != null)
+            {
+                scroller.ChangeView(_thumbDragOffset - dx, null, null, true);
+                e.Handled = true;
+            }
+        }
+
+        private void ThumbList_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            if (!_thumbDragging) return;
+            _thumbDragging = false;
+            ThumbList.ReleasePointerCapture(e.Pointer);
+            e.Handled = true;
+        }
+
+        private static T FindChild<T>(DependencyObject root) where T : DependencyObject
+        {
+            int count = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < count; i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+                if (child is T match) return match;
+                var result = FindChild<T>(child);
+                if (result != null) return result;
+            }
+            return null;
         }
 
         private bool HandleKey(VirtualKey key)
@@ -916,7 +1011,8 @@ namespace HyperViewer
         /// <summary>
         /// 顶栏响应式布局 (代码驱动, 避免 VisualState 触发器在反复缩窗时的状态残留):
         /// ≥800 Tab 栏; ≥1120 操作按钮带文字; 640~1120 图标按钮+溢出菜单;
-        /// <640 搜索收起为按钮; <480 再收起装饰性文字。
+        /// 搜索栏按所在星号列实际宽度自动收起 (<180px 时变图标按钮);
+        /// <480 再收起装饰性文字。
         /// 文字阈值必须够高, 否则文字按钮+Tab+系统按钮区总宽超出窗口, 按钮会被挤到最小化按钮下面。
         /// </summary>
         private void ApplyResponsiveLayout(double width)
@@ -929,20 +1025,8 @@ namespace HyperViewer
             TabPanel.Visibility = wide ? Visibility.Visible : Visibility.Collapsed;
             LibOverflowBtn.Visibility = wide ? Visibility.Collapsed : Visibility.Visible;
 
-            if (!medium)
-            {
-                if (!_searchBoxOpen)
-                {
-                    SearchBox.Visibility = Visibility.Collapsed;
-                    SearchBtn.Visibility = Visibility.Visible;
-                }
-            }
-            else
-            {
-                _searchBoxOpen = false;
-                SearchBox.Visibility = Visibility.Visible;
-                SearchBtn.Visibility = Visibility.Collapsed;
-            }
+            // 搜索栏按星号列实际宽度自动收起 (布局完成后测量, 见 UpdateSearchBarCollapse)
+            _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, UpdateSearchBarCollapse);
 
             var txtVis = textVisible ? Visibility.Visible : Visibility.Collapsed;
             OpenImageTxt.Visibility = txtVis;
@@ -961,7 +1045,31 @@ namespace HyperViewer
             FileNameText.Visibility = veryNarrow ? Visibility.Collapsed : Visibility.Visible;
             LibSettingsBtn.Visibility = veryNarrow ? Visibility.Collapsed : Visibility.Visible;
 
-            HomeTopBar.Padding = new Thickness(medium ? 16 : 12, 8, _overlayInset, 8);
+            HomeTopBar.Padding = new Thickness(medium ? 16 : 12, 8, 0, 8);
+        }
+
+        /// <summary>
+        /// 搜索框所在星号列实际宽度过窄时自动收起为搜索按钮。
+        /// 用列的 ActualWidth 而非 SearchBox 自身 (收起后盒子宽为 0, 列宽仍有效);
+        /// 在窗口尺寸/系统按钮区变化后的布局完成时刻测量。
+        /// </summary>
+        private void UpdateSearchBarCollapse()
+        {
+            if (!Vm.HomeVisible || SearchColumn == null) return;
+            bool narrow = SearchColumn.ActualWidth < 180;
+            if (narrow)
+            {
+                if (!_searchBoxOpen && SearchBox.Visibility != Visibility.Collapsed)
+                {
+                    SearchBox.Visibility = Visibility.Collapsed;
+                    SearchBtn.Visibility = Visibility.Visible;
+                }
+            }
+            else if (!_searchBoxOpen && SearchBox.Visibility != Visibility.Visible)
+            {
+                SearchBox.Visibility = Visibility.Visible;
+                SearchBtn.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void Page_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -1334,6 +1442,11 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
     }
 
     // 文件夹上下文菜单
+    private async void AddFolder_Click(object sender, RoutedEventArgs e)
+    {
+        await Vm.AddLibraryFolderAsync();
+    }
+
     private async void FolderContext_Open_Click(object sender, RoutedEventArgs e)
     {
         if (sender is MenuFlyoutItem item && item.DataContext is StorageFolder folder)
