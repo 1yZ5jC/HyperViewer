@@ -446,6 +446,7 @@ namespace HyperViewer.ViewModels
                     _masterAlbums.Clear();
                     _masterAllPhotos.Clear();
                     LibraryEmptyVisible = true;
+                    _ = TileService.UpdateAsync(null);
                     return;
                 }
                 var result = await LibraryScanService.ScanAsync(folders, token);
@@ -467,6 +468,9 @@ namespace HyperViewer.ViewModels
                     // Populate filtered collections based on current search text
                     ApplySearch();
                     LibraryEmptyVisible = _masterAlbums.Count == 0 && _masterAllPhotos.Count == 0;
+
+                // 动态磁贴: 最近照片 (按日期降序的列表头部)
+                _ = TileService.UpdateAsync(_masterAllPhotos.Take(4).Select(p => p.Path));
 
                 // 后台懒加载相册封面
                 _ = Task.Run(async () =>

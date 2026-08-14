@@ -83,6 +83,13 @@ namespace HyperViewer
             ZoomSlider.ValueChanged += ZoomSlider_ValueChanged;
             UpdateZoomSlider();
             SetupTitleBar();
+            // 保证窄窗口下顶栏内容不会侵入系统窗口按钮区
+            try
+            {
+                Windows.UI.ViewManagement.ApplicationView.GetForCurrentView()
+                    .SetPreferredMinSize(new Windows.Foundation.Size(400, 320));
+            }
+            catch { }
             // 返回时复用页面实例 (UWP 默认 Disabled 会在 GoBack 时重建页面,
             // 新 VM 的 Current=null, 导致"退出编辑/设置后回到主页"而非图片视图)
             this.NavigationCacheMode = NavigationCacheMode.Required;
@@ -100,18 +107,31 @@ namespace HyperViewer
             {
                 _titleBarHooked = true;
                 titleBar.LayoutMetricsChanged += (_, __) => UpdateTitleBarInsets();
-                Window.Current.SizeChanged += (_, __) => UpdateTitleBarInsets();
+                Window.Current.SizeChanged += (_, __) => OnWindowSizeChanged();
             }
             UpdateTitleBarInsets();
+            ApplyResponsiveLayout(Window.Current.Bounds.Width);
         }
+
+        private void OnWindowSizeChanged()
+        {
+            UpdateTitleBarInsets();
+            ApplyResponsiveLayout(Window.Current.Bounds.Width);
+        }
+
+        private double _overlayInset;
 
         private void UpdateTitleBarInsets()
         {
             double inset = 0;
             try { inset = CoreApplication.GetCurrentView().TitleBar.SystemOverlayRightInset; }
             catch { }
+            _overlayInset = inset;
             if (HomePad != null) HomePad.Width = new GridLength(inset);
             if (ImagePad != null) ImagePad.Width = new GridLength(inset);
+            // 系统窗口按钮区必须作为右内边距预留, 否则窄窗口下内容溢出会被挤到按钮下面
+            if (HomeTopBar != null) HomeTopBar.Padding = new Thickness(16, 8, inset, 8);
+            if (ImageTopBar != null) ImageTopBar.Padding = new Thickness(12, 6, inset, 6);
         }
 
         private void UpdateZoomSlider()
@@ -765,7 +785,7 @@ namespace HyperViewer
         {
             _selectMode = !_selectMode;
             AllPhotosGrid.SelectionMode = _selectMode ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
-            AllPhotosGrid.SelectedItems.Clear();
+            if (!_selectMode) ClearSelection();
             SelectBar.Visibility = _selectMode ? Visibility.Visible : Visibility.Collapsed;
             SelectModeBtnText.Text = Loc.Get(_selectMode ? "SelectModeOff" : "SelectModeOn");
             UpdateSelectCount();
@@ -785,9 +805,19 @@ namespace HyperViewer
             SelectDeleteBtn.IsEnabled = count > 0;
         }
 
+        /// <summary>
+        /// 安全清空选中: 图库重扫/数据源重建后 SelectedItems 可能持有失效引用,
+        /// 直接 Clear() 会抛 E_UNEXPECTED, 忽略该异常。
+        /// </summary>
+        private void ClearSelection()
+        {
+            try { AllPhotosGrid.SelectedItems.Clear(); }
+            catch { }
+        }
+
         private void SelectCancel_Click(object sender, RoutedEventArgs e)
         {
-            AllPhotosGrid.SelectedItems.Clear();
+            ClearSelection();
             SelectModeBtn_Click(sender, e);
         }
 
@@ -799,7 +829,7 @@ namespace HyperViewer
                 if (Vm.Favorites.All(f => !string.Equals(f.Path, item.Path, StringComparison.OrdinalIgnoreCase)))
                     Vm.Favorites.Add(item);
             }
-            AllPhotosGrid.SelectedItems.Clear();
+            ClearSelection();
             UpdateSelectCount();
         }
 
@@ -831,7 +861,7 @@ namespace HyperViewer
             if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
 
             var failed = await Vm.BatchDeleteAsync(paths);
-            AllPhotosGrid.SelectedItems.Clear();
+            ClearSelection();
             if (failed.Count > 0)
             {
                 var err = new ContentDialog
@@ -847,6 +877,96 @@ namespace HyperViewer
         private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
             // 用户提交搜索（按 Enter 或点击搜索图标），搜索逻辑在 SearchText 属性绑定中已触发
+            CollapseSearchBox();
+        }
+
+        private bool _searchBoxOpen;
+
+        private void SearchBtn_Click(object sender, RoutedEventArgs e)
+        {
+            _searchBoxOpen = true;
+            SearchBox.Visibility = Visibility.Visible;
+            SearchBtn.Visibility = Visibility.Collapsed;
+            SearchBox.Focus(FocusState.Programmatic);
+        }
+
+        private void SearchBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == VirtualKey.Escape)
+            {
+                CollapseSearchBox();
+                e.Handled = true;
+            }
+        }
+
+        private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            // 未输入内容时失焦收起为搜索按钮 (很窄布局)
+            if (string.IsNullOrEmpty(SearchBox.Text)) CollapseSearchBox();
+        }
+
+        private void CollapseSearchBox()
+        {
+            if (!_searchBoxOpen) return;
+            _searchBoxOpen = false;
+            SearchBox.Visibility = Visibility.Collapsed;
+            SearchBtn.Visibility = Visibility.Visible;
+        }
+
+        /// <summary>
+        /// 顶栏响应式布局 (代码驱动, 避免 VisualState 触发器在反复缩窗时的状态残留):
+        /// ≥800 Tab 栏; ≥1120 操作按钮带文字; 640~1120 图标按钮+溢出菜单;
+        /// <640 搜索收起为按钮; <480 再收起装饰性文字。
+        /// 文字阈值必须够高, 否则文字按钮+Tab+系统按钮区总宽超出窗口, 按钮会被挤到最小化按钮下面。
+        /// </summary>
+        private void ApplyResponsiveLayout(double width)
+        {
+            bool wide = width >= 800;
+            bool textVisible = width >= 1120;
+            bool medium = width >= 640;
+            bool veryNarrow = width < 480;
+
+            TabPanel.Visibility = wide ? Visibility.Visible : Visibility.Collapsed;
+            LibOverflowBtn.Visibility = wide ? Visibility.Collapsed : Visibility.Visible;
+
+            if (!medium)
+            {
+                if (!_searchBoxOpen)
+                {
+                    SearchBox.Visibility = Visibility.Collapsed;
+                    SearchBtn.Visibility = Visibility.Visible;
+                }
+            }
+            else
+            {
+                _searchBoxOpen = false;
+                SearchBox.Visibility = Visibility.Visible;
+                SearchBtn.Visibility = Visibility.Collapsed;
+            }
+
+            var txtVis = textVisible ? Visibility.Visible : Visibility.Collapsed;
+            OpenImageTxt.Visibility = txtVis;
+            AddFolderTxt.Visibility = txtVis;
+            SettingsTxt.Visibility = txtVis;
+            SelectModeBtnText.Visibility = txtVis;
+
+            var padIcon = new Thickness(10, 7, 10, 7);
+            LibOpenImageBtn.Padding = textVisible ? new Thickness(14, 7, 14, 7) : padIcon;
+            LibAddFolderBtn.Padding = textVisible ? new Thickness(14, 7, 14, 7) : padIcon;
+            LibSettingsBtn.Padding = textVisible ? new Thickness(14, 7, 14, 7) : padIcon;
+            SelectModeBtn.Padding = textVisible ? new Thickness(12, 7, 12, 7) : padIcon;
+
+            // 极窄: 收起装饰性元素, 保证内容不侵入系统窗口按钮区域
+            AppTitleText.Visibility = veryNarrow ? Visibility.Collapsed : Visibility.Visible;
+            FileNameText.Visibility = veryNarrow ? Visibility.Collapsed : Visibility.Visible;
+            LibSettingsBtn.Visibility = veryNarrow ? Visibility.Collapsed : Visibility.Visible;
+
+            HomeTopBar.Padding = new Thickness(medium ? 16 : 12, 8, _overlayInset, 8);
+        }
+
+        private void Page_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            ApplyResponsiveLayout(e.NewSize.Width);
         }
 
         private void SearchBox_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)

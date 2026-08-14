@@ -10,7 +10,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-    KeyDown="Page_KeyDown">
+    KeyDown="Page_KeyDown"
+    SizeChanged="Page_SizeChanged">
 
     <Page.Resources>
         <!-- 缩略图栏当前项高亮 -->
@@ -205,10 +206,6 @@
                         <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelWide}" />
                         <Setter Target="FavoritesGrid.ItemsPanel" Value="{StaticResource PhotoPanelWide}" />
                         <Setter Target="FileNameText.MaxWidth" Value="280" />
-                        <Setter Target="LibOpenImageBtn.Visibility" Value="Visible" />
-                        <Setter Target="TabPanel.Visibility" Value="Visible" />
-                        <Setter Target="ActionPanel.Visibility" Value="Visible" />
-                        <Setter Target="LibOverflowBtn.Visibility" Value="Collapsed" />
                     </VisualState.Setters>
                 </VisualState>
                 <VisualState x:Name="Medium">
@@ -220,10 +217,6 @@
                         <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
                         <Setter Target="FavoritesGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
                         <Setter Target="FileNameText.MaxWidth" Value="160" />
-                        <Setter Target="LibOpenImageBtn.Visibility" Value="Collapsed" />
-                        <Setter Target="TabPanel.Visibility" Value="Visible" />
-                        <Setter Target="ActionPanel.Visibility" Value="Visible" />
-                        <Setter Target="LibOverflowBtn.Visibility" Value="Collapsed" />
                     </VisualState.Setters>
                 </VisualState>
                 <VisualState x:Name="Narrow">
@@ -232,10 +225,6 @@
                         <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
                         <Setter Target="FavoritesGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
                         <Setter Target="FileNameText.MaxWidth" Value="100" />
-                        <Setter Target="LibOpenImageBtn.Visibility" Value="Collapsed" />
-                        <Setter Target="TabPanel.Visibility" Value="Collapsed" />
-                        <Setter Target="ActionPanel.Visibility" Value="Collapsed" />
-                        <Setter Target="LibOverflowBtn.Visibility" Value="Visible" />
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>
@@ -1037,7 +1026,8 @@
                     <ColumnDefinition x:Name="HomePad" Width="0"/>
                 </Grid.ColumnDefinitions>
                 <!-- 应用名 (拖拽区域) -->
-                <TextBlock Grid.Column="0"
+                <TextBlock x:Name="AppTitleText"
+                           Grid.Column="0"
                            Text="HyperViewer"
                            FontSize="14"
                            FontWeight="SemiBold"
@@ -1126,40 +1116,70 @@
                                 AutomationProperties.Name="搜索相册 / 照片"
                                 QuerySubmitted="SearchBox_QuerySubmitted"
                                 SuggestionChosen="SearchBox_SuggestionChosen"
-                                TextChanged="SearchBox_TextChanged">
+                                TextChanged="SearchBox_TextChanged"
+                                KeyDown="SearchBox_KeyDown"
+                                LostFocus="SearchBox_LostFocus">
                     <AutoSuggestBox.ItemTemplate>
                         <DataTemplate x:DataType="x:String">
                             <TextBlock Text="{x:Bind}"/>
                         </DataTemplate>
                     </AutoSuggestBox.ItemTemplate>
                 </AutoSuggestBox>
+                <!-- 很窄时搜索收起为图标按钮 -->
+                <Button x:Name="SearchBtn"
+                        Grid.Column="2"
+                        Visibility="Collapsed"
+                        Style="{StaticResource TitleBarIconButtonStyle}"
+                        Margin="0,0,8,0"
+                        Click="SearchBtn_Click"
+                        ToolTipService.ToolTip="搜索"
+                        AutomationProperties.Name="搜索">
+                    <FontIcon Glyph="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                </Button>
                 <!-- 右侧操作按钮 -->
                 <StackPanel x:Name="ActionPanel" Grid.Column="3" Orientation="Horizontal">
-                    <Button x:Uid="LibOpenImage"
-                            x:Name="LibOpenImageBtn"
+                    <Button x:Name="LibOpenImageBtn"
                             Command="{x:Bind Vm.OpenImageCommand}"
                             Padding="14,7"
                             Background="{ThemeResource BtnBgBrush}"
                             Foreground="{ThemeResource TextPrimaryBrush}"
                             BorderThickness="0"
                             FontSize="13"
-                            AutomationProperties.Name="打开图片"/>
-                    <Button x:Uid="LibAddFolder"
+                            AutomationProperties.Name="打开图片">
+                        <StackPanel Orientation="Horizontal">
+                            <FontIcon Glyph="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                            <TextBlock x:Name="OpenImageTxt" x:Uid="LibOpenImageTxt"
+                                       VerticalAlignment="Center" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="LibAddFolderBtn"
                             Command="{x:Bind Vm.OpenFolderCommand}"
                             Padding="14,7" Margin="8,0,8,0"
                             Background="{ThemeResource AccentBrush}"
                             Foreground="White"
                             BorderThickness="0"
                             FontSize="13"
-                            AutomationProperties.Name="打开文件夹"/>
-                    <Button x:Uid="LibSettings"
+                            AutomationProperties.Name="打开文件夹">
+                        <StackPanel Orientation="Horizontal">
+                            <FontIcon Glyph="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                            <TextBlock x:Name="AddFolderTxt" x:Uid="LibAddFolderTxt"
+                                       VerticalAlignment="Center" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="LibSettingsBtn"
                             Click="SettingsButton_Click"
                             Padding="14,7" Margin="8,0,0,0"
                             Background="{ThemeResource BtnBgBrush}"
                             Foreground="{ThemeResource TextPrimaryBrush}"
                             BorderThickness="0"
                             FontSize="13"
-                            AutomationProperties.Name="设置"/>
+                            AutomationProperties.Name="设置">
+                        <StackPanel Orientation="Horizontal">
+                            <FontIcon Glyph="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                            <TextBlock x:Name="SettingsTxt" x:Uid="LibSettingsTxt"
+                                       VerticalAlignment="Center" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </Button>
                     <Button x:Name="SelectModeBtn"
                             Click="SelectModeBtn_Click"
                             Padding="12,7" Margin="8,0,0,0"
@@ -1170,7 +1190,8 @@
                             AutomationProperties.Name="选择">
                         <StackPanel Orientation="Horizontal">
                             <FontIcon Glyph="&#xE8B3;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
-                            <TextBlock x:Name="SelectModeBtnText" Text="选择"/>
+                            <TextBlock x:Name="SelectModeBtnText" Text="选择"
+                                       VerticalAlignment="Center" Margin="6,0,0,0"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>

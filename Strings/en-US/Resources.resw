@@ -489,6 +489,15 @@
   <data name="LibSettings.Content" xml:space="preserve">
     <value>Settings</value>
   </data>
+  <data name="LibOpenImageTxt.Text" xml:space="preserve">
+    <value>Open image</value>
+  </data>
+  <data name="LibAddFolderTxt.Text" xml:space="preserve">
+    <value>Add folder</value>
+  </data>
+  <data name="LibSettingsTxt.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
   <data name="Seconds1.Content" xml:space="preserve">
     <value>1 second</value>
   </data>
