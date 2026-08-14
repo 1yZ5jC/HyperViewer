@@ -32,6 +32,9 @@
                        Foreground="{ThemeResource TextPrimaryBrush}"
                        TextTrimming="CharacterEllipsis"/>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <ToggleButton x:Name="DayBtn" x:Uid="TimelineLevelDay" Tag="0" MinWidth="34" Margin="0,0,4,0" IsChecked="True" Click="Level_Click"/>
+                <ToggleButton x:Name="MonthBtn" x:Uid="TimelineLevelMonth" Tag="1" MinWidth="34" Margin="0,0,4,0" Click="Level_Click"/>
+                <ToggleButton x:Name="YearBtn" x:Uid="TimelineLevelYear" Tag="2" MinWidth="34" Margin="0,0,8,0" Click="Level_Click"/>
                 <ProgressRing IsActive="{x:Bind Vm.IsScanning, Mode=OneWay}" Width="20" Height="20" Margin="0,0,8,0"/>
                 <TextBlock Text="{x:Bind Vm.StatusText, Mode=OneWay}" VerticalAlignment="Center"
                            Foreground="{ThemeResource TextMutedBrush}"/>

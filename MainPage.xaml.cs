@@ -154,10 +154,10 @@ namespace HyperViewer
             }
         }
 
-        private async void OnLibraryTabChanged(object sender, MainViewModel.LibraryTabKind newTab)
+        private void OnLibraryTabChanged(object sender, MainViewModel.LibraryTabKind newTab)
         {
             // 简单的淡入淡出切换动画
-            var grids = new FrameworkElement[] { AlbumsGrid, AllPhotosGrid, FoldersGrid };
+            var grids = new FrameworkElement[] { AlbumsGrid, AllPhotosGrid, FoldersGrid, FavoritesGrid };
             FrameworkElement targetGrid = null;
             if (newTab == MainViewModel.LibraryTabKind.Albums)
                 targetGrid = AlbumsGrid;
@@ -165,6 +165,8 @@ namespace HyperViewer
                 targetGrid = AllPhotosGrid;
             else if (newTab == MainViewModel.LibraryTabKind.Folders)
                 targetGrid = FoldersGrid;
+            else if (newTab == MainViewModel.LibraryTabKind.Favorites)
+                targetGrid = FavoritesGrid;
 
             if (targetGrid == null) return;
 
@@ -744,9 +746,101 @@ namespace HyperViewer
 
         private void PhotoGrid_ItemClick(object sender, ItemClickEventArgs e)
         {
+            if (sender == AllPhotosGrid && _selectMode)
+            {
+                UpdateSelectCount();
+                return;
+            }
             if (e.ClickedItem is PhotoItem photo)
             {
                 _ = Vm.OpenPhotoFromLibraryAsync(photo);
+            }
+        }
+
+        // ====== 批量选择 ======
+
+        private bool _selectMode;
+
+        private void SelectModeBtn_Click(object sender, RoutedEventArgs e)
+        {
+            _selectMode = !_selectMode;
+            AllPhotosGrid.SelectionMode = _selectMode ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
+            AllPhotosGrid.SelectedItems.Clear();
+            SelectBar.Visibility = _selectMode ? Visibility.Visible : Visibility.Collapsed;
+            SelectModeBtnText.Text = Loc.Get(_selectMode ? "SelectModeOff" : "SelectModeOn");
+            UpdateSelectCount();
+        }
+
+        private void AllPhotosGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_selectMode) UpdateSelectCount();
+        }
+
+        private void UpdateSelectCount()
+        {
+            int count = AllPhotosGrid.SelectedItems.Count;
+            SelectCountText.Text = Loc.Format("SelectCount", count);
+            SelectFavBtn.IsEnabled = count > 0;
+            SelectShareBtn.IsEnabled = count > 0;
+            SelectDeleteBtn.IsEnabled = count > 0;
+        }
+
+        private void SelectCancel_Click(object sender, RoutedEventArgs e)
+        {
+            AllPhotosGrid.SelectedItems.Clear();
+            SelectModeBtn_Click(sender, e);
+        }
+
+        private void SelectFav_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var item in AllPhotosGrid.SelectedItems.Cast<PhotoItem>())
+            {
+                FavoritesService.Add(item.Path);
+                if (Vm.Favorites.All(f => !string.Equals(f.Path, item.Path, StringComparison.OrdinalIgnoreCase)))
+                    Vm.Favorites.Add(item);
+            }
+            AllPhotosGrid.SelectedItems.Clear();
+            UpdateSelectCount();
+        }
+
+        private async void SelectShare_Click(object sender, RoutedEventArgs e)
+        {
+            var files = new List<StorageFile>();
+            foreach (var item in AllPhotosGrid.SelectedItems.Cast<PhotoItem>())
+            {
+                try { files.Add(await StorageFile.GetFileFromPathAsync(item.Path)); } catch { }
+            }
+            if (files.Count > 0)
+            {
+                ShareService.ShareFiles(files, Loc.Format("ShareBatchTitle", files.Count));
+            }
+        }
+
+        private async void SelectDelete_Click(object sender, RoutedEventArgs e)
+        {
+            int count = AllPhotosGrid.SelectedItems.Count;
+            if (count == 0) return;
+            var paths = AllPhotosGrid.SelectedItems.Cast<PhotoItem>().Select(p => p.Path).ToList();
+            var dlg = new ContentDialog
+            {
+                Title = Loc.Get("DeleteTitle"),
+                Content = Loc.Format("BatchDeleteMessage", count),
+                PrimaryButtonText = Loc.Get("DeletePrimary"),
+                CloseButtonText = Loc.Get("DialogCancel")
+            };
+            if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
+
+            var failed = await Vm.BatchDeleteAsync(paths);
+            AllPhotosGrid.SelectedItems.Clear();
+            if (failed.Count > 0)
+            {
+                var err = new ContentDialog
+                {
+                    Title = Loc.Get("DeleteFailTitle"),
+                    Content = Loc.Format("BatchDeleteFailMessage", failed.Count),
+                    CloseButtonText = Loc.Get("DialogOK")
+                };
+                await err.ShowAsync();
             }
         }
 
@@ -848,6 +942,9 @@ namespace HyperViewer
                 }
             }
         }
+
+        private void FavoritesGrid_RightTapped(object sender, RightTappedRoutedEventArgs e)
+            => AllPhotosGrid_RightTapped(sender, e);
 
         private void RecentFolder_RightTapped(object sender, RightTappedRoutedEventArgs e)
         {

@@ -189,7 +189,7 @@ namespace HyperViewer.Services
         /// <summary>
         /// 把像素保存为新文件 (PNG 默认; JPEG 需指定编码器)。
         /// </summary>
-        public static async Task SaveAsync(StorageFile target, byte[] pixels, int width, int height, Guid encoderId = default(Guid))
+        public static async Task SaveAsync(StorageFile target, byte[] pixels, int width, int height, Guid encoderId = default(Guid), double quality = 0.95)
         {
             if (encoderId == default(Guid)) encoderId = BitmapEncoder.PngEncoderId;
             using (var stream = await target.OpenAsync(FileAccessMode.ReadWrite))
@@ -203,6 +203,13 @@ namespace HyperViewer.Services
                     96,
                     96,
                     pixels);
+                if (encoderId == BitmapEncoder.JpegEncoderId)
+                {
+                    var props = new BitmapPropertySet();
+                    props.Add("ImageQuality", new BitmapTypedValue(
+                        Math.Max(0.0, Math.Min(1.0, quality)), PropertyType.Single));
+                    await encoder.BitmapProperties.SetPropertiesAsync(props);
+                }
                 await encoder.FlushAsync();
             }
         }

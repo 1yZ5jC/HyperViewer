@@ -79,6 +79,14 @@ namespace HyperViewer
             }
             catch { }
             UpdateTitleBarInset();
+            Loaded += (_, __) => ApplyDragRegion();
+        }
+
+        /// <summary>编辑页顶栏作为标题栏拖拽区 (与主页一致)。</summary>
+        private void ApplyDragRegion()
+        {
+            try { Window.Current.SetTitleBar(TopBarGrid); }
+            catch { }
         }
 
         private void OnTitleMetricsChanged(CoreApplicationViewTitleBar sender, object args)
@@ -115,6 +123,7 @@ namespace HyperViewer
             {
                 CoreApplication.GetCurrentView().TitleBar.LayoutMetricsChanged -= OnTitleMetricsChanged;
                 Window.Current.SizeChanged -= OnWindowSizeChanged;
+                Window.Current.SetTitleBar(null);
             }
             catch { }
             base.OnNavigatedFrom(e);
@@ -441,6 +450,9 @@ namespace HyperViewer
             int gen = ++_renderGen;
             try
             {
+                var ink = CaptureInk();
+                double hostW = InkHost.ActualWidth;
+                double hostH = InkHost.ActualHeight;
                 bool hasPending = _mode == EditMode.Mosaic && _pendingMosaic.Count >= 2;
                 double mosaicSize = MosaicSizeSlider.Value / 100.0;
                 var rendered = await Task.Run(() => RenderOpsSync(_previewBase, _ops, _opIndex,
@@ -463,6 +475,14 @@ namespace HyperViewer
                     PasteText(tmp, rendered.Width, rendered.Height, ax - bmp.W / 2.0, ay - bmp.H / 2.0, bmp);
                 }
                 if (gen != _renderGen) return;
+
+                if (ink.Count > 0)
+                {
+                    // 墨迹实时合成到预览 (所见即所得, 与保存结果一致)
+                    var inkTarget = new EditableImage(tmp, rendered.Width, rendered.Height, (uint)rendered.Width, (uint)rendered.Height);
+                    await Task.Run(() => CompositeInk(inkTarget, ink, hostW, hostH));
+                    if (gen != _renderGen) return;
+                }
 
                 RenderPixels(tmp, rendered.Width, rendered.Height);
                 _lastHisto = ImageEditService.BuildHistogram(tmp, rendered.Width, rendered.Height);
@@ -1140,6 +1160,13 @@ namespace HyperViewer
             Guid encoderId = string.Equals(file.FileType, ".jpg", StringComparison.OrdinalIgnoreCase)
                 ? BitmapEncoder.JpegEncoderId
                 : BitmapEncoder.PngEncoderId;
+            double quality;
+            switch (QualityCombo.SelectedIndex)
+            {
+                case 1: quality = 0.8; break;
+                case 2: quality = 0.6; break;
+                default: quality = 0.95; break;
+            }
             BusyRing.IsActive = true;
             StatusText.Text = Loc.Get("EditProcessing");
             try
@@ -1158,7 +1185,7 @@ namespace HyperViewer
                     PasteText(rendered.Pixels, rendered.Width, rendered.Height, ax - bmp.W / 2.0, ay - bmp.H / 2.0, bmp);
                 }
                 await Task.Run(() => CompositeInk(rendered, ink, hostW, hostH));
-                await ImageEditService.SaveAsync(file, rendered.Pixels, rendered.Width, rendered.Height, encoderId);
+                await ImageEditService.SaveAsync(file, rendered.Pixels, rendered.Width, rendered.Height, encoderId, quality);
                 StatusText.Text = Loc.Format("EditSaved", file.Name);
             }
             catch

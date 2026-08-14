@@ -96,6 +96,24 @@
                     <ComboBoxItem x:Uid="TransitionFlicker" Tag="Flicker"/>
                 </ComboBox>
 
+                <ToggleSwitch x:Name="SlideRandomOrderSwitch"
+                              x:Uid="SettingsSlideRandomOrder"
+                              Margin="0,16,0,0"
+                              Toggled="SlideRandomOrderSwitch_Toggled"/>
+                <TextBlock Style="{StaticResource SettingHintStyle}" x:Uid="SettingsSlideRandomOrderHint"/>
+
+                <ToggleSwitch x:Name="SlideRandomTransitionSwitch"
+                              x:Uid="SettingsSlideRandomTransition"
+                              Margin="0,8,0,0"
+                              Toggled="SlideRandomTransitionSwitch_Toggled"/>
+                <TextBlock Style="{StaticResource SettingHintStyle}" x:Uid="SettingsSlideRandomTransitionHint"/>
+
+                <ToggleSwitch x:Name="SlideBlurSwitch"
+                              x:Uid="SettingsSlideBlur"
+                              Margin="0,8,0,0"
+                              Toggled="SlideBlurSwitch_Toggled"/>
+                <TextBlock Style="{StaticResource SettingHintStyle}" x:Uid="SettingsSlideBlurHint"/>
+
                 <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsBgLabel" Margin="0,24,0,0"/>
                 <ComboBox x:Name="BackgroundBox" Width="200" SelectionChanged="BackgroundBox_SelectionChanged">
                     <ComboBoxItem x:Uid="BgBlack" Tag="Black"/>

@@ -144,6 +144,24 @@
   <data name="DeleteRecycleFallbackMessage" xml:space="preserve">
     <value>无法移入回收站，已永久删除该文件。</value>
   </data>
+  <data name="BatchDeleteMessage" xml:space="preserve">
+    <value>确定要删除选中的 {0} 张照片吗? 此操作不可撤销。</value>
+  </data>
+  <data name="BatchDeleteFailMessage" xml:space="preserve">
+    <value>{0} 张照片删除失败，文件可能正被占用或被系统保护。</value>
+  </data>
+  <data name="SelectModeOn" xml:space="preserve">
+    <value>选择</value>
+  </data>
+  <data name="SelectModeOff" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="SelectCount" xml:space="preserve">
+    <value>已选 {0} 张</value>
+  </data>
+  <data name="ShareBatchTitle" xml:space="preserve">
+    <value>分享 {0} 张照片</value>
+  </data>
   <data name="RenameTitle" xml:space="preserve">
     <value>重命名</value>
   </data>
@@ -167,6 +185,15 @@
   </data>
   <data name="EditSave.Content" xml:space="preserve">
     <value>保存</value>
+  </data>
+  <data name="EditQualityHigh.Content" xml:space="preserve">
+    <value>质量:高</value>
+  </data>
+  <data name="EditQualityMedium.Content" xml:space="preserve">
+    <value>质量:中</value>
+  </data>
+  <data name="EditQualityLow.Content" xml:space="preserve">
+    <value>质量:低</value>
   </data>
   <data name="EditCropHint.Text" xml:space="preserve">
     <value>在图片上拖拽画出裁剪区域, 可拖动选区位置</value>
@@ -405,6 +432,42 @@
   <data name="SettingsResetRotation.OffContent" xml:space="preserve">
     <value>保持方向</value>
   </data>
+  <data name="SettingsSlideRandomOrder.Header" xml:space="preserve">
+    <value>幻灯片随机顺序</value>
+  </data>
+  <data name="SettingsSlideRandomOrder.OnContent" xml:space="preserve">
+    <value>随机播放</value>
+  </data>
+  <data name="SettingsSlideRandomOrder.OffContent" xml:space="preserve">
+    <value>按顺序播放</value>
+  </data>
+  <data name="SettingsSlideRandomOrderHint.Text" xml:space="preserve">
+    <value>每张随机切换, 不重复相邻</value>
+  </data>
+  <data name="SettingsSlideRandomTransition.Header" xml:space="preserve">
+    <value>幻灯片随机转场</value>
+  </data>
+  <data name="SettingsSlideRandomTransition.OnContent" xml:space="preserve">
+    <value>随机转场</value>
+  </data>
+  <data name="SettingsSlideRandomTransition.OffContent" xml:space="preserve">
+    <value>固定转场</value>
+  </data>
+  <data name="SettingsSlideRandomTransitionHint.Text" xml:space="preserve">
+    <value>每次淡入/缩放/平移/闪烁随机挑选</value>
+  </data>
+  <data name="SettingsSlideBlur.Header" xml:space="preserve">
+    <value>幻灯片模糊背景</value>
+  </data>
+  <data name="SettingsSlideBlur.OnContent" xml:space="preserve">
+    <value>模糊背景</value>
+  </data>
+  <data name="SettingsSlideBlur.OffContent" xml:space="preserve">
+    <value>纯色背景</value>
+  </data>
+  <data name="SettingsSlideBlurHint.Text" xml:space="preserve">
+    <value>背景跟随当前图片的色彩模糊显示</value>
+  </data>
   <data name="LibTabAlbums.Content" xml:space="preserve">
     <value>集锦</value>
   </data>
@@ -413,6 +476,9 @@
   </data>
   <data name="LibTabFolders.Content" xml:space="preserve">
     <value>文件夹</value>
+  </data>
+  <data name="LibTabFavorites.Content" xml:space="preserve">
+    <value>收藏</value>
   </data>
   <data name="LibAddFolder.Content" xml:space="preserve">
     <value>添加文件夹</value>
@@ -459,6 +525,21 @@
   <data name="TimelineDateTitle" xml:space="preserve">
     <value>{0}年{1}月{2}日</value>
   </data>
+  <data name="TimelineMonthTitle" xml:space="preserve">
+    <value>{0}年{1}月</value>
+  </data>
+  <data name="TimelineYearTitle" xml:space="preserve">
+    <value>{0}年</value>
+  </data>
+  <data name="TimelineLevelDay" xml:space="preserve">
+    <value>日</value>
+  </data>
+  <data name="TimelineLevelMonth" xml:space="preserve">
+    <value>月</value>
+  </data>
+  <data name="TimelineLevelYear" xml:space="preserve">
+    <value>年</value>
+  </data>
   <data name="InfoFileName" xml:space="preserve">
     <value>文件名</value>
   </data>
@@ -492,6 +573,15 @@
   <data name="InfoFocal" xml:space="preserve">
     <value>焦距</value>
   </data>
+  <data name="InfoIso" xml:space="preserve">
+    <value>ISO</value>
+  </data>
+  <data name="InfoGps" xml:space="preserve">
+    <value>GPS</value>
+  </data>
+  <data name="InfoPanelTitle.Text" xml:space="preserve">
+    <value>信息</value>
+  </data>
   <data name="EditTypePNG" xml:space="preserve">
     <value>PNG 图片</value>
   </data>
@@ -512,6 +602,9 @@
   </data>
   <data name="LibTabFoldersFlyout.Text" xml:space="preserve">
     <value>文件夹</value>
+  </data>
+  <data name="LibTabFavoritesFlyout.Text" xml:space="preserve">
+    <value>收藏</value>
   </data>
   <data name="LibOpenImageFlyout.Text" xml:space="preserve">
     <value>打开图片</value>

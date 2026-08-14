@@ -81,9 +81,9 @@ namespace HyperViewer.Models
             rows.Add(new InfoRow(Loc.Get("InfoCamera"), string.IsNullOrEmpty(CameraModel) ? "—" : $"{CameraManufacturer ?? ""} {CameraModel}".Trim()));
             rows.Add(new InfoRow(Loc.Get("InfoAperture"), FNumberText));
             rows.Add(new InfoRow(Loc.Get("InfoShutter"), ExposureText));
-            rows.Add(new InfoRow("ISO", IsoSpeedText));
+            rows.Add(new InfoRow(Loc.Get("InfoIso"), IsoSpeedText));
             rows.Add(new InfoRow(Loc.Get("InfoFocal"), FocalLengthText));
-            rows.Add(new InfoRow("GPS", GpsText));
+            rows.Add(new InfoRow(Loc.Get("InfoGps"), GpsText));
             return rows;
         }
     }

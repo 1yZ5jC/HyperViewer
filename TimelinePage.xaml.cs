@@ -4,6 +4,7 @@ using HyperViewer.ViewModels;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Navigation;
 
 namespace HyperViewer
@@ -46,6 +47,20 @@ namespace HyperViewer
             EmptyHint.Visibility = (!Vm.IsScanning && Vm.Groups.Count == 0)
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+        }
+
+        private void Level_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(sender is ToggleButton tb)
+                || !(tb.Tag is string s)
+                || !int.TryParse(s, out int level))
+            {
+                return;
+            }
+            DayBtn.IsChecked = level == 0;
+            MonthBtn.IsChecked = level == 1;
+            YearBtn.IsChecked = level == 2;
+            Vm.SetLevel(level);
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)

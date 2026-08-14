@@ -19,7 +19,7 @@
         </Grid.RowDefinitions>
 
         <!-- 顶栏 -->
-        <Grid Grid.Row="0" Padding="12,6" Background="{ThemeResource ChromeBgBrush}">
+        <Grid x:Name="TopBarGrid" Grid.Row="0" Padding="12,6" Background="{ThemeResource ChromeBgBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -93,6 +93,12 @@
                     <Border Width="1" Background="{ThemeResource ChromeBgStrongBrush}" Margin="10,4"/>
                     <Button x:Uid="EditApplyCrop" Click="ApplyCrop_Click" MinWidth="80"/>
                     <Button x:Uid="EditReset" Click="Reset_Click" MinWidth="60" Margin="6,0,0,0"/>
+                    <ComboBox x:Name="QualityCombo" MinWidth="72" Margin="6,0,0,0"
+                              VerticalAlignment="Center" SelectedIndex="0">
+                        <ComboBoxItem x:Uid="EditQualityHigh"/>
+                        <ComboBoxItem x:Uid="EditQualityMedium"/>
+                        <ComboBoxItem x:Uid="EditQualityLow"/>
+                    </ComboBox>
                     <Button x:Uid="EditSave" Click="Save_Click" MinWidth="60" Margin="6,0,0,0"/>
                     <TextBlock x:Name="HintText" x:Uid="EditCropHint"
                                VerticalAlignment="Center" Margin="10,0,0,0"

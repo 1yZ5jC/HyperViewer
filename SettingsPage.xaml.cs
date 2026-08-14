@@ -91,6 +91,9 @@ namespace HyperViewer
             }
 
             ResetRotationSwitch.IsOn = SettingsService.ResetRotationOnNavigate;
+            SlideRandomOrderSwitch.IsOn = SettingsService.SlideRandomOrder;
+            SlideRandomTransitionSwitch.IsOn = SettingsService.SlideRandomTransition;
+            SlideBlurSwitch.IsOn = SettingsService.SlideBlurBackground;
             CacheInfoText.Text = Loc.Format("CacheInfo", ImageLoaderService.CacheCount);
             BuildShortcutPanel();
 
@@ -175,6 +178,24 @@ namespace HyperViewer
             {
                 SettingsService.SlideTransition = transition;
             }
+        }
+
+        private void SlideRandomOrderSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_loading) return;
+            SettingsService.SlideRandomOrder = SlideRandomOrderSwitch.IsOn;
+        }
+
+        private void SlideRandomTransitionSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_loading) return;
+            SettingsService.SlideRandomTransition = SlideRandomTransitionSwitch.IsOn;
+        }
+
+        private void SlideBlurSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_loading) return;
+            SettingsService.SlideBlurBackground = SlideBlurSwitch.IsOn;
         }
 
         private void ResetRotationSwitch_Toggled(object sender, RoutedEventArgs e)

@@ -144,6 +144,24 @@
   <data name="DeleteRecycleFallbackMessage" xml:space="preserve">
     <value>Could not move to Recycle Bin. The file was permanently deleted.</value>
   </data>
+  <data name="BatchDeleteMessage" xml:space="preserve">
+    <value>Delete the {0} selected photos? This cannot be undone.</value>
+  </data>
+  <data name="BatchDeleteFailMessage" xml:space="preserve">
+    <value>{0} photos could not be deleted. The files may be in use or protected.</value>
+  </data>
+  <data name="SelectModeOn" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="SelectModeOff" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="SelectCount" xml:space="preserve">
+    <value>{0} selected</value>
+  </data>
+  <data name="ShareBatchTitle" xml:space="preserve">
+    <value>Share {0} photos</value>
+  </data>
   <data name="RenameTitle" xml:space="preserve">
     <value>Rename</value>
   </data>
@@ -167,6 +185,15 @@
   </data>
   <data name="EditSave.Content" xml:space="preserve">
     <value>Save</value>
+  </data>
+  <data name="EditQualityHigh.Content" xml:space="preserve">
+    <value>Quality: High</value>
+  </data>
+  <data name="EditQualityMedium.Content" xml:space="preserve">
+    <value>Quality: Medium</value>
+  </data>
+  <data name="EditQualityLow.Content" xml:space="preserve">
+    <value>Quality: Low</value>
   </data>
   <data name="EditCropHint.Text" xml:space="preserve">
     <value>Drag on the image to draw a crop area, drag the selection to move it</value>
@@ -405,6 +432,42 @@
   <data name="SettingsResetRotation.OffContent" xml:space="preserve">
     <value>Keep current orientation</value>
   </data>
+  <data name="SettingsSlideRandomOrder.Header" xml:space="preserve">
+    <value>Slideshow random order</value>
+  </data>
+  <data name="SettingsSlideRandomOrder.OnContent" xml:space="preserve">
+    <value>Random</value>
+  </data>
+  <data name="SettingsSlideRandomOrder.OffContent" xml:space="preserve">
+    <value>Sequential</value>
+  </data>
+  <data name="SettingsSlideRandomOrderHint.Text" xml:space="preserve">
+    <value>Shuffles slides without repeating the same photo back-to-back</value>
+  </data>
+  <data name="SettingsSlideRandomTransition.Header" xml:space="preserve">
+    <value>Slideshow random transitions</value>
+  </data>
+  <data name="SettingsSlideRandomTransition.OnContent" xml:space="preserve">
+    <value>Random transition</value>
+  </data>
+  <data name="SettingsSlideRandomTransition.OffContent" xml:space="preserve">
+    <value>Fixed transition</value>
+  </data>
+  <data name="SettingsSlideRandomTransitionHint.Text" xml:space="preserve">
+    <value>Picks a random Fade / Zoom / Pan / Flicker each slide</value>
+  </data>
+  <data name="SettingsSlideBlur.Header" xml:space="preserve">
+    <value>Slideshow blurred background</value>
+  </data>
+  <data name="SettingsSlideBlur.OnContent" xml:space="preserve">
+    <value>Blurred background</value>
+  </data>
+  <data name="SettingsSlideBlur.OffContent" xml:space="preserve">
+    <value>Solid background</value>
+  </data>
+  <data name="SettingsSlideBlurHint.Text" xml:space="preserve">
+    <value>Background follows the current photo with a blur effect</value>
+  </data>
   <data name="LibTabAlbums.Content" xml:space="preserve">
     <value>Albums</value>
   </data>
@@ -413,6 +476,9 @@
   </data>
   <data name="LibTabFolders.Content" xml:space="preserve">
     <value>Folders</value>
+  </data>
+  <data name="LibTabFavorites.Content" xml:space="preserve">
+    <value>Favorites</value>
   </data>
   <data name="LibAddFolder.Content" xml:space="preserve">
     <value>Add folder</value>
@@ -459,6 +525,21 @@
   <data name="TimelineDateTitle" xml:space="preserve">
     <value>{1}/{2}/{0}</value>
   </data>
+  <data name="TimelineMonthTitle" xml:space="preserve">
+    <value>{1}/{0}</value>
+  </data>
+  <data name="TimelineYearTitle" xml:space="preserve">
+    <value>{0}</value>
+  </data>
+  <data name="TimelineLevelDay" xml:space="preserve">
+    <value>Day</value>
+  </data>
+  <data name="TimelineLevelMonth" xml:space="preserve">
+    <value>Month</value>
+  </data>
+  <data name="TimelineLevelYear" xml:space="preserve">
+    <value>Year</value>
+  </data>
   <data name="InfoFileName" xml:space="preserve">
     <value>File name</value>
   </data>
@@ -492,6 +573,15 @@
   <data name="InfoFocal" xml:space="preserve">
     <value>Focal length</value>
   </data>
+  <data name="InfoIso" xml:space="preserve">
+    <value>ISO</value>
+  </data>
+  <data name="InfoGps" xml:space="preserve">
+    <value>GPS</value>
+  </data>
+  <data name="InfoPanelTitle.Text" xml:space="preserve">
+    <value>Info</value>
+  </data>
   <data name="EditTypePNG" xml:space="preserve">
     <value>PNG image</value>
   </data>
@@ -512,6 +602,9 @@
   </data>
   <data name="LibTabFoldersFlyout.Text" xml:space="preserve">
     <value>Folders</value>
+  </data>
+  <data name="LibTabFavoritesFlyout.Text" xml:space="preserve">
+    <value>Favorites</value>
   </data>
   <data name="LibOpenImageFlyout.Text" xml:space="preserve">
     <value>Open image</value>

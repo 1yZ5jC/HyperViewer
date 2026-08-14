@@ -1,19 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Windows.Storage;
 
 namespace HyperViewer.Helpers
 {
     /// <summary>
-    /// 收藏持久化: LocalSettings 存路径集合 (按路径匹配)。
+    /// 收藏持久化: LocalSettings 存路径集合 (保留添加/拖拽后的顺序)。
     /// </summary>
     public static class FavoritesService
     {
         private const string SettingsKey = "FavoritePaths";
         private const char Separator = '|';
 
-        private static readonly HashSet<string> Cache =
+        private static readonly HashSet<string> Set =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private static readonly List<string> Order = new List<string>();
         private static readonly object Sync = new object();
 
         static FavoritesService()
@@ -24,7 +26,9 @@ namespace HyperViewer.Helpers
                 lock (Sync)
                 {
                     foreach (var p in s.Split(new[] { Separator }, StringSplitOptions.RemoveEmptyEntries))
-                        Cache.Add(p);
+                    {
+                        if (Set.Add(p)) Order.Add(p);
+                    }
                 }
             }
         }
@@ -33,7 +37,7 @@ namespace HyperViewer.Helpers
         {
             lock (Sync)
             {
-                return !string.IsNullOrEmpty(path) && Cache.Contains(path);
+                return !string.IsNullOrEmpty(path) && Set.Contains(path);
             }
         }
 
@@ -41,7 +45,10 @@ namespace HyperViewer.Helpers
         {
             lock (Sync)
             {
-                if (!string.IsNullOrEmpty(path) && Cache.Add(path)) Persist();
+                if (string.IsNullOrEmpty(path) || Set.Contains(path)) return;
+                Set.Add(path);
+                Order.Add(path);
+                Persist();
             }
         }
 
@@ -49,16 +56,44 @@ namespace HyperViewer.Helpers
         {
             lock (Sync)
             {
-                if (Cache.Remove(path)) Persist();
+                if (!string.IsNullOrEmpty(path) && Set.Remove(path))
+                {
+                    Order.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
+                    Persist();
+                }
+            }
+        }
+
+        /// <summary>按顺序返回全部收藏路径 (只读快照)。</summary>
+        public static IReadOnlyList<string> GetAll()
+        {
+            lock (Sync)
+            {
+                return Order.ToList();
+            }
+        }
+
+        /// <summary>用新顺序整体替换收藏 (拖拽排序后调用)。</summary>
+        public static void SaveOrder(IEnumerable<string> paths)
+        {
+            lock (Sync)
+            {
+                Order.Clear();
+                Set.Clear();
+                if (paths != null)
+                {
+                    foreach (var p in paths)
+                    {
+                        if (!string.IsNullOrEmpty(p) && Set.Add(p)) Order.Add(p);
+                    }
+                }
+                Persist();
             }
         }
 
         private static void Persist()
         {
-            lock (Sync)
-            {
-                ApplicationData.Current.LocalSettings.Values[SettingsKey] = string.Join(Separator.ToString(), Cache);
-            }
+            ApplicationData.Current.LocalSettings.Values[SettingsKey] = string.Join(Separator.ToString(), Order);
         }
     }
 }

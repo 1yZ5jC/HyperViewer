@@ -52,6 +52,22 @@ namespace HyperViewer.ViewModels
             Groups = new ReadOnlyObservableCollection<TimelineGroup>(_groups);
         }
 
+        private int _level;
+        /// <summary>0=按日, 1=按月, 2=按年。</summary>
+        public int Level
+        {
+            get => _level;
+            private set => SetProperty(ref _level, value);
+        }
+
+        /// <summary>切换分组层级并重建分组。</summary>
+        public void SetLevel(int level)
+        {
+            if (level < 0 || level > 2 || level == Level || _photos == null) return;
+            Level = level;
+            RebuildGroups();
+        }
+
         public async Task LoadAsync(StorageFolder folder)
         {
             _groups.Clear();
@@ -79,21 +95,13 @@ namespace HyperViewer.ViewModels
                 await Task.WhenAll(tasks);
             }
             IsScanning = false;
-
-            var groups = photos
-                .Where(p => p.DateTaken.HasValue)
-                .GroupBy(p => p.DateTaken.Value.Date)
-                .OrderByDescending(g => g.Key)
-                .Select(g => new TimelineGroup(g.Key, g.OrderByDescending(p => p.DateTaken.Value)))
-                .ToList();
-
-            foreach (var g in groups) _groups.Add(g);
+            _photos = new List<PhotoItem>(photos);
+            RebuildGroups();
 
             if (_groups.Count > 0)
             {
                 CalendarMin = _groups[_groups.Count - 1].Date;
                 CalendarMax = _groups[0].Date;
-                StatusText = Loc.Format("TimelineDone", photos.Count, _groups.Count);
             }
             else
             {
@@ -102,6 +110,33 @@ namespace HyperViewer.ViewModels
 
             // 无日期照片兜底展示: 归入最早一组之前的日子? 直接忽略, 不影响主流程
             await ImageLoaderService.PreloadThumbnailsAsync(photos);
+        }
+
+        private List<PhotoItem> _photos;
+
+        private void RebuildGroups()
+        {
+            _groups.Clear();
+            var dated = _photos.Where(p => p.DateTaken.HasValue).ToList();
+            if (dated.Count == 0)
+            {
+                StatusText = Loc.Get("TimelineNoDate");
+                return;
+            }
+
+            IEnumerable<IGrouping<DateTime, PhotoItem>> grouped;
+            if (Level == 2)
+                grouped = dated.GroupBy(p => new DateTime(p.DateTaken.Value.Year, 1, 1));
+            else if (Level == 1)
+                grouped = dated.GroupBy(p => new DateTime(p.DateTaken.Value.Year, p.DateTaken.Value.Month, 1));
+            else
+                grouped = dated.GroupBy(p => p.DateTaken.Value.Date);
+
+            foreach (var g in grouped.OrderByDescending(g => g.Key))
+            {
+                _groups.Add(new TimelineGroup(g.Key, g.OrderByDescending(p => p.DateTaken.Value), Level));
+            }
+            StatusText = Loc.Format("TimelineDone", _photos.Count, _groups.Count);
         }
 
         private static async Task LoadDateAsync(SemaphoreSlim sem, PhotoItem p, IProgress<int> progress)
@@ -119,13 +154,16 @@ namespace HyperViewer.ViewModels
         }
 
         /// <summary>
-        /// 找到某个日期所在分组; 无该日分组则回退到最近一个更早的分组。
+        /// 找到某个日期所在分组; 无该分组则回退到最近一个更早的分组 (按当前层级匹配)。
         /// </summary>
         public TimelineGroup FindGroupForDate(DateTimeOffset date)
         {
             var day = date.Date;
-            return _groups.FirstOrDefault(g => g.Date == day)
-                ?? _groups.FirstOrDefault(g => g.Date < day);
+            DateTime key = Level == 2 ? new DateTime(day.Year, 1, 1)
+                : Level == 1 ? new DateTime(day.Year, day.Month, 1)
+                : day;
+            return _groups.FirstOrDefault(g => g.Date == key)
+                ?? _groups.FirstOrDefault(g => g.Date < key);
         }
     }
 }

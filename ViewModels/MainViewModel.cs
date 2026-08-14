@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -118,7 +119,7 @@ namespace HyperViewer.ViewModels
         }
 
         /// <summary>图库视图当前 Tab。</summary>
-        public enum LibraryTabKind { Albums, AllPhotos, Folders }
+        public enum LibraryTabKind { Albums, AllPhotos, Folders, Favorites }
         private LibraryTabKind _libraryTab = LibraryTabKind.Albums;
         public LibraryTabKind LibraryTab
         {
@@ -137,14 +138,20 @@ namespace HyperViewer.ViewModels
         public bool AlbumsVisible => LibraryTab == LibraryTabKind.Albums;
         public bool AllPhotosVisible => LibraryTab == LibraryTabKind.AllPhotos;
         public bool FoldersVisible => LibraryTab == LibraryTabKind.Folders;
+        public bool FavoritesVisible => LibraryTab == LibraryTabKind.Favorites;
 
         // Tab 内容视图可见性 (空态显示时全部隐藏, 避免与空态面板重叠)
         public bool AlbumsContentVisible => AlbumsVisible && !LibraryEmptyVisible;
         public bool AllPhotosContentVisible => AllPhotosVisible && !LibraryEmptyVisible;
         public bool FoldersContentVisible => FoldersVisible && !LibraryEmptyVisible;
+        public bool FavoritesContentVisible => FavoritesVisible && !LibraryEmptyVisible;
 
         public ObservableCollection<AlbumItem> Albums { get; } = new ObservableCollection<AlbumItem>();
         public ObservableCollection<PhotoItem> AllPhotos { get; } = new ObservableCollection<PhotoItem>();
+        public ObservableCollection<PhotoItem> Favorites { get; } = new ObservableCollection<PhotoItem>();
+
+        private bool _favoritesLoading;
+        private bool _suppressFavoritesPersist;
 
         // ---- Search support ----
         private List<AlbumItem> _masterAlbums = new List<AlbumItem>();
@@ -213,9 +220,11 @@ namespace HyperViewer.ViewModels
             RaisePropertyChanged(nameof(AlbumsVisible));
             RaisePropertyChanged(nameof(AllPhotosVisible));
             RaisePropertyChanged(nameof(FoldersVisible));
+            RaisePropertyChanged(nameof(FavoritesVisible));
             RaisePropertyChanged(nameof(AlbumsContentVisible));
             RaisePropertyChanged(nameof(AllPhotosContentVisible));
             RaisePropertyChanged(nameof(FoldersContentVisible));
+            RaisePropertyChanged(nameof(FavoritesContentVisible));
         }
 
         private bool _loadFailed;
@@ -397,6 +406,8 @@ namespace HyperViewer.ViewModels
             SelectAlbumsTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.Albums));
             SelectAllPhotosTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.AllPhotos));
             SelectFoldersTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.Folders));
+            SelectFavoritesTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.Favorites));
+            Favorites.CollectionChanged += OnFavoritesChanged;
 
             _recent = RecentFoldersService.Instance;
             _recent.Changed += (_, __) =>
@@ -510,6 +521,7 @@ namespace HyperViewer.ViewModels
         public void SelectLibraryTab(LibraryTabKind kind)
         {
             LibraryTab = kind;
+            if (kind == LibraryTabKind.Favorites) _ = RefreshFavoritesAsync();
             // 持久化到本地设置
             SettingsService.LastTab = kind.ToString();
         }
@@ -517,6 +529,48 @@ namespace HyperViewer.ViewModels
         public RelayCommand SelectAlbumsTabCommand { get; }
         public RelayCommand SelectAllPhotosTabCommand { get; }
         public RelayCommand SelectFoldersTabCommand { get; }
+        public RelayCommand SelectFavoritesTabCommand { get; }
+
+        /// <summary>
+        /// 重建收藏列表 (保持用户拖拽后的顺序)。文件已移动/删除的静默跳过。
+        /// </summary>
+        public async Task RefreshFavoritesAsync()
+        {
+            if (_favoritesLoading) return;
+            _favoritesLoading = true;
+            try
+            {
+                _suppressFavoritesPersist = true;
+                Favorites.Clear();
+                var byPath = new Dictionary<string, PhotoItem>(StringComparer.OrdinalIgnoreCase);
+                foreach (var p in _masterAllPhotos) byPath[p.Path] = p;
+                foreach (var path in FavoritesService.GetAll())
+                {
+                    if (byPath.TryGetValue(path, out var item))
+                    {
+                        Favorites.Add(item);
+                        continue;
+                    }
+                    try
+                    {
+                        var file = await StorageFile.GetFileFromPathAsync(path);
+                        Favorites.Add(new PhotoItem(file));
+                    }
+                    catch { /* 文件已被移动或删除 */ }
+                }
+            }
+            finally
+            {
+                _suppressFavoritesPersist = false;
+                _favoritesLoading = false;
+            }
+        }
+
+        private void OnFavoritesChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (_suppressFavoritesPersist) return;
+            FavoritesService.SaveOrder(Favorites.Select(f => f.Path));
+        }
 
         private async Task OpenImageAsync()
         {
@@ -794,6 +848,37 @@ namespace HyperViewer.ViewModels
         }
 
         /// <summary>
+        /// 批量删除 (回收站, 失败则永久删除), 并从图库/收藏中移除, 返回失败路径。
+        /// </summary>
+        public async Task<List<string>> BatchDeleteAsync(IEnumerable<string> paths)
+        {
+            var list = (paths ?? Enumerable.Empty<string>()).ToList();
+            var failed = new List<string>();
+            foreach (var p in list)
+            {
+                try
+                {
+                    if (!TryRecycle(p))
+                    {
+                        var f = await StorageFile.GetFileFromPathAsync(p);
+                        await f.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                    }
+                }
+                catch { failed.Add(p); }
+            }
+            if (list.Count > 0)
+            {
+                _masterAllPhotos.RemoveAll(x => list.Contains(x.Path, StringComparer.OrdinalIgnoreCase));
+                foreach (var p in list) FavoritesService.Remove(p);
+                if (Favorites.Any(f => list.Contains(f.Path, StringComparer.OrdinalIgnoreCase)))
+                    _ = RefreshFavoritesAsync();
+                ApplySearch();
+                LibraryEmptyVisible = _masterAlbums.Count == 0 && _masterAllPhotos.Count == 0;
+            }
+            return failed;
+        }
+
+        /// <summary>
         /// 复制当前图片到剪贴板 (懒加载流, 复制时不阻塞 UI)。
         /// </summary>
         public void CopyCurrentToClipboard()
@@ -996,6 +1081,8 @@ namespace HyperViewer.ViewModels
 
         // ====== 幻灯片 ======
         private CancellationTokenSource _slideShowCts;
+        private readonly Random _rng = new Random();
+        private static readonly string[] TransitionNames = { "Fade", "Zoom", "Pan", "Flicker" };
 
         /// <summary>
         /// 返回图库主页 (清除当前图片)。
@@ -1029,6 +1116,18 @@ namespace HyperViewer.ViewModels
             SlideShowRunning = false;
             _slideShowCts?.Cancel();
             _slideShowCts = null;
+            // 模糊背景播放结束后恢复设置里的背景
+            RefreshSettings();
+        }
+
+        /// <summary>幻灯片播放进度 (0~1, 用于底部进度条)。</summary>
+        public double SlideShowProgress
+        {
+            get
+            {
+                if (_photos.Count == 0) return 0;
+                return (double)(CurrentIndex + 1) / _photos.Count;
+            }
         }
 
         private async Task RunSlideShowAsync(CancellationToken token)
@@ -1038,8 +1137,121 @@ namespace HyperViewer.ViewModels
                 try { await Task.Delay(TimeSpan.FromSeconds(SlideShowSeconds), token); }
                 catch (TaskCanceledException) { break; }
                 if (token.IsCancellationRequested) break;
-                if (CanGoNext) Next();
-                else { First(); }
+
+                if (SettingsService.SlideRandomTransition)
+                {
+                    SettingsService.SlideTransition = TransitionNames[_rng.Next(TransitionNames.Length)];
+                }
+
+                if (SettingsService.SlideRandomOrder && _photos.Count > 1)
+                {
+                    int idx;
+                    do { idx = _rng.Next(_photos.Count); } while (idx == CurrentIndex);
+                    CurrentIndex = idx;
+                    Current = _photos[idx];
+                    ApplyNavigationReset();
+                }
+                else if (CanGoNext) Next();
+                else First();
+
+                RaisePropertyChanged(nameof(SlideShowProgress));
+                _ = UpdateSlideBackgroundAsync(Current);
+            }
+        }
+
+        /// <summary>
+        /// 幻灯片模糊背景: 取当前图片缩小版做盒式模糊, 铺满主区背景。
+        /// </summary>
+        private async Task UpdateSlideBackgroundAsync(PhotoItem photo)
+        {
+            if (!SlideShowRunning || !SettingsService.SlideBlurBackground || photo == null) return;
+            try
+            {
+                var file = await StorageFile.GetFileFromPathAsync(photo.Path);
+                using (var stream = await file.OpenAsync(Windows.Storage.FileAccessMode.Read))
+                {
+                    var decoder = await BitmapDecoder.CreateAsync(stream);
+                    using (var sb = await decoder.GetSoftwareBitmapAsync(
+                        BitmapPixelFormat.Bgra8,
+                        BitmapAlphaMode.Premultiplied,
+                        new BitmapTransform
+                        {
+                            ScaledWidth = 192,
+                            ScaledHeight = 192,
+                            InterpolationMode = BitmapInterpolationMode.Fant
+                        },
+                        ExifOrientationMode.IgnoreExifOrientation,
+                        ColorManagementMode.DoNotColorManage))
+                    {
+                        var bytes = new byte[sb.PixelWidth * sb.PixelHeight * 4];
+                        sb.CopyToBuffer(bytes.AsBuffer());
+                        BoxBlur(bytes, sb.PixelWidth, sb.PixelHeight, 12);
+                        var wb = new WriteableBitmap(sb.PixelWidth, sb.PixelHeight);
+                        using (var wbs = wb.PixelBuffer.AsStream())
+                        {
+                            wbs.Write(bytes, 0, bytes.Length);
+                        }
+                        wb.Invalidate();
+                        if (!SlideShowRunning) return;
+                        MainBackground = new ImageBrush
+                        {
+                            ImageSource = wb,
+                            Stretch = Stretch.UniformToFill
+                        };
+                    }
+                }
+            }
+            catch
+            {
+                // 个别图片解码失败时保持原背景
+            }
+        }
+
+        private static void BoxBlur(byte[] pixels, int w, int h, int radius)
+        {
+            var tmp = new byte[pixels.Length];
+            int stride = w * 4;
+            for (int c = 0; c < 4; c++)
+            {
+                // 水平方向
+                for (int y = 0; y < h; y++)
+                {
+                    int rowBase = y * stride + c;
+                    int sum = 0, count = 0;
+                    for (int x = -radius; x <= radius; x++)
+                    {
+                        int sx = x < 0 ? 0 : (x >= w ? w - 1 : x);
+                        sum += pixels[rowBase + sx * 4];
+                        count++;
+                    }
+                    for (int x = 0; x < w; x++)
+                    {
+                        tmp[rowBase + x * 4] = (byte)(sum / count);
+                        int add = x + radius + 1;
+                        int sub = x - radius;
+                        if (add < w) { sum += pixels[rowBase + add * 4]; count++; }
+                        if (sub >= 0) { sum -= pixels[rowBase + sub * 4]; count--; }
+                    }
+                }
+                // 垂直方向
+                for (int x = 0; x < w; x++)
+                {
+                    int sum = 0, count = 0;
+                    for (int y = -radius; y <= radius; y++)
+                    {
+                        int sy = y < 0 ? 0 : (y >= h ? h - 1 : y);
+                        sum += tmp[sy * stride + x * 4 + c];
+                        count++;
+                    }
+                    for (int y = 0; y < h; y++)
+                    {
+                        pixels[y * stride + x * 4 + c] = (byte)(sum / count);
+                        int add = y + radius + 1;
+                        int sub = y - radius;
+                        if (add < h) { sum += tmp[add * stride + x * 4 + c]; count++; }
+                        if (sub >= 0) { sum -= tmp[sub * stride + x * 4 + c]; count--; }
+                    }
+                }
             }
         }
 

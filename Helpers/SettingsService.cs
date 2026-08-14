@@ -12,6 +12,9 @@ namespace HyperViewer.Helpers
         private const string KeyTheme = "AppTheme";
         private const string KeyResetRotation = "ResetRotationOnNavigate";
         private const string KeySlideTransition = "SlideTransition";
+        private const string KeySlideRandomOrder = "SlideRandomOrder";
+        private const string KeySlideRandomTransition = "SlideRandomTransition";
+        private const string KeySlideBlurBackground = "SlideBlurBackground";
         private const string KeyLastTab = "LastTab";
         private const string KeyRestoreLastFolder = "RestoreLastFolder";
         private const string KeyLastFolderPath = "LastFolderPath";
@@ -59,6 +62,27 @@ namespace HyperViewer.Helpers
         {
             get { return GetString(KeySlideTransition, "Fade"); }
             set { Store.Values[KeySlideTransition] = value; }
+        }
+
+        /// <summary>幻灯片随机播放顺序。</summary>
+        public static bool SlideRandomOrder
+        {
+            get { return GetBool(KeySlideRandomOrder, false); }
+            set { Store.Values[KeySlideRandomOrder] = value; }
+        }
+
+        /// <summary>幻灯片每张随机转场。</summary>
+        public static bool SlideRandomTransition
+        {
+            get { return GetBool(KeySlideRandomTransition, false); }
+            set { Store.Values[KeySlideRandomTransition] = value; }
+        }
+
+        /// <summary>幻灯片模糊背景 (每张跟随当前图片色彩)。</summary>
+        public static bool SlideBlurBackground
+        {
+            get { return GetBool(KeySlideBlurBackground, false); }
+            set { Store.Values[KeySlideBlurBackground] = value; }
         }
 
         // 最近一次打开的图库 Tab（Albums / AllPhotos / Folders）
