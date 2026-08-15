@@ -15,7 +15,7 @@
         </Grid.RowDefinitions>
 
         <!-- 顶栏: 返回 / 标题 / 扫描进度 -->
-        <Grid Grid.Row="0" Padding="12,6" Background="{ThemeResource ChromeBgBrush}">
+        <Grid x:Name="TopBarGrid" Grid.Row="0" Padding="12,6" Background="{ThemeResource ChromeBgBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -27,10 +27,14 @@
                 <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"
                           Foreground="{ThemeResource TextPrimaryBrush}"/>
           </Button>
-            <TextBlock x:Name="TitleText" Grid.Column="1" VerticalAlignment="Center"
-                       FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
-                       Foreground="{ThemeResource TextPrimaryBrush}"
-                       TextTrimming="CharacterEllipsis"/>
+            <!-- 标题栏拖拽区 (SetTitleBar 目标): 只含非交互内容。返回按钮及右侧
+                 ToggleButton 必须在拖拽区子树之外, 否则收不到指针输入 (标题栏吞事件) -->
+            <Grid x:Name="TitleBarDragRegion" Grid.Column="1" Background="Transparent">
+                <TextBlock x:Name="TitleText" VerticalAlignment="Center"
+                           FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
+                           Foreground="{ThemeResource TextPrimaryBrush}"
+                           TextTrimming="CharacterEllipsis"/>
+            </Grid>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                 <ToggleButton x:Name="DayBtn" x:Uid="TimelineLevelDay" Tag="0" MinWidth="34" Margin="0,0,4,0" IsChecked="True" Click="Level_Click"/>
                 <ToggleButton x:Name="MonthBtn" x:Uid="TimelineLevelMonth" Tag="1" MinWidth="34" Margin="0,0,4,0" Click="Level_Click"/>

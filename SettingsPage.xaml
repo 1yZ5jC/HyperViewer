@@ -34,7 +34,7 @@
         </Grid.RowDefinitions>
 
         <!-- 顶栏 -->
-        <Grid Grid.Row="0" Padding="12,6" Background="{ThemeResource ChromeBgBrush}">
+        <Grid x:Name="TopBarGrid" Grid.Row="0" Padding="12,6" Background="{ThemeResource ChromeBgBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -46,10 +46,14 @@
                 <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"
                           Foreground="{ThemeResource TextPrimaryBrush}"/>
             </Button>
-            <TextBlock Grid.Column="1" VerticalAlignment="Center"
-                       FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
-                       Foreground="{ThemeResource TextPrimaryBrush}"
-                       x:Uid="SettingsTitle"/>
+            <!-- 标题栏拖拽区 (SetTitleBar 目标): 只含非交互内容。返回按钮必须在
+                 拖拽区子树之外, 否则收不到任何指针输入 (标题栏吞事件, 见主页) -->
+            <Grid x:Name="TitleBarDragRegion" Grid.Column="1" Background="Transparent">
+                <TextBlock VerticalAlignment="Center"
+                           FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
+                           Foreground="{ThemeResource TextPrimaryBrush}"
+                           x:Uid="SettingsTitle"/>
+            </Grid>
         </Grid>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">

@@ -6,6 +6,7 @@ using Windows.Globalization;
 using Windows.System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Navigation;
 
 namespace HyperViewer
 {
@@ -20,6 +21,21 @@ namespace HyperViewer
         {
             this.InitializeComponent();
             this.Loaded += (_, __) => LoadCurrentValues();
+            this.Loaded += (_, __) => ApplyDragRegion();
+        }
+
+        /// <summary>设置页顶栏拖拽区作为标题栏 (按钮等交互控件在拖拽区外, 见 XAML)。</summary>
+        private void ApplyDragRegion()
+        {
+            try { Window.Current.SetTitleBar(TitleBarDragRegion); }
+            catch { }
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            try { Window.Current.SetTitleBar(null); }
+            catch { }
+            base.OnNavigatedFrom(e);
         }
 
         private void LoadCurrentValues()

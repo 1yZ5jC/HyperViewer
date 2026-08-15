@@ -27,13 +27,24 @@ namespace HyperViewer
                 if (e.PropertyName == nameof(TimelineViewModel.IsScanning))
                     UpdateEmptyHint();
             };
+            // 顶栏作为标题栏拖拽区 (与主页/编辑页/设置页一致)
+            this.Loaded += (_, __) => ApplyDragRegion();
             // 窗口最小宽度下日历列可能过窄, 这里做简单保护
             UpdateEmptyHint();
+        }
+
+        /// <summary>时间线页顶栏拖拽区作为标题栏 (按钮等交互控件在拖拽区外, 见 XAML)。</summary>
+        private void ApplyDragRegion()
+        {
+            try { Window.Current.SetTitleBar(TitleBarDragRegion); }
+            catch { }
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            // 缓存复用页面实例时 Loaded 不重触发, 这里保险性重设标题栏拖动区
+            ApplyDragRegion();
             _currentFolder = e.Parameter as StorageFolder;
             TitleText.Text = _currentFolder?.Name ?? Loc.Get("TimelineTitle");
             if (_currentFolder != null)
@@ -65,6 +76,7 @@ namespace HyperViewer
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
+            Helpers.DebugLog.Write("TL", $"BackButton_Click canGoBack={Frame.CanGoBack}");
             if (Frame.CanGoBack) Frame.GoBack();
         }
 

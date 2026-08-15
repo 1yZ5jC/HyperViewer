@@ -83,10 +83,10 @@ namespace HyperViewer
             Loaded += (_, __) => ApplyDragRegion();
         }
 
-        /// <summary>编辑页顶栏作为标题栏拖拽区 (与主页一致)。</summary>
+        /// <summary>编辑页顶栏拖拽区作为标题栏 (按钮等交互控件在拖拽区外, 见 XAML)。</summary>
         private void ApplyDragRegion()
         {
-            try { Window.Current.SetTitleBar(TopBarGrid); }
+            try { Window.Current.SetTitleBar(TitleBarDragRegion); }
             catch { }
         }
 
@@ -107,6 +107,8 @@ namespace HyperViewer
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            // 缓存复用页面实例时 Loaded 不重触发, 这里保险性重设标题栏拖动区
+            ApplyDragRegion();
             // InkToolbar 需周年更新 (14393) 及以上, 低版本动态创建会被系统忽略
             EnsureInkToolbar();
             InkHost.InkPresenter.InputDeviceTypes = CoreInputDeviceTypes.Mouse
@@ -1216,6 +1218,7 @@ namespace HyperViewer
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
+            Helpers.DebugLog.Write("EDIT", $"BackButton_Click canGoBack={Frame.CanGoBack}");
             if (Frame.CanGoBack) Frame.GoBack();
         }
     }

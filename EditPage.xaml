@@ -23,8 +23,6 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Click="BackButton_Click" Padding="10,4"
                     Background="Transparent" BorderThickness="0"
@@ -32,16 +30,25 @@
                 <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"
                           Foreground="{ThemeResource TextPrimaryBrush}"/>
             </Button>
-            <TextBlock x:Name="TitleText" Grid.Column="1" VerticalAlignment="Center"
-                       FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
-                       Foreground="{ThemeResource TextPrimaryBrush}"
-                       TextTrimming="CharacterEllipsis"/>
-            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                <ProgressRing x:Name="BusyRing" IsActive="False" Width="20" Height="20" Margin="0,0,8,0"/>
-                <TextBlock x:Name="StatusText" VerticalAlignment="Center"
-                           Foreground="{ThemeResource TextMutedBrush}"/>
-            </StackPanel>
-            <Grid x:Name="TitleInsetPad" Grid.Column="3"/>
+            <!-- 标题栏拖拽区 (SetTitleBar 目标): 只含非交互内容。返回按钮必须在
+                 拖拽区子树之外, 否则收不到任何指针输入 (标题栏吞事件, 见主页) -->
+            <Grid x:Name="TitleBarDragRegion" Grid.Column="1" Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TitleText" Grid.Column="0" VerticalAlignment="Center"
+                           FontSize="16" FontWeight="SemiBold" Margin="8,0,0,0"
+                           Foreground="{ThemeResource TextPrimaryBrush}"
+                           TextTrimming="CharacterEllipsis"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ProgressRing x:Name="BusyRing" IsActive="False" Width="20" Height="20" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="StatusText" VerticalAlignment="Center"
+                               Foreground="{ThemeResource TextMutedBrush}"/>
+                </StackPanel>
+                <Grid x:Name="TitleInsetPad" Grid.Column="2"/>
+            </Grid>
         </Grid>
 
         <!-- 工具条 -->
