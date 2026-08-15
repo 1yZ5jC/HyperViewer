@@ -683,7 +683,7 @@ namespace HyperViewer.ViewModels
 
         public void Next()
         {
-            System.Diagnostics.Debug.WriteLine($"[VM] Next ({CurrentIndex}->{CurrentIndex + 1})");
+            Helpers.DebugLog.Write("VM", $"Next ({CurrentIndex}->{CurrentIndex + 1})");
             if (!CanGoNext) return;
             CurrentIndex++;
             Current = _photos[CurrentIndex];
@@ -691,7 +691,7 @@ namespace HyperViewer.ViewModels
         }
         public void Prev()
         {
-            System.Diagnostics.Debug.WriteLine($"[VM] Prev ({CurrentIndex}->{CurrentIndex - 1})");
+            Helpers.DebugLog.Write("VM", $"Prev ({CurrentIndex}->{CurrentIndex - 1})");
             if (!CanGoPrev) return;
             CurrentIndex--;
             Current = _photos[CurrentIndex];
@@ -728,7 +728,7 @@ namespace HyperViewer.ViewModels
         {
             if (parameter is int idx && idx >= 0 && idx < _photos.Count)
             {
-                System.Diagnostics.Debug.WriteLine($"[VM] SelectByIndex {idx} (from thumbstrip)");
+                Helpers.DebugLog.Write("VM", $"SelectByIndex {idx} (from thumbstrip)");
                 CurrentIndex = idx;
                 Current = _photos[idx];
                 ApplyNavigationReset();
@@ -964,11 +964,20 @@ namespace HyperViewer.ViewModels
         // 加载序号: 快速切换时丢弃过期解码结果 (避免旧图晚到覆盖新图)
         private int _loadSeq;
 
+        private bool _isQuickShowing;
+        /// <summary>当前显示的是邻居低清占位图 (主图解码中)。</summary>
+        public bool IsQuickShowing
+        {
+            get => _isQuickShowing;
+            private set => SetProperty(ref _isQuickShowing, value);
+        }
+
         private async void RaiseImageChangedAsync()
         {
             var seq = ++_loadSeq;
             if (Current == null)
             {
+                IsQuickShowing = false;
                 DisplayImage = null;
                 LoadFailed = false;
                 InfoRows = null;
@@ -980,11 +989,28 @@ namespace HyperViewer.ViewModels
             // 已有相邻预取的低清版: 立即显示, 高清完成后替换
             if (_neighborCache.TryGetValue(CurrentIndex, out var quick))
             {
+                IsQuickShowing = true;
                 DisplayImage = quick;
+                Helpers.DebugLog.Write("VM", $"Load#{seq} idx={CurrentIndex} quick={quick.PixelWidth}x{quick.PixelHeight} (low-res neighbor)");
+            }
+            else
+            {
+                IsQuickShowing = false;
+                Helpers.DebugLog.Write("VM", $"Load#{seq} idx={CurrentIndex} no quick, decode high-res...");
             }
 
+            // 开发者模拟 10240: 注入解码延迟, 复现"解码慢 -> ImageOpened 晚 ->
+            // 布局/事件时序拉长"的真实 10240 行为 (PixelWidth==0 挂起、timer 兜底等)
+            if (Helpers.SettingsService.DebugSimulate10240)
+            {
+                await Task.Delay(700);
+            }
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             var bmp = await ImageLoaderService.LoadAsync(Current);
+            Helpers.DebugLog.Write("VM", $"Load#{seq} decoded {sw.ElapsedMilliseconds}ms px={(bmp?.PixelWidth ?? 0)}x{(bmp?.PixelHeight ?? 0)} seqOk={seq == _loadSeq}");
             if (seq != _loadSeq) return; // 已被更新的切换取代, 丢弃过期结果
+            IsQuickShowing = false;
             DisplayImage = bmp;
             LoadFailed = bmp == null;
             IsLoading = false;

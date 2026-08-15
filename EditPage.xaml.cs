@@ -123,14 +123,14 @@ namespace HyperViewer
         private void EnsureInkToolbar()
         {
             if (InkBarPanel.Children.Count > 0 && InkBarPanel.Children[0] is InkToolbar) return;
-            if (!ApiInformation.IsTypePresent("Windows.UI.Xaml.Controls.InkToolbar")) return;
+            if (!Helpers.UwpCompat.HasInkToolbar) return;
             InkBarPanel.Children.Insert(0, new InkToolbar { TargetInkCanvas = InkHost });
         }
 
         /// <summary>设备像素缩放 (XamlRoot 属 1703+ 才有, 低版本回退 1.0)。</summary>
         private static double DevScaleOf(UIElement e)
         {
-            if (!ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 4)) return 1.0;
+            if (!Helpers.UwpCompat.HasXamlRoot) return 1.0;
             try { return e.XamlRoot?.RasterizationScale ?? 1.0; } catch { return 1.0; }
         }
 

@@ -242,6 +242,7 @@
                   PointerMoved="ImageArea_PointerMoved">
                 <controls:ImageViewer x:Name="Viewer"
                                       Source="{x:Bind Vm.DisplayImage, Mode=OneWay}"
+                                      IsPlaceholder="{x:Bind Vm.IsQuickShowing, Mode=OneWay}"
                                       ImageRotation="{x:Bind Vm.Rotation, Mode=OneWay}"
                                       FlipH="{x:Bind Vm.FlipH, Mode=OneWay}"
                                       FlipV="{x:Bind Vm.FlipV, Mode=OneWay}"

@@ -51,6 +51,24 @@ namespace HyperViewer.Controls
                 typeof(ImageViewer),
                 new PropertyMetadata(1, OnTransformChanged));
 
+        /// <summary>
+        /// 低清占位图显示中 (MainViewModel 显示邻居缓存 quick 时置 true)。
+        /// 占位期间不隐藏、不拟合、保持当前 zoom 直接显示, 高清图到达后再走正常流程,
+        /// 避免"低清 fit 放大 -> 高清 fit 缩小"的两次缩放跳变。
+        /// </summary>
+        public static readonly DependencyProperty IsPlaceholderProperty =
+            DependencyProperty.Register(
+                nameof(IsPlaceholder),
+                typeof(bool),
+                typeof(ImageViewer),
+                new PropertyMetadata(false));
+
+        public bool IsPlaceholder
+        {
+            get => (bool)GetValue(IsPlaceholderProperty);
+            set => SetValue(IsPlaceholderProperty, value);
+        }
+
         public BitmapImage Source
         {
             get => (BitmapImage)GetValue(SourceProperty);
@@ -85,6 +103,10 @@ namespace HyperViewer.Controls
 
         private bool _suppressViewChange;
         private float _lastFitZoom = -1f;
+        // 渲染当前旋转角度 (动画目标): Stop 旋转动画后 CompositeTransform.Rotation
+        // 会回落基值 (通常 0), 新动画若不带 From 就会从 0° 起步, 连续旋转表现为
+        // "以 0° 为基准倒转"; 用跟踪值保证动画始终从当前状态顺时针转
+        private double _currentRotation;
         private readonly CompositeTransform _imageTransform = new CompositeTransform();
         private readonly ScaleTransform _transitionScale = new ScaleTransform();
         private readonly TranslateTransform _transitionTranslate = new TranslateTransform();
@@ -103,6 +125,9 @@ namespace HyperViewer.Controls
             TheImage.RenderTransformOrigin = new Point(0.5, 0.5);
             _fitRetryTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(120) };
             _fitRetryTimer.Tick += OnFitRetryTick;
+            // 淡入兜底: ChangeView 动画完成事件 (ViewChanged) 断链时也要淡入
+            _fadeInTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+            _fadeInTimer.Tick += OnFadeInTimerTick;
         }
 
         private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -112,13 +137,31 @@ namespace HyperViewer.Controls
                 // 换图: 立即停掉旧旋转动画并归位 (防止 360->0 之类倒转), 旋转从新图的角度开始
                 v._rotationStoryboard?.Stop();
                 v._imageTransform.Rotation = v.ImageRotation;
+                v._currentRotation = v.ImageRotation;
                 v.TheImage.Source = e.NewValue as BitmapImage;
+                if (v.IsPlaceholder)
+                {
+                    // 低清占位图: 保持当前 zoom 直接显示, 不隐藏不拟合。
+                    // 高清图到达时 (IsPlaceholder=false) 再走正常"隐藏 -> fit -> 淡入"流程,
+                    // 全程只有一次 fit, 不会出现"低清 fit 放大 -> 高清 fit 缩小"的两次缩放跳变。
+                    v._pendingFit = false;
+                    v._pendingFadeIn = false;
+                    v._fadeInTimer.Stop();
+                    v._fitRetryTimer.Stop();
+                    v._lastFitZoom = -1f;
+                    v.ImageChanged?.Invoke(v, EventArgs.Empty);
+                    Helpers.DebugLog.Write("IMG", $"SourceChanged (placeholder) new={(e.NewValue as BitmapImage)?.PixelWidth}x{(e.NewValue as BitmapImage)?.PixelHeight} keep-zoom");
+                    return;
+                }
                 // 换图瞬间隐藏: 防止旧 zoom (如放大 150%) 残留, 新图以放大态
                 // 短暂显示再缩回 fit ("先放大后缩小"跳动); 布局稳定后 fit 完成才淡入
                 v.TheImage.Opacity = 0;
                 v._pendingFit = true;
+                v._pendingFadeIn = false;
+                v._fadeInTimer.Stop();
                 v._lastFitZoom = -1f;
                 v.ImageChanged?.Invoke(v, EventArgs.Empty);
+                Helpers.DebugLog.Write("IMG", $"SourceChanged new={(e.NewValue as BitmapImage)?.PixelWidth}x{(e.NewValue as BitmapImage)?.PixelHeight} opacity=0 pendingFit=true");
                 // 兜底: 事件 (ImageOpened/SizeChanged) 可能断链 (10240 上同一实例
                 // 重复赋值不再触发 ImageOpened), 定时重试直到适应成功并淡入
                 v._fitRetryTimer.Stop();
@@ -132,21 +175,27 @@ namespace HyperViewer.Controls
         // 因此延迟到解码完成 (ImageOpened / SizeChanged) 后再适应 + 淡入。
         private bool _pendingFit;
         private DispatcherTimer _fitRetryTimer;
+        // 淡入延迟到 fit 动画完成后 (ViewChanged IsIntermediate=false): 
+        // 图片可见时缩放动画已结束, 不会出现"淡入过程中缩放乱跳"
+        private bool _pendingFadeIn;
+        private DispatcherTimer _fadeInTimer;
 
         private void TheImage_ImageOpened(object sender, RoutedEventArgs e)
         {
+            Helpers.DebugLog.Write("IMG", $"ImageOpened px={(TheImage.Source as BitmapImage)?.PixelWidth}x{(TheImage.Source as BitmapImage)?.PixelHeight} act={TheImage.ActualWidth:0.0}x{TheImage.ActualHeight:0.0}");
             // 不在此处 fit/淡入: 解码完成但布局 (Extent) 尚未更新, 此刻启动的
             // ChangeView 动画会被随后的布局变化中断, 造成"属性已是 fit 但
-            // 渲染停在中间值"的外显不一致; 等 SizeChanged (布局完成) 再 fit+淡入
+            // 渲染停在中间值"的外显不一致; 等 SizeChanged (布局完成) 再 fit
             _pendingFit = true;
         }
 
         private void TheImage_SizeChanged(object sender, SizeChangedEventArgs e)
         {
+            Helpers.DebugLog.Write("IMG", $"SizeChanged {e.NewSize.Width:0.0}x{e.NewSize.Height:0.0} pendingFit={_pendingFit}");
             if (_pendingFit && TryFit())
             {
                 _pendingFit = false;
-                FadeIn();
+                RequestFadeIn();
             }
         }
 
@@ -157,10 +206,31 @@ namespace HyperViewer.Controls
                 _fitRetryTimer.Stop();
                 return;
             }
+            Helpers.DebugLog.Write("IMG", "FitRetryTick");
             if (TryFit())
             {
                 _pendingFit = false;
                 _fitRetryTimer.Stop();
+                RequestFadeIn();
+            }
+        }
+
+        // 请求淡入: 等 fit 动画完成 (ViewChanged 最终态) 后执行, 定时器兜底
+        private void RequestFadeIn()
+        {
+            Helpers.DebugLog.Write("IMG", "RequestFadeIn (wait fit anim end)");
+            _pendingFadeIn = true;
+            _fadeInTimer.Stop();
+            _fadeInTimer.Start();
+        }
+
+        private void OnFadeInTimerTick(object sender, object e)
+        {
+            _fadeInTimer.Stop();
+            if (_pendingFadeIn)
+            {
+                _pendingFadeIn = false;
+                Helpers.DebugLog.Write("IMG", "FadeIn (timer fallback)");
                 FadeIn();
             }
         }
@@ -174,6 +244,7 @@ namespace HyperViewer.Controls
                 || bmp.PixelWidth <= 0
                 || bmp.PixelHeight <= 0)
             {
+                Helpers.DebugLog.Write("IMG", $"TryFit deferred (px invalid: {(TheImage.Source as BitmapImage)?.PixelWidth}x{(TheImage.Source as BitmapImage)?.PixelHeight})");
                 return false;
             }
             FitToWindow();
@@ -256,6 +327,9 @@ namespace HyperViewer.Controls
             _rotationStoryboard?.Stop();
             var anim = new DoubleAnimation
             {
+                // From = 当前状态 (跟踪值): 中断的动画 Stop 后 Rotation 回落基值,
+                // 不带 From 会从 0° 起步造成"以 0° 为基准"的倒转
+                From = _currentRotation,
                 To = ImageRotation,
                 Duration = TimeSpan.FromMilliseconds(200)
             };
@@ -264,6 +338,7 @@ namespace HyperViewer.Controls
             var sb = new Storyboard();
             sb.Children.Add(anim);
             _rotationStoryboard = sb;
+            _currentRotation = ImageRotation;
             sb.Begin();
         }
 
@@ -329,7 +404,8 @@ namespace HyperViewer.Controls
             var clamped = Math.Max(Scroller.MinZoomFactor,
                                    Math.Min(Scroller.MaxZoomFactor, zoom));
             _suppressViewChange = true;
-            // ChangeView 四参重载 (disableAnimation) 是 14393+ 才有
+            // ChangeView 四参重载 (disableAnimation) 是 14393+ 才有;
+            // DebugSimulate10240 已由 UwpCompat.HasContractV2 统一强制按 10240 处理
             if (Helpers.UwpCompat.HasContractV2)
             {
                 Scroller.ChangeView(null, null, clamped, true);
@@ -337,6 +413,7 @@ namespace HyperViewer.Controls
             else
             {
                 // 10240: 三参 ChangeView, offset 由系统自行锚定 (同 FitToWindow)
+                Helpers.DebugLog.Write("IMG", $"SetZoom {clamped} -> ChangeView3 (anim)");
                 Scroller.ChangeView(null, null, clamped);
             }
             _suppressViewChange = false;
@@ -346,12 +423,21 @@ namespace HyperViewer.Controls
         private void Scroller_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
             var z = Scroller.ZoomFactor;
+            Helpers.DebugLog.Write("IMG", $"ViewChanged inter={e.IsIntermediate} zoom={z:0.000} off={Scroller.HorizontalOffset:0.0},{Scroller.VerticalOffset:0.0} pendFade={_pendingFadeIn} supress={_suppressViewChange}");
             // 缩放级别变化 (含捏合过程) 时显示百分比指示器
             if ((e.IsIntermediate || Math.Abs(z - 1.0f) > 0.001f)
                 && Math.Abs(z - _lastBadgeZoom) > 0.005f)
             {
                 _lastBadgeZoom = z;
                 ShowZoomBadge();
+            }
+            // fit 动画结束 (最终态) 后再淡入: 图片可见时缩放已完成, 无"淡入中缩放乱跳"
+            if (_pendingFadeIn && !e.IsIntermediate)
+            {
+                _pendingFadeIn = false;
+                _fadeInTimer.Stop();
+                Helpers.DebugLog.Write("IMG", "FadeIn (fit anim ended)");
+                FadeIn();
             }
             if (!_suppressViewChange && !e.IsIntermediate)
             {
@@ -411,9 +497,13 @@ namespace HyperViewer.Controls
         }
 
         /// <summary>
-        /// 适应窗口: 按图片尺寸 (含旋转) 计算缩放, 使整图恰好放入视口。
-        /// 解码未完成 (PixelWidth==0) 时直接返回, 等 ImageOpened/SizeChanged;
-        /// 不能回退到 ActualWidth —— 换图瞬间它是旧图遗留尺寸, 会算错 fit。
+        /// 适应窗口: 按图片布局尺寸 (含旋转) 计算缩放, 使整图恰好放入视口。
+        /// 必须用布局尺寸 (ActualWidth) 而非 bmp.PixelWidth: PixelWidth 是物理像素,
+        /// 高 DPI 系统 (如 220%) 上它与 ScrollViewer 的 Extent 单位 (布局尺寸) 不一致,
+        /// 算出的 fit 会整体偏小约 DPI 倍数 (100% DPI 的 10240 上两者相等, 故 26100 模拟
+        /// 与真实 10240 显示不符即源于此)。换图瞬间 ActualWidth 是旧图遗留值, 但 fit 只在
+        /// 布局稳定后 (SizeChanged/定时器) 触发, 此时已是新图尺寸; PixelWidth 守卫仍保证
+        /// 解码未完成时不拟合。
         /// </summary>
         public void FitToWindow()
         {
@@ -423,8 +513,8 @@ namespace HyperViewer.Controls
             {
                 return;
             }
-            var iw = bmp.PixelWidth;
-            var ih = bmp.PixelHeight;
+            var iw = TheImage.ActualWidth;
+            var ih = TheImage.ActualHeight;
             if (iw <= 0 || ih <= 0) return;
 
             // 旋转 90/270 时宽高互换 (RenderTransform 不影响布局尺寸)
@@ -445,9 +535,11 @@ namespace HyperViewer.Controls
             fit = Math.Max(Scroller.MinZoomFactor, Math.Min(Scroller.MaxZoomFactor, fit));
             _lastFitZoom = fit;
             _suppressViewChange = true;
-            // ChangeView 四参重载 (disableAnimation) 是 14393+ 才有
+            // ChangeView 四参重载 (disableAnimation) 是 14393+ 才有;
+            // DebugSimulate10240 已由 UwpCompat.HasContractV2 统一强制按 10240 处理
             if (Helpers.UwpCompat.HasContractV2)
             {
+                Helpers.DebugLog.Write("IMG", $"Fit: {iw}x{ih} vw={vw}vh={vh} fit={fit} -> ChangeView4(true)");
                 Scroller.ChangeView(null, null, fit, true);
             }
             else
@@ -455,6 +547,7 @@ namespace HyperViewer.Controls
                 // 10240: 三参 ChangeView, offset 由系统在 zoom 变化时自行锚定
                 // (保持视口中心的内容点), 居中正确; 不要显式设置 offset
                 // (Extent 异步更新, 手算偏移会基于不一致的内部状态而偏右下方)
+                Helpers.DebugLog.Write("IMG", $"Fit: {iw}x{ih} vw={vw}vh={vh} fit={fit} -> ChangeView3 (anim)");
                 Scroller.ChangeView(null, null, fit);
             }
             _suppressViewChange = false;

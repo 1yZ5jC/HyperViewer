@@ -177,6 +177,16 @@
                         BorderThickness="1" BorderBrush="{ThemeResource BtnBorderBrush}"/>
                 <StackPanel x:Name="ShortcutPanel" Margin="0,12,0,0"/>
 
+                <!-- 开发者选项 -->
+                <TextBlock Style="{StaticResource SectionLabelStyle}" x:Uid="SettingsDevLabel" Margin="0,24,0,0"/>
+                <ToggleSwitch x:Name="Sim10240Switch"
+                              x:Uid="SettingsDevSim10240"
+                              Toggled="Sim10240Switch_Toggled"/>
+                <ToggleSwitch x:Name="VerboseLogSwitch"
+                              x:Uid="SettingsDevVerboseLog"
+                              Margin="0,16,0,0"
+                              Toggled="VerboseLogSwitch_Toggled"/>
+
             </StackPanel>
         </ScrollViewer>
     </Grid>

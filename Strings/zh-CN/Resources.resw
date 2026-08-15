@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <data name="CmdOpenImage.Label" xml:space="preserve">
     <value>打开图片</value>
@@ -852,4 +852,30 @@
   <data name="KeyF11" xml:space="preserve">
     <value>F11</value>
   </data>
-</root>
+  <data name="SettingsDevLabel.Text" xml:space="preserve">
+    <value>开发者选项</value>
+  </data>
+  <data name="SettingsDevSim10240.Header" xml:space="preserve">
+    <value>模拟 Win10 (10240) 渲染</value>
+  </data>
+  <data name="SettingsDevSim10240.OnContent" xml:space="preserve">
+    <value>开</value>
+  </data>
+  <data name="SettingsDevSim10240.OffContent" xml:space="preserve">
+    <value>关</value>
+  </data>
+  <data name="SettingsDevSim10240Hint.Text" xml:space="preserve">
+    <value>高版本系统强制走 10240 路径(三参 ChangeView 带动画),用于复现 10240 缩放/居中问题</value>
+  </data>
+  <data name="SettingsDevVerboseLog.Header" xml:space="preserve">
+    <value>详细调试日志</value>
+  </data>
+  <data name="SettingsDevVerboseLog.OnContent" xml:space="preserve">
+    <value>开</value>
+  </data>
+  <data name="SettingsDevVerboseLog.OffContent" xml:space="preserve">
+    <value>关</value>
+  </data>
+  <data name="SettingsDevVerboseLogHint.Text" xml:space="preserve">
+    <value>输出图片解码/布局/fit/淡入时序日志,用 DebugView 或调试器捕获</value>
+  </data></root>

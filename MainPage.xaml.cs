@@ -57,6 +57,19 @@ namespace HyperViewer
             ThumbList.PointerMoved += ThumbList_PointerMoved;
             ThumbList.PointerReleased += ThumbList_PointerReleased;
             ThumbList.PointerCaptureLost += (_, __) => _thumbDragging = false;
+            // 窗口尺寸变化防抖: resize 过程中尺寸多次变化, 每次都触发 fit 动画
+            // 会造成"缩放乱跳"; 停顿 250ms 后才重新适应。
+            // Tick 内先 Stop: 一次性防抖 —— 否则 fit 完成后 IsAtFitZoom 恒成立,
+            // 定时器每 250ms 空转重调 FitToWindow (日志里连续的重复 Fit 行)
+            _resizeFitTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+            _resizeFitTimer.Tick += (_, __) =>
+            {
+                _resizeFitTimer.Stop();
+                if (Viewer != null && Vm.HasImage && Viewer.IsAtFitZoom)
+                {
+                    Viewer.FitToWindow();
+                }
+            };
             this.DataContext = Vm;
             Vm.PropertyChanged += OnVmPropertyChanged;
             Vm.LibraryTabChanged += OnLibraryTabChanged;
@@ -127,11 +140,10 @@ namespace HyperViewer
         {
             UpdateTitleBarInsets();
             ApplyResponsiveLayout(Window.Current.Bounds.Width);
-            // 处于"适应"档时窗口变化后重新适应, 避免图片被裁切
-            if (Viewer != null && Vm.HasImage && Viewer.IsAtFitZoom)
-            {
-                Viewer.FitToWindow();
-            }
+            // 处于"适应"档时窗口变化后重新适应 (防抖, 见 _resizeFitTimer),
+            // 避免图片被裁切, 同时防止 resize 期间的多次 fit 动画乱跳
+            _resizeFitTimer.Stop();
+            _resizeFitTimer.Start();
         }
 
         private void UpdateTitleBarInsets()
@@ -529,7 +541,7 @@ namespace HyperViewer
                 // 已处理则阻止按键继续派发给 XAML 焦点控件,
                 // 否则缩略图 ListView 等控件会把方向键再消费一次 → 一次按键换两张
                 if (handled) args.Handled = true;
-                System.Diagnostics.Debug.WriteLine($"[KEY] {args.VirtualKey} handled={handled}");
+                Helpers.DebugLog.Write("KEY", $"{args.VirtualKey} handled={handled}");
             }
         }
 
@@ -575,6 +587,7 @@ namespace HyperViewer
         private double _thumbDragStartX;
         private double _thumbDragOffset;
         private ScrollViewer _thumbScroller;
+        private DispatcherTimer _resizeFitTimer;
 
         private void ThumbList_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
         {

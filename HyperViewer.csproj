@@ -172,6 +172,7 @@
     <Compile Include="Helpers\SelectionBrushConverter.cs" />
     <Compile Include="Helpers\FavoritesService.cs" />
     <Compile Include="Helpers\SettingsService.cs" />
+    <Compile Include="Helpers\DebugLog.cs" />
     <Compile Include="Helpers\UwpCompat.cs" />
     <Compile Include="Helpers\CompatContentDialog.cs" />
     <Compile Include="Helpers\KeyboardService.cs" />

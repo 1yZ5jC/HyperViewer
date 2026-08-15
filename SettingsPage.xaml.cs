@@ -91,6 +91,8 @@ namespace HyperViewer
             }
 
             ResetRotationSwitch.IsOn = SettingsService.ResetRotationOnNavigate;
+            Sim10240Switch.IsOn = SettingsService.DebugSimulate10240;
+            VerboseLogSwitch.IsOn = SettingsService.DebugVerboseLog;
             SlideRandomOrderSwitch.IsOn = SettingsService.SlideRandomOrder;
             SlideRandomTransitionSwitch.IsOn = SettingsService.SlideRandomTransition;
             SlideBlurSwitch.IsOn = SettingsService.SlideBlurBackground;
@@ -151,8 +153,7 @@ namespace HyperViewer
                 if (await dlg.ShowAsync() == ContentDialogResult.Primary)
                 {
                     // RequestRestartAsync 需 1709 (UniversalApiContract v5) 及以上
-                    if (Windows.Foundation.Metadata.ApiInformation.IsApiContractPresent(
-                            "Windows.Foundation.UniversalApiContract", 5))
+                    if (Helpers.UwpCompat.HasContractV5)
                     {
                         try
                         {
@@ -259,6 +260,20 @@ namespace HyperViewer
         {
             if (_loading) return;
             SettingsService.ResetRotationOnNavigate = ResetRotationSwitch.IsOn;
+        }
+
+        // ====== 开发者选项 ======
+
+        private void Sim10240Switch_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_loading) return;
+            SettingsService.DebugSimulate10240 = Sim10240Switch.IsOn;
+        }
+
+        private void VerboseLogSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_loading) return;
+            SettingsService.DebugVerboseLog = VerboseLogSwitch.IsOn;
         }
 
         // ====== 缓存与数据 ======

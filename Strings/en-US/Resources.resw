@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <data name="CmdOpenImage.Label" xml:space="preserve">
     <value>Open image</value>
@@ -852,4 +852,30 @@
   <data name="KeyF11" xml:space="preserve">
     <value>F11</value>
   </data>
-</root>
+  <data name="SettingsDevLabel.Text" xml:space="preserve">
+    <value>Developer options</value>
+  </data>
+  <data name="SettingsDevSim10240.Header" xml:space="preserve">
+    <value>Simulate Win10 (10240) rendering</value>
+  </data>
+  <data name="SettingsDevSim10240.OnContent" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="SettingsDevSim10240.OffContent" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="SettingsDevSim10240Hint.Text" xml:space="preserve">
+    <value>Force the 10240 path (3-arg ChangeView with animation) on newer systems to reproduce 10240 zoom/centering issues</value>
+  </data>
+  <data name="SettingsDevVerboseLog.Header" xml:space="preserve">
+    <value>Verbose debug log</value>
+  </data>
+  <data name="SettingsDevVerboseLog.OnContent" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="SettingsDevVerboseLog.OffContent" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="SettingsDevVerboseLogHint.Text" xml:space="preserve">
+    <value>Log image decode/layout/fit/fade-in timing; capture with DebugView or a debugger</value>
+  </data></root>

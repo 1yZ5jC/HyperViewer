@@ -22,6 +22,8 @@ namespace HyperViewer.Helpers
         private const string KeyTileSingleImage = "TileSingleImage";
         private const string KeyTileRotationEnabled = "TileRotationEnabled";
         private const string KeyTileRotationSeconds = "TileRotationSeconds";
+        private const string KeyDebugSimulate10240 = "DebugSimulate10240";
+        private const string KeyDebugVerboseLog = "DebugVerboseLog";
 
         private static readonly ApplicationDataContainer Store =
             ApplicationData.Current.LocalSettings;
@@ -136,6 +138,20 @@ namespace HyperViewer.Helpers
         {
             get { return GetInt(KeyTileRotationSeconds, 60); }
             set { Store.Values[KeyTileRotationSeconds] = value; }
+        }
+
+        /// <summary>开发者: 在高版本系统上强制走 10240 渲染路径 (三参 ChangeView 带动画等)。</summary>
+        public static bool DebugSimulate10240
+        {
+            get { return GetBool(KeyDebugSimulate10240, false); }
+            set { Store.Values[KeyDebugSimulate10240] = value; }
+        }
+
+        /// <summary>开发者: 输出详细调试日志 (DebugView / 调试器捕获)。</summary>
+        public static bool DebugVerboseLog
+        {
+            get { return GetBool(KeyDebugVerboseLog, false); }
+            set { Store.Values[KeyDebugVerboseLog] = value; }
         }
 
         private static bool GetBool(string key, bool def)
