@@ -52,10 +52,11 @@ namespace HyperViewer
             ThumbList.AddHandler(PointerWheelChangedEvent,
                                  new PointerEventHandler(ThumbList_PointerWheelChanged),
                                  true);
-            // 鼠标手势: 中键按住拖拽平移胶片
+            // 鼠标手势: 中键/右键按住拖拽平移胶片 (触摸滑动/惯性滚动由 ListView 原生支持)
             ThumbList.PointerPressed += ThumbList_PointerPressed;
             ThumbList.PointerMoved += ThumbList_PointerMoved;
             ThumbList.PointerReleased += ThumbList_PointerReleased;
+            ThumbList.PointerCaptureLost += (_, __) => _thumbDragging = false;
             this.DataContext = Vm;
             Vm.PropertyChanged += OnVmPropertyChanged;
             Vm.LibraryTabChanged += OnLibraryTabChanged;
@@ -171,9 +172,6 @@ namespace HyperViewer
                     break;
                 case nameof(MainViewModel.InfoPanelOpen):
                     InfoColumn.Width = Vm.InfoPanelOpen ? new GridLength(320) : new GridLength(0);
-                    break;
-                case nameof(MainViewModel.DisplayImage):
-                    Viewer.FadeIn();
                     break;
                 case nameof(MainViewModel.HomeVisible):
                     SetChrome(Vm.HomeVisible ? false : true);
@@ -576,6 +574,7 @@ namespace HyperViewer
         private bool _thumbDragging;
         private double _thumbDragStartX;
         private double _thumbDragOffset;
+        private ScrollViewer _thumbScroller;
 
         private void ThumbList_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
         {
@@ -616,32 +615,32 @@ namespace HyperViewer
 
         private void ThumbList_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            if (!e.GetCurrentPoint(ThumbList).Properties.IsMiddleButtonPressed) return;
+            var props = e.GetCurrentPoint(ThumbList).Properties;
+            // 中键或右键: 按住拖动平移胶片 (触摸滑动由 ListView 原生支持)
+            if (!props.IsMiddleButtonPressed && !props.IsRightButtonPressed) return;
             _thumbDragging = true;
             _thumbDragStartX = e.GetCurrentPoint(ThumbList).Position.X;
-            _thumbDragOffset = FindChild<ScrollViewer>(ThumbList)?.HorizontalOffset ?? 0;
+            _thumbScroller = FindChild<ScrollViewer>(ThumbList);
+            _thumbDragOffset = _thumbScroller?.HorizontalOffset ?? 0;
             ThumbList.CapturePointer(e.Pointer);
             e.Handled = true;
         }
 
         private void ThumbList_PointerMoved(object sender, PointerRoutedEventArgs e)
         {
-            if (!_thumbDragging) return;
+            if (!_thumbDragging || _thumbScroller == null) return;
             double dx = e.GetCurrentPoint(ThumbList).Position.X - _thumbDragStartX;
-            var scroller = FindChild<ScrollViewer>(ThumbList);
-            if (scroller != null)
+            double target = _thumbDragOffset - dx;
+            // ChangeView 四参重载 (disableAnimation) 是 14393+ 才有
+            if (Helpers.UwpCompat.HasContractV2)
             {
-                double target = _thumbDragOffset - dx;
-                if (Helpers.UwpCompat.HasContractV2)
-                {
-                    scroller.ChangeView(target, null, null, true);
-                }
-                else
-                {
-                    scroller.ChangeView(target, null, null);
-                }
-                e.Handled = true;
+                _thumbScroller.ChangeView(target, null, null, true);
             }
+            else
+            {
+                _thumbScroller.ChangeView(target, null, null);
+            }
+            e.Handled = true;
         }
 
         private void ThumbList_PointerReleased(object sender, PointerRoutedEventArgs e)

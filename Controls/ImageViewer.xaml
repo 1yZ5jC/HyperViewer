@@ -30,6 +30,7 @@
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    ImageOpened="TheImage_ImageOpened"
+                   SizeChanged="TheImage_SizeChanged"
                    RenderTransformOrigin="0.5,0.5"/>
         </ScrollViewer>
 

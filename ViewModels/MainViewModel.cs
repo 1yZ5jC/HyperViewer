@@ -71,12 +71,13 @@ namespace HyperViewer.ViewModels
             }
         }
 
-        // 旋转角度 (0/90/180/270)
+        // 旋转角度 (累加值, 可超 360/负值: 取模会在 270->360 时变成 270->0,
+        // 让动画逆时针倒转, 视觉上"回到原始方向"而非再转 90°)
         private int _rotation;
         public int Rotation
         {
             get => _rotation;
-            private set { SetProperty(ref _rotation, ((value % 360) + 360) % 360); }
+            private set => SetProperty(ref _rotation, value);
         }
 
         // 水平/垂直翻转 (1 表示翻转, 0 表示不翻转, 用作 scale 系数)
@@ -362,7 +363,7 @@ namespace HyperViewer.ViewModels
             get
             {
                 if (Current == null) return string.Empty;
-                return $"{ZoomFactor:0%}{(Rotation != 0 ? "  " + Rotation + "°" : "")}{(FlipH < 0 ? "  " + Loc.Get("FlipHState") : "")}{(FlipV < 0 ? "  " + Loc.Get("FlipVState") : "")}";
+                return $"{ZoomFactor:0%}{(((Rotation % 360) + 360) % 360 != 0 ? "  " + ((Rotation % 360) + 360) % 360 + "°" : "")}{(FlipH < 0 ? "  " + Loc.Get("FlipHState") : "")}{(FlipV < 0 ? "  " + Loc.Get("FlipVState") : "")}";
             }
         }
 

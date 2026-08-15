@@ -101,32 +101,73 @@ namespace HyperViewer.Controls
             _transitionGroup.Children.Add(_transitionTranslate);
             TheImage.RenderTransform = _transitionGroup;
             TheImage.RenderTransformOrigin = new Point(0.5, 0.5);
+            _fitRetryTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(120) };
+            _fitRetryTimer.Tick += OnFitRetryTick;
         }
 
         private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is ImageViewer v)
             {
+                // 换图: 立即停掉旧旋转动画并归位 (防止 360->0 之类倒转), 旋转从新图的角度开始
+                v._rotationStoryboard?.Stop();
+                v._imageTransform.Rotation = v.ImageRotation;
                 v.TheImage.Source = e.NewValue as BitmapImage;
                 v._pendingFit = true;
                 v.ResetView();
                 v.ImageChanged?.Invoke(v, EventArgs.Empty);
+                // 兜底: 事件 (ImageOpened/SizeChanged) 可能断链 (10240 上同一实例
+                // 重复赋值不再触发 ImageOpened), 定时重试直到适应成功
+                v._fitRetryTimer.Stop();
+                v._fitRetryTimer.Start();
             }
         }
 
         // 10240 兼容: SetSourceAsync 返回时 BitmapImage 可能尚未解码完成
         // (PixelWidth==0), 此时若用 TheImage.ActualWidth (旧图遗留尺寸) 计算
         // 适应缩放会得到错误倍数, 解码完成后才跳变 -> 视觉抖动。
-        // 因此延迟到 ImageOpened (解码完成, 尺寸有效) 后再适应。
+        // 因此延迟到解码完成 (ImageOpened / SizeChanged) 后再适应 + 淡入。
         private bool _pendingFit;
+        private DispatcherTimer _fitRetryTimer;
 
         private void TheImage_ImageOpened(object sender, RoutedEventArgs e)
         {
-            if (_pendingFit)
+            if (_pendingFit && TryFit()) _pendingFit = false;
+            FadeIn();
+        }
+
+        private void TheImage_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (_pendingFit && TryFit()) _pendingFit = false;
+        }
+
+        private void OnFitRetryTick(object sender, object e)
+        {
+            if (!_pendingFit)
+            {
+                _fitRetryTimer.Stop();
+                return;
+            }
+            if (TryFit())
             {
                 _pendingFit = false;
-                FitToWindow();
+                _fitRetryTimer.Stop();
             }
+        }
+
+        // 尺寸有效才真正执行适应: 换图瞬间旧图事件可能晚到 (此时新图
+        // PixelWidth==0), 误清 _pendingFit 会让新图解码完成后不再适应;
+        // 失败时保持挂起, 等新图自己的事件
+        private bool TryFit()
+        {
+            if (!(TheImage.Source is BitmapImage bmp)
+                || bmp.PixelWidth <= 0
+                || bmp.PixelHeight <= 0)
+            {
+                return false;
+            }
+            FitToWindow();
+            return true;
         }
 
         /// <summary>
@@ -136,7 +177,8 @@ namespace HyperViewer.Controls
         public void FadeIn(string transition = null)
         {
             var kind = string.IsNullOrEmpty(transition) ? Helpers.SettingsService.SlideTransition : transition;
-            TheImage.Opacity = 0;
+            // 不显式归零透明度: 动画 From=0 自带淡入起点;
+            // 若动画因任何原因未执行, 图片保持可见而不是黑屏
             _fadeStoryboard?.Stop();
             var sb = new Storyboard();
             var add = new Action<string, double, double, double>((prop, from, to, ms) =>
@@ -284,6 +326,7 @@ namespace HyperViewer.Controls
             }
             else
             {
+                // 10240: 三参 ChangeView, offset 由系统自行锚定 (同 FitToWindow)
                 Scroller.ChangeView(null, null, clamped);
             }
             _suppressViewChange = false;
@@ -349,34 +392,29 @@ namespace HyperViewer.Controls
 
         /// <summary>
         /// 复位视图: 新图加载 / 重置缩放 (数字0) 时调用, 切换到"适应窗口"档。
-        /// 解码未完成 (PixelWidth==0) 时挂起, 等 ImageOpened 再适应。
+        /// 解码未完成 (PixelWidth==0) 或视口未就绪时挂起, 由事件/定时器兜底。
         /// </summary>
         public void ResetView()
         {
             _lastFitZoom = -1f;
-            if (TheImage.Source is BitmapImage bmp && bmp.PixelWidth > 0 && bmp.PixelHeight > 0)
-            {
-                _pendingFit = false;
-                FitToWindow();
-            }
+            if (TryFit()) _pendingFit = false;
         }
 
         /// <summary>
         /// 适应窗口: 按图片尺寸 (含旋转) 计算缩放, 使整图恰好放入视口。
+        /// 解码未完成 (PixelWidth==0) 时直接返回, 等 ImageOpened/SizeChanged;
+        /// 不能回退到 ActualWidth —— 换图瞬间它是旧图遗留尺寸, 会算错 fit。
         /// </summary>
         public void FitToWindow()
         {
-            double iw, ih;
-            if (TheImage.Source is BitmapImage bmp && bmp.PixelWidth > 0 && bmp.PixelHeight > 0)
+            if (!(TheImage.Source is BitmapImage bmp)
+                || bmp.PixelWidth <= 0
+                || bmp.PixelHeight <= 0)
             {
-                iw = bmp.PixelWidth;
-                ih = bmp.PixelHeight;
+                return;
             }
-            else
-            {
-                iw = TheImage.ActualWidth;
-                ih = TheImage.ActualHeight;
-            }
+            var iw = bmp.PixelWidth;
+            var ih = bmp.PixelHeight;
             if (iw <= 0 || ih <= 0) return;
 
             // 旋转 90/270 时宽高互换 (RenderTransform 不影响布局尺寸)
@@ -404,6 +442,9 @@ namespace HyperViewer.Controls
             }
             else
             {
+                // 10240: 三参 ChangeView, offset 由系统在 zoom 变化时自行锚定
+                // (保持视口中心的内容点), 居中正确; 不要显式设置 offset
+                // (Extent 异步更新, 手算偏移会基于不一致的内部状态而偏右下方)
                 Scroller.ChangeView(null, null, fit);
             }
             _suppressViewChange = false;
