@@ -113,11 +113,14 @@ namespace HyperViewer.Controls
                 v._rotationStoryboard?.Stop();
                 v._imageTransform.Rotation = v.ImageRotation;
                 v.TheImage.Source = e.NewValue as BitmapImage;
+                // 换图瞬间隐藏: 防止旧 zoom (如放大 150%) 残留, 新图以放大态
+                // 短暂显示再缩回 fit ("先放大后缩小"跳动); 布局稳定后 fit 完成才淡入
+                v.TheImage.Opacity = 0;
                 v._pendingFit = true;
-                v.ResetView();
+                v._lastFitZoom = -1f;
                 v.ImageChanged?.Invoke(v, EventArgs.Empty);
                 // 兜底: 事件 (ImageOpened/SizeChanged) 可能断链 (10240 上同一实例
-                // 重复赋值不再触发 ImageOpened), 定时重试直到适应成功
+                // 重复赋值不再触发 ImageOpened), 定时重试直到适应成功并淡入
                 v._fitRetryTimer.Stop();
                 v._fitRetryTimer.Start();
             }
@@ -132,13 +135,19 @@ namespace HyperViewer.Controls
 
         private void TheImage_ImageOpened(object sender, RoutedEventArgs e)
         {
-            if (_pendingFit && TryFit()) _pendingFit = false;
-            FadeIn();
+            // 不在此处 fit/淡入: 解码完成但布局 (Extent) 尚未更新, 此刻启动的
+            // ChangeView 动画会被随后的布局变化中断, 造成"属性已是 fit 但
+            // 渲染停在中间值"的外显不一致; 等 SizeChanged (布局完成) 再 fit+淡入
+            _pendingFit = true;
         }
 
         private void TheImage_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if (_pendingFit && TryFit()) _pendingFit = false;
+            if (_pendingFit && TryFit())
+            {
+                _pendingFit = false;
+                FadeIn();
+            }
         }
 
         private void OnFitRetryTick(object sender, object e)
@@ -152,6 +161,7 @@ namespace HyperViewer.Controls
             {
                 _pendingFit = false;
                 _fitRetryTimer.Stop();
+                FadeIn();
             }
         }
 

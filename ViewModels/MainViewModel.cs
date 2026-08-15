@@ -623,6 +623,9 @@ namespace HyperViewer.ViewModels
             {
                 var items = await FilePickerService.EnumerateImagesAsync(folder);
                 _photos.Clear();
+                // 新列表会话: 邻居预取缓存按旧列表的 index 存储, 直接使用会
+                // 先显示错误的邻居低清图 (如"全部照片"打开时显示错图)
+                _neighborCache.Clear();
                 foreach (var p in items) _photos.Add(p);
                 CurrentFolder = folder;
                 SettingsService.LastFolderPath = folder.Path;
@@ -958,8 +961,12 @@ namespace HyperViewer.ViewModels
             return true;
         }
 
+        // 加载序号: 快速切换时丢弃过期解码结果 (避免旧图晚到覆盖新图)
+        private int _loadSeq;
+
         private async void RaiseImageChangedAsync()
         {
+            var seq = ++_loadSeq;
             if (Current == null)
             {
                 DisplayImage = null;
@@ -977,6 +984,7 @@ namespace HyperViewer.ViewModels
             }
 
             var bmp = await ImageLoaderService.LoadAsync(Current);
+            if (seq != _loadSeq) return; // 已被更新的切换取代, 丢弃过期结果
             DisplayImage = bmp;
             LoadFailed = bmp == null;
             IsLoading = false;
@@ -1121,6 +1129,9 @@ namespace HyperViewer.ViewModels
         public void GoHome()
         {
             StopSlideShow();
+            // 离开看图页: 清掉按 index 存的邻居预取缓存, 防止下次打开同列表
+            // 图片时先显示上次会话的错误邻居图
+            _neighborCache.Clear();
             if (Current != null)
             {
                 Current = null;
