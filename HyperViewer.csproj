@@ -39,7 +39,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <ErrorReport>prompt</ErrorReport>
     <Prefer32Bit>true</Prefer32Bit>
-    <AppxBundlePlatforms>x86|x64|arm64</AppxBundlePlatforms>
+    <AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
@@ -172,6 +172,8 @@
     <Compile Include="Helpers\SelectionBrushConverter.cs" />
     <Compile Include="Helpers\FavoritesService.cs" />
     <Compile Include="Helpers\SettingsService.cs" />
+    <Compile Include="Helpers\UwpCompat.cs" />
+    <Compile Include="Helpers\CompatContentDialog.cs" />
     <Compile Include="Helpers\KeyboardService.cs" />
     <Compile Include="Helpers\Loc.cs" />
   </ItemGroup>

@@ -75,8 +75,10 @@ namespace HyperViewer
             if (group == null || !TimelineList.Items.Contains(group)) return;
             TimelineList.ScrollIntoView(group);
             TimelineList.UpdateLayout();
-            if (TimelineList.ContainerFromItem(group) is FrameworkElement fe)
+            if (TimelineList.ContainerFromItem(group) is FrameworkElement fe
+                && Helpers.UwpCompat.HasContractV2)
             {
+                // BringIntoViewOptions 是 14393+ 才有; 10240 上方的 ScrollIntoView 已生效
                 fe.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = true });
             }
         }

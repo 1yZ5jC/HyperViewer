@@ -233,6 +233,65 @@ HyperViewer/
 - 解决: **绝不**用 PowerShell 文本命令改含中文的 XAML/代码文件; 只用 Edit/Write 工具 (UTF-8 正确); 改完立刻 `git diff` 检查
 - 附带教训: UWP `Slider` 的属性名是 `Minimum`/`Maximum` (不是 `Min`/`Max`), `Path.FillRule` 不是 Path 的属性 (要设在 PathGeometry 上)
 
+### 11. ARM/ARM64 打包: VS 校验拒绝但编译产物可用 (绕过方案)
+- 症状: `msbuild /p:Platform=ARM` 报错"要编译 ARM 配置的应用程序, 必须将项目的目标平台版本更新为 Windows 11 版本 22H2 (内部版本 22621)或更低版本"; `Platform=ARM64` 报"必须将项目的最低版本更新为 Windows 10 Fall Creators Update (内部版本 16299)或更高版本"
+- 原因: VS2022 17.x 的 `_ValidateConfiguration` (Microsoft.AppXPackage.Targets) 在打包前校验; 本机只有 26100 SDK 完整 (14393/15063/16299/17134 缺 UnionMetadata winmd, 降 TargetPlatformVersion 报 WMC1006)
+- 关键: **.NET Native 编译在校验失败之前已完成**, `bin\ARM\Release\HyperViewer.exe` 等产物齐全
+- 解决: 手动组装布局 + `makeappx.exe` 打包 (已封装为 `build-arm.ps1`, 含签名)
+
+### 12. MakeAppx 手动打包的坑
+- `$targetnametoken$.exe` 未替换 → 校验报 "declared for element ... doesn't exist in the package": 直接用 VS 构建生成的规范化 `bin\x86\Debug(或 Release)\AppxManifest.xml` (exe 名已替换, Dependencies 由 csproj 的 TargetPlatformMin/Version 生成)
+- `MaxVersionTested` 不能小于 `MinVersion` (错误 0x80080204 "The max version tested value must not be less than the min version value"); 且该属性是**必需**的 (移除报 schema 错) → 设为目标平台版本 (如 `10.0.26100.0`)
+- `ProcessorArchitecture` 枚举必须**小写** (`arm`/`arm64`/`x86`/`neutral`), 大写报 C00CE169
+- VS 注入的 `build:Metadata` / `xmlns:build` 可清理 (非必需)
+- 文本处理用 .NET `File.ReadAllText/WriteAllText`, 别用 PowerShell 文本命令 (见坑 10)
+- `makeappx.exe` 位置: `C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x86\makeappx.exe`
+
+### 13. AppX 签名: 证书 Subject 必须等于 manifest Publisher (0x8007000b)
+- 症状: `signtool sign` 对 appx 报 `SignerSign() failed (-2147024885/0x8007000b)`, 但签普通 exe 正常
+- 根因: AppX 签名要求证书 Subject 与 manifest `<Identity Publisher>` **完全一致** (如 `CN=Alan`); 与 CNG/CAPI 密钥无关, 与 EKU 也无关 (只要含 Code Signing EKU 且被签名工具认可)
+- 解决: `New-SelfSignedCertificate -Type CodeSigningCert -Subject "<Publisher值>" -KeyExportPolicy Exportable` → `Export-PfxCertificate` → `signtool sign /fd SHA256 /f x.pfx /p <pw>`
+- 时间戳: 默认加 `/tr http://timestamp.digicert.com /td SHA256`, 离线时降级为无时间戳签名
+- 自签证书未装信任根时 `signtool verify` 报 "chain terminated in a root certificate which is not trusted" 是**预期行为**; 部署到设备前需把证书安装到设备的"受信任的根证书颁发机构"
+
+### 14. `AppxBundle=Always` + 多架构 `AppxBundlePlatforms` 会毁掉单平台构建
+- 症状: x86 Debug 构建报 MakeAppx `0x80070003` (entrypoint 缺失) / mapping 解析失败 / `0x8007000b`
+- 原因: bundle 打包对 `AppxBundlePlatforms` 里每个架构都生成布局, 未构建的架构布局里没有 `HyperViewer.exe`
+- 解决: 日常单平台构建显式 `/p:AppxBundlePlatforms=<当前架构>` 覆盖 (build.ps1 已加); 多架构包用 VS"创建应用包"向导或 `build-arm.ps1`
+
+### 15. 后台任务扩展必须用默认 (foundation) 命名空间
+- 症状: manifest 中 `<uap:Extension Category="windows.backgroundTasks">` 或 `uap3:` 前缀都被 VS 校验拒绝
+- 正确写法 (官方文档同款, 无前缀):
+  ```xml
+  <Extension Category="windows.backgroundTasks" EntryPoint="HyperViewer.Tasks.TileRotationTask">
+    <BackgroundTasks><Task Type="timer" /></BackgroundTasks>
+  </Extension>
+  ```
+- `TimerTrigger(15, false)` 的 15 是系统允许的最短周期 (分钟)
+
+### 16. 设置默认值要语义化: 主题默认 "Dark" 会盖掉"跟随系统"
+- 症状: 首次启动 (无配置) 时应用固定深色, 不跟随系统颜色 —— 等于默认值"重写"了跟随系统的预期
+- 解决: `SettingsService.AppTheme` 默认值 `"Dark"` → `"Default"` (跟随系统); `ApplyThemeNow` 对 `"Default"` 走 `ElementTheme.Default` 天然兼容
+- 注意: 已安装实例的 LocalSettings 不会自动迁移旧值, 仅对全新安装生效
+
+### 17. 14393+ API 运行时崩溃: 编译期查不出 (WinRT API 版本守卫)
+- 症状: 10240 上点击胶片/滚轮滚动/缩放报运行时异常崩溃; 同样代码在 14393+ 正常
+- 原因: winmd 按 TargetPlatformVersion (26100) 解析, **编译期不校验** API 引入版本; 部分 API 在 10240 上不存在, 调用即崩
+- 已发现并修复 (都需 `UwpCompat.HasContractV2` 守卫 = UniversalApiContract v2/14393):
+  - `UIElement.StartBringIntoView(BringIntoViewOptions)` (14393+) → 10240 用 `ListViewBase.ScrollIntoView(item)`
+  - `ScrollViewer.ChangeView(x, y, z, disableAnimation)` 四参重载 (14393+) → 10240 用三参 (无动画)
+- 排查方法: 新功能上线前 grep `BringIntoViewOptions|ChangeView\(.*, true\)|AnimationDesired` 等, 并对照文档确认 API 引入版本
+- 守卫类: `Helpers/UwpCompat.cs` (`HasContractV2` 静态只读, 启动时计算一次)
+
+### 18. 15063+/1703+ API 兼容: ContentDialog 关闭按钮与剪贴板 (Contract v4 守卫)
+- 症状: 10240 上打开任何对话框报运行时异常; 复制图片偶发异常
+- 已发现并修复 (都需 `UwpCompat.HasContractV4` 守卫 = UniversalApiContract v4/1703):
+  - `ContentDialog.CloseButtonText` (1703+) → 新建 `Helpers/CompatContentDialog.cs`: 在 v4 以下回退 `SecondaryButtonText` (8.1 原生), 全项目 23 处 `new ContentDialog` → `new CompatContentDialog`、`CloseButtonText` → `CompatCloseButtonText`
+  - `Clipboard.SetContentWithOptions` (1703+) → 10240 降级 `Clipboard.SetContent(package)`
+  - `InkDrawingAttributes.PencilProperties` (14393+) → `HasContractV2 &&` 短路 (10240 无铅笔类型, 枚举永不命中, 属双保险)
+- 核对过安全的 API: DataTransferManager/ShowShareUI、PrintManager/PrintDocument、BitmapDecoder/BitmapEncoder、CoreApplicationViewTitleBar/SetTitleBar、SetPreferredMinSize、TryEnterFullScreenMode 均 10240 原生; App.xaml 高对比度字典的 `SystemColorXxxColor` 为框架级资源, 10240 存在
+- 排查方法: 全局 grep `ContentDialog|Clipboard\.SetContentWithOptions|CloseButtonText` 及新控件/新属性, 对照文档 "Requirements > API contract" 栏确认引入版本
+
 ## 开发顺序 (已执行 + 待执行)
 
 1. ✅ 搭 MVVM 骨架 + 目录 + 自研基类
@@ -241,4 +300,5 @@ HyperViewer/
 4. ✅ 缩略图栏、旋转/翻转、幻灯片、最近打开、错误占位、加载进度
 5. ✅ EXIF 信息面板、时间轴、编辑页 (裁剪/调色/滤镜)、设置页、国际化
 6. 🔜 主页欢迎面板 (已完成, 带窄屏自适应) 之后的 UI 打磨与复盘清单 (见"下一步")
-7. 🔜 文件关联清单双击默认打开、超大图分块解码、扩展格式、打包签名、Store 提交
+7. 🔜 文件关联清单双击默认打开、超大图分块解码、扩展格式、Store 提交
+8. ✅ ARM/ARM64 Release 打包 + 签名 (build-arm.ps1, 见踩坑 11-13)

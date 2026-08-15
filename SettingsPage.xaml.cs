@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using HyperViewer.Helpers;
 using HyperViewer.Services;
 using Windows.ApplicationModel.Core;
@@ -141,12 +141,12 @@ namespace HyperViewer
             if (LanguageBox.SelectedItem is ComboBoxItem item && item.Tag is string lang)
             {
                 ApplicationLanguages.PrimaryLanguageOverride = lang == "System" ? string.Empty : lang;
-                var dlg = new ContentDialog
+                var dlg = new CompatContentDialog
                 {
                     Title = Loc.Get("RestartTitle"),
                     Content = Loc.Get("RestartMessage"),
                     PrimaryButtonText = Loc.Get("RestartNow"),
-                    CloseButtonText = Loc.Get("RestartLater")
+                    CompatCloseButtonText = Loc.Get("RestartLater")
                 };
                 if (await dlg.ShowAsync() == ContentDialogResult.Primary)
                 {
@@ -165,11 +165,11 @@ namespace HyperViewer
                     }
                     else
                     {
-                        await new ContentDialog
+                        await new CompatContentDialog
                         {
                             Title = Loc.Get("RestartTitle"),
                             Content = Loc.Get("RestartMessage"),
-                            CloseButtonText = Loc.Get("RestartLater")
+                            CompatCloseButtonText = Loc.Get("RestartLater")
                         }.ShowAsync();
                     }
                 }
@@ -267,22 +267,22 @@ namespace HyperViewer
         {
             int cleared = ImageLoaderService.ClearCache();
             CacheInfoText.Text = Loc.Format("CacheInfo", ImageLoaderService.CacheCount);
-            await new ContentDialog
+            await new CompatContentDialog
             {
                 Title = Loc.Get("ClearCacheTitle"),
                 Content = Loc.Format("CacheCleared", cleared),
-                CloseButtonText = Loc.Get("DialogOK")
+                CompatCloseButtonText = Loc.Get("DialogOK")
             }.ShowAsync();
         }
 
         private async void ClearRecent_Click(object sender, RoutedEventArgs e)
         {
             await RecentFoldersService.Instance.ClearAsync();
-            await new ContentDialog
+            await new CompatContentDialog
             {
                 Title = Loc.Get("ClearRecentTitle"),
                 Content = Loc.Get("RecentCleared"),
-                CloseButtonText = Loc.Get("DialogOK")
+                CompatCloseButtonText = Loc.Get("DialogOK")
             }.ShowAsync();
         }
 

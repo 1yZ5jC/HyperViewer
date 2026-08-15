@@ -261,7 +261,15 @@ namespace HyperViewer.Controls
             var clamped = Math.Max(Scroller.MinZoomFactor,
                                    Math.Min(Scroller.MaxZoomFactor, zoom));
             _suppressViewChange = true;
-            Scroller.ChangeView(null, null, clamped, true);
+            // ChangeView 四参重载 (disableAnimation) 是 14393+ 才有
+            if (Helpers.UwpCompat.HasContractV2)
+            {
+                Scroller.ChangeView(null, null, clamped, true);
+            }
+            else
+            {
+                Scroller.ChangeView(null, null, clamped);
+            }
             _suppressViewChange = false;
             ZoomFactorChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -368,7 +376,15 @@ namespace HyperViewer.Controls
             fit = Math.Max(Scroller.MinZoomFactor, Math.Min(Scroller.MaxZoomFactor, fit));
             _lastFitZoom = fit;
             _suppressViewChange = true;
-            Scroller.ChangeView(null, null, fit, true);
+            // ChangeView 四参重载 (disableAnimation) 是 14393+ 才有
+            if (Helpers.UwpCompat.HasContractV2)
+            {
+                Scroller.ChangeView(null, null, fit, true);
+            }
+            else
+            {
+                Scroller.ChangeView(null, null, fit);
+            }
             _suppressViewChange = false;
             ZoomFactorChanged?.Invoke(this, EventArgs.Empty);
         }

@@ -911,7 +911,15 @@ namespace HyperViewer.ViewModels
                 var package = new DataPackage();
                 package.RequestedOperation = DataPackageOperation.Copy;
                 package.SetBitmap(RandomAccessStreamReference.CreateFromFile(Current.File));
-                Clipboard.SetContentWithOptions(package, null);
+                // SetContentWithOptions 是 1703+ (契约 v4) 才有, 10240 用 SetContent
+                if (Helpers.UwpCompat.HasContractV4)
+                {
+                    Clipboard.SetContentWithOptions(package, null);
+                }
+                else
+                {
+                    Clipboard.SetContent(package);
+                }
             }
             catch
             {

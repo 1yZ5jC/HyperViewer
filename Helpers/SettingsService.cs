@@ -42,11 +42,11 @@ namespace HyperViewer.Helpers
         }
 
         /// <summary>
-        /// 应用主题: "Default" / "Dark" / "Light"。
+        /// 应用主题: "Default" (跟随系统) / "Dark" / "Light"。
         /// </summary>
         public static string AppTheme
         {
-            get { return GetString(KeyTheme, "Dark"); }
+            get { return GetString(KeyTheme, "Default"); }
             set { Store.Values[KeyTheme] = value; }
         }
 

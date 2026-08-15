@@ -26,7 +26,10 @@ Write-Host "==> Clean ($Configuration|$Platform)"
 if ($LASTEXITCODE -ne 0) { Write-Error "Clean 失败 ($LASTEXITCODE)"; exit $LASTEXITCODE }
 
 Write-Host "==> Build ($Configuration|$Platform)"
-& $msbuild "$root\HyperViewer.csproj" /t:Build /p:Configuration=$Configuration /p:Platform=$Platform /v:m /nologo
+# csproj 里 AppxBundle=Always 且 AppxBundlePlatforms 含多架构时,
+# 仅构建单平台会因其他架构布局缺失 (entrypoint) 导致 MakeAppx 失败,
+# 故日常单平台构建显式覆盖为当前架构 (多架构打包请用 VS"创建应用包"向导)。
+& $msbuild "$root\HyperViewer.csproj" /t:Build /p:Configuration=$Configuration /p:Platform=$Platform /p:AppxBundlePlatforms=$Platform /v:m /nologo
 if ($LASTEXITCODE -ne 0) { Write-Error "Build 失败 ($LASTEXITCODE)"; exit $LASTEXITCODE }
 
 Write-Host "==> OK"

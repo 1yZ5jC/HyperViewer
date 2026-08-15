@@ -497,11 +497,11 @@ namespace HyperViewer
                 var target = await ExportService.SaveAsAsync(file);
                 if (target != null)
                 {
-                    await new ContentDialog
+                    await new CompatContentDialog
                     {
                         Title = Loc.Get("ExportTitle"),
                         Content = Loc.Format("ExportDone", target.Name),
-                        CloseButtonText = Loc.Get("DialogOK")
+                        CompatCloseButtonText = Loc.Get("DialogOK")
                     }.ShowAsync();
                 }
             }
@@ -544,10 +544,17 @@ namespace HyperViewer
                 {
                     ThumbList.SelectedIndex = Vm.CurrentIndex;
                 }
-                // 滚到当前项
+                // 滚到当前项 (BringIntoViewOptions 是 14393+ 才有, 10240 用 ListViewBase.ScrollIntoView)
                 if (ThumbList.ContainerFromIndex(Vm.CurrentIndex) is FrameworkElement fe)
                 {
-                    fe.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = true });
+                    if (Helpers.UwpCompat.HasContractV2)
+                    {
+                        fe.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = true });
+                    }
+                    else
+                    {
+                        ThumbList.ScrollIntoView(ThumbList.Items[Vm.CurrentIndex]);
+                    }
                 }
             }
         }
@@ -593,7 +600,16 @@ namespace HyperViewer
             var scroller = FindChild<ScrollViewer>(ThumbList);
             if (scroller != null)
             {
-                scroller.ChangeView(scroller.HorizontalOffset + steps * ThumbStep, null, null, true);
+                // ChangeView 四参重载 (disableAnimation) 是 14393+ 才有
+                double target = scroller.HorizontalOffset + steps * ThumbStep;
+                if (Helpers.UwpCompat.HasContractV2)
+                {
+                    scroller.ChangeView(target, null, null, true);
+                }
+                else
+                {
+                    scroller.ChangeView(target, null, null);
+                }
                 e.Handled = true;
             }
         }
@@ -615,7 +631,15 @@ namespace HyperViewer
             var scroller = FindChild<ScrollViewer>(ThumbList);
             if (scroller != null)
             {
-                scroller.ChangeView(_thumbDragOffset - dx, null, null, true);
+                double target = _thumbDragOffset - dx;
+                if (Helpers.UwpCompat.HasContractV2)
+                {
+                    scroller.ChangeView(target, null, null, true);
+                }
+                else
+                {
+                    scroller.ChangeView(target, null, null);
+                }
                 e.Handled = true;
             }
         }
@@ -797,11 +821,11 @@ namespace HyperViewer
             var recent = Vm.RecentFolders;
             if (recent == null || recent.Count == 0)
             {
-                var dlg = new ContentDialog
+                var dlg = new CompatContentDialog
                 {
                     Title = Loc.Get("RecentNone"),
                     Content = Loc.Get("RecentEmpty"),
-                    CloseButtonText = Loc.Get("DialogOK")
+                    CompatCloseButtonText = Loc.Get("DialogOK")
                 };
                 await dlg.ShowAsync();
                 return;
@@ -824,11 +848,11 @@ namespace HyperViewer
                 panel.Children.Add(btn);
             }
 
-            var dlg2 = new ContentDialog
+            var dlg2 = new CompatContentDialog
             {
                 Title = Loc.Get("RecentTitle"),
                 Content = panel,
-                CloseButtonText = Loc.Get("DialogCancel")
+                CompatCloseButtonText = Loc.Get("DialogCancel")
             };
             await dlg2.ShowAsync();
         }
@@ -946,12 +970,12 @@ namespace HyperViewer
             int count = AllPhotosGrid.SelectedItems.Count;
             if (count == 0) return;
             var paths = AllPhotosGrid.SelectedItems.Cast<PhotoItem>().Select(p => p.Path).ToList();
-            var dlg = new ContentDialog
+            var dlg = new CompatContentDialog
             {
                 Title = Loc.Get("DeleteTitle"),
                 Content = Loc.Format("BatchDeleteMessage", count),
                 PrimaryButtonText = Loc.Get("DeletePrimary"),
-                CloseButtonText = Loc.Get("DialogCancel")
+                CompatCloseButtonText = Loc.Get("DialogCancel")
             };
             if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
 
@@ -959,11 +983,11 @@ namespace HyperViewer
             ClearSelection();
             if (failed.Count > 0)
             {
-                var err = new ContentDialog
+                var err = new CompatContentDialog
                 {
                     Title = Loc.Get("DeleteFailTitle"),
                     Content = Loc.Format("BatchDeleteFailMessage", failed.Count),
-                    CloseButtonText = Loc.Get("DialogOK")
+                    CompatCloseButtonText = Loc.Get("DialogOK")
                 };
                 await err.ShowAsync();
             }
@@ -1212,33 +1236,33 @@ namespace HyperViewer
         private async void Delete_Click(object sender, RoutedEventArgs e)
         {
             if (Vm.Current == null) return;
-            var dlg = new ContentDialog
+            var dlg = new CompatContentDialog
             {
                 Title = Loc.Get("DeleteTitle"),
                 Content = Loc.Format("DeleteMessage", Vm.Current.Name),
                 PrimaryButtonText = Loc.Get("DeletePrimary"),
-                CloseButtonText = Loc.Get("DialogCancel")
+                CompatCloseButtonText = Loc.Get("DialogCancel")
             };
             if (await dlg.ShowAsync() == ContentDialogResult.Primary)
             {
                 bool ok = await Vm.DeleteCurrentAsync();
                 if (!ok)
                 {
-                    var err = new ContentDialog
+                    var err = new CompatContentDialog
                     {
                         Title = Loc.Get("DeleteFailTitle"),
                         Content = Loc.Get("DeleteFailMessage"),
-                        CloseButtonText = Loc.Get("DialogOK")
+                        CompatCloseButtonText = Loc.Get("DialogOK")
                     };
                     await err.ShowAsync();
                 }
                 else if (!Vm.LastDeleteToRecycleBin)
                 {
-                    var info = new ContentDialog
+                    var info = new CompatContentDialog
                     {
                         Title = Loc.Get("DeleteFailTitle"),
                         Content = Loc.Get("DeleteRecycleFallbackMessage"),
-                        CloseButtonText = Loc.Get("DialogOK")
+                        CompatCloseButtonText = Loc.Get("DialogOK")
                     };
                     await info.ShowAsync();
                 }
@@ -1255,23 +1279,23 @@ namespace HyperViewer
                 SelectionLength = Vm.Current.Name.Length - (System.IO.Path.GetExtension(Vm.Current.Name).Length),
                 Margin = new Thickness(0, 12, 0, 0)
             };
-            var dlg = new ContentDialog
+            var dlg = new CompatContentDialog
             {
                 Title = Loc.Get("RenameTitle"),
                 Content = input,
                 PrimaryButtonText = Loc.Get("RenamePrimary"),
-                CloseButtonText = Loc.Get("DialogCancel")
+                CompatCloseButtonText = Loc.Get("DialogCancel")
             };
             if (await dlg.ShowAsync() == ContentDialogResult.Primary)
             {
 bool ok = await Vm.RenameCurrentAsync(input.Text);
             if (!ok)
             {
-                var err = new ContentDialog
+                var err = new CompatContentDialog
                 {
                     Title = Loc.Get("RenameFailTitle"),
                     Content = Loc.Get("RenameFailMessage"),
-                    CloseButtonText = Loc.Get("DialogOK")
+                    CompatCloseButtonText = Loc.Get("DialogOK")
                 };
                 await err.ShowAsync();
             }
@@ -1298,12 +1322,12 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
         if (sender is MenuFlyoutItem item && item.DataContext is AlbumItem album && album.Folder != null)
         {
             var input = new TextBox { Text = album.Name, Margin = new Thickness(0, 12, 0, 0) };
-            var dlg = new ContentDialog
+            var dlg = new CompatContentDialog
             {
                 Title = Loc.Get("RenameTitle"),
                 Content = input,
                 PrimaryButtonText = Loc.Get("RenamePrimary"),
-                CloseButtonText = Loc.Get("DialogCancel")
+                CompatCloseButtonText = Loc.Get("DialogCancel")
             };
             if (await dlg.ShowAsync() == ContentDialogResult.Primary)
             {
@@ -1321,12 +1345,12 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
     {
         if (sender is MenuFlyoutItem item && item.DataContext is AlbumItem album && album.Folder != null)
         {
-            var dlg = new ContentDialog
+            var dlg = new CompatContentDialog
             {
                 Title = Loc.Get("DeleteTitle"),
                 Content = Loc.Format("DeleteMessage", album.Name),
                 PrimaryButtonText = Loc.Get("DeletePrimary"),
-                CloseButtonText = Loc.Get("DialogCancel")
+                CompatCloseButtonText = Loc.Get("DialogCancel")
             };
             if (await dlg.ShowAsync() == ContentDialogResult.Primary)
             {
@@ -1344,11 +1368,11 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
     {
         if (sender is MenuFlyoutItem item && item.DataContext is AlbumItem album)
         {
-            var info = new ContentDialog
+            var info = new CompatContentDialog
             {
                 Title = Loc.Get("PropertiesTitle"),
                 Content = new TextBlock { Text = $"名称: {album.Name}\n路径: {album.Path}\n图片数: {album.Count}\n日期范围: {album.DateRangeText}", TextWrapping = TextWrapping.Wrap },
-                CloseButtonText = Loc.Get("DialogOK")
+                CompatCloseButtonText = Loc.Get("DialogOK")
             };
             _ = info.ShowAsync();
         }
@@ -1385,12 +1409,12 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
         if (sender is MenuFlyoutItem item && item.DataContext is PhotoItem photo && photo.File != null)
         {
             var input = new TextBox { Text = photo.Name, Margin = new Thickness(0, 12, 0, 0) };
-            var dlg = new ContentDialog
+            var dlg = new CompatContentDialog
             {
                 Title = Loc.Get("RenameTitle"),
                 Content = input,
                 PrimaryButtonText = Loc.Get("RenamePrimary"),
-                CloseButtonText = Loc.Get("DialogCancel")
+                CompatCloseButtonText = Loc.Get("DialogCancel")
             };
             if (await dlg.ShowAsync() == ContentDialogResult.Primary)
             {
@@ -1408,12 +1432,12 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
     {
         if (sender is MenuFlyoutItem item && item.DataContext is PhotoItem photo && photo.File != null)
         {
-            var dlg = new ContentDialog
+            var dlg = new CompatContentDialog
             {
                 Title = Loc.Get("DeleteTitle"),
                 Content = Loc.Format("DeleteMessage", photo.Name),
                 PrimaryButtonText = Loc.Get("DeletePrimary"),
-                CloseButtonText = Loc.Get("DialogCancel")
+                CompatCloseButtonText = Loc.Get("DialogCancel")
             };
             if (await dlg.ShowAsync() == ContentDialogResult.Primary)
             {
@@ -1431,11 +1455,11 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
     {
         if (sender is MenuFlyoutItem item && item.DataContext is PhotoItem photo)
         {
-            var info = new ContentDialog
+            var info = new CompatContentDialog
             {
                 Title = Loc.Get("PropertiesTitle"),
                 Content = new TextBlock { Text = $"名称: {photo.Name}\n路径: {photo.Path}\n创建时间: {photo.DateCreated}", TextWrapping = TextWrapping.Wrap },
-                CloseButtonText = Loc.Get("DialogOK")
+                CompatCloseButtonText = Loc.Get("DialogOK")
             };
             _ = info.ShowAsync();
         }
@@ -1457,12 +1481,12 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
     {
         if (sender is MenuFlyoutItem item && item.DataContext is StorageFolder folder)
         {
-            var dlg = new ContentDialog
+            var dlg = new CompatContentDialog
             {
                 Title = Loc.Get("RemoveTitle"),
                 Content = Loc.Format("RemoveMessage", folder.Name),
                 PrimaryButtonText = Loc.Get("RemovePrimary"),
-                CloseButtonText = Loc.Get("DialogCancel")
+                CompatCloseButtonText = Loc.Get("DialogCancel")
             };
             if (await dlg.ShowAsync() == ContentDialogResult.Primary)
             {
@@ -1476,11 +1500,11 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
     {
         if (sender is MenuFlyoutItem item && item.DataContext is StorageFolder folder)
         {
-            var info = new ContentDialog
+            var info = new CompatContentDialog
             {
                 Title = Loc.Get("PropertiesTitle"),
                 Content = new TextBlock { Text = $"名称: {folder.Name}\n路径: {folder.Path}", TextWrapping = TextWrapping.Wrap },
-                CloseButtonText = Loc.Get("DialogOK")
+                CompatCloseButtonText = Loc.Get("DialogOK")
             };
             _ = info.ShowAsync();
 }

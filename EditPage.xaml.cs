@@ -1053,7 +1053,9 @@ namespace HyperViewer
                     if (pts.Count == 0) continue;
                     var attrs = st.DrawingAttributes;
                     byte a = 255;
-                    if (attrs.Kind == InkDrawingAttributesKind.Pencil && attrs.PencilProperties != null)
+                    if (UwpCompat.HasContractV2
+                        && attrs.Kind == InkDrawingAttributesKind.Pencil
+                        && attrs.PencilProperties != null)
                     {
                         a = (byte)Math.Round(255 * Math.Max(0.0, Math.Min(1.0, attrs.PencilProperties.Opacity)));
                     }
