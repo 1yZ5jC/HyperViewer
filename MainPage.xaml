@@ -1011,7 +1011,7 @@
                         IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"
                         ToolTipService.ToolTip="适应"
                         AutomationProperties.Name="适应">
-                    <FontIcon Glyph="&#xE9D5;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                    <FontIcon Glyph="&#xE740;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                 </Button>
                 <!-- 缩略图栏开关 -->
                 <Button x:Name="ThumbToggleBtn"
@@ -1247,6 +1247,7 @@
                         Style="{StaticResource TitleBarIconButtonStyle}"
                         Click="BackToLibrary_Click"
                         Margin="8,5,0,5"
+                        ToolTipService.ToolTip="返回"
                         AutomationProperties.Name="返回">
                     <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                 </Button>
@@ -1266,6 +1267,7 @@
                         Style="{StaticResource TitleBarIconButtonStyle}"
                         Command="{x:Bind Vm.RotateCommand}"
                         IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"
+                        ToolTipService.ToolTip="旋转"
                         AutomationProperties.Name="旋转">
                     <FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                 </Button>
@@ -1274,6 +1276,7 @@
                         Style="{StaticResource TitleBarIconButtonStyle}"
                         Click="EditButton_Click"
                         IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"
+                        ToolTipService.ToolTip="编辑"
                         AutomationProperties.Name="编辑">
                     <FontIcon Glyph="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                 </Button>
@@ -1282,6 +1285,7 @@
                         Style="{StaticResource TitleBarIconButtonStyle}"
                         Command="{x:Bind Vm.ToggleInfoPanelCommand}"
                         IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"
+                        ToolTipService.ToolTip="信息"
                         AutomationProperties.Name="信息">
                     <FontIcon Glyph="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                 </Button>
@@ -1290,6 +1294,7 @@
                         Style="{StaticResource TitleBarIconButtonStyle}"
                         Command="{x:Bind Vm.ToggleFavoriteCommand}"
                         IsEnabled="{x:Bind Vm.HasImage, Mode=OneWay}"
+                        ToolTipService.ToolTip="收藏"
                         AutomationProperties.Name="收藏">
                     <FontIcon Glyph="{x:Bind Vm.FavoriteGlyph, Mode=OneWay}"
                               FontFamily="Segoe MDL2 Assets"
@@ -1299,6 +1304,7 @@
                 <Button Grid.Column="7"
                         Style="{StaticResource TitleBarIconButtonStyle}"
                         Margin="4,5,0,5"
+                        ToolTipService.ToolTip="更多"
                         AutomationProperties.Name="更多">
                     <Button.Flyout>
                         <MenuFlyout>

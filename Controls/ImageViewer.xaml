@@ -29,6 +29,7 @@
                    Stretch="Uniform"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
+                   ImageOpened="TheImage_ImageOpened"
                    RenderTransformOrigin="0.5,0.5"/>
         </ScrollViewer>
 

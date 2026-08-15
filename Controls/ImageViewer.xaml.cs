@@ -108,8 +108,24 @@ namespace HyperViewer.Controls
             if (d is ImageViewer v)
             {
                 v.TheImage.Source = e.NewValue as BitmapImage;
+                v._pendingFit = true;
                 v.ResetView();
                 v.ImageChanged?.Invoke(v, EventArgs.Empty);
+            }
+        }
+
+        // 10240 兼容: SetSourceAsync 返回时 BitmapImage 可能尚未解码完成
+        // (PixelWidth==0), 此时若用 TheImage.ActualWidth (旧图遗留尺寸) 计算
+        // 适应缩放会得到错误倍数, 解码完成后才跳变 -> 视觉抖动。
+        // 因此延迟到 ImageOpened (解码完成, 尺寸有效) 后再适应。
+        private bool _pendingFit;
+
+        private void TheImage_ImageOpened(object sender, RoutedEventArgs e)
+        {
+            if (_pendingFit)
+            {
+                _pendingFit = false;
+                FitToWindow();
             }
         }
 
@@ -333,11 +349,16 @@ namespace HyperViewer.Controls
 
         /// <summary>
         /// 复位视图: 新图加载 / 重置缩放 (数字0) 时调用, 切换到"适应窗口"档。
+        /// 解码未完成 (PixelWidth==0) 时挂起, 等 ImageOpened 再适应。
         /// </summary>
         public void ResetView()
         {
             _lastFitZoom = -1f;
-            FitToWindow();
+            if (TheImage.Source is BitmapImage bmp && bmp.PixelWidth > 0 && bmp.PixelHeight > 0)
+            {
+                _pendingFit = false;
+                FitToWindow();
+            }
         }
 
         /// <summary>
