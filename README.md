@@ -41,6 +41,7 @@
 ### ✅ 已完成 (设置与国际化)
 - 设置页: 幻灯片间隔 (1/3/5/10s) + 主视图背景色 (黑/深灰/白), LocalSettings 即时生效
 - 国际化: `Strings\zh-CN` + `en-US` 两套 resw, XAML 全量 `x:Uid`, 代码走 `Helpers/Loc.cs`
+- 开发者选项: 10240 模拟开关 (`DebugSimulate10240`) + 详细调试日志 (`DebugVerboseLog`), 日志始终落盘 `LocalState\debug.log` (见踩坑 23)
 
 ### 🔜 下一步 (记自"对照旧版 Windows 图片应用"复盘)
 **日常高频**
@@ -281,7 +282,7 @@ HyperViewer/
   - `UIElement.StartBringIntoView(BringIntoViewOptions)` (14393+) → 10240 用 `ListViewBase.ScrollIntoView(item)`
   - `ScrollViewer.ChangeView(x, y, z, disableAnimation)` 四参重载 (14393+) → 10240 用三参 (无动画)
 - 排查方法: 新功能上线前 grep `BringIntoViewOptions|ChangeView\(.*, true\)|AnimationDesired` 等, 并对照文档确认 API 引入版本
-- 守卫类: `Helpers/UwpCompat.cs` (`HasContractV2` 静态只读, 启动时计算一次)
+- 守卫类: `Helpers/UwpCompat.cs` (`HasContractV2` 为属性, 支持模拟开关即时切换; 见踩坑 23)
 
 ### 18. 15063+/1703+ API 兼容: ContentDialog 关闭按钮与剪贴板 (Contract v4 守卫)
 - 症状: 10240 上打开任何对话框报运行时异常; 复制图片偶发异常
@@ -291,6 +292,58 @@ HyperViewer/
   - `InkDrawingAttributes.PencilProperties` (14393+) → `HasContractV2 &&` 短路 (10240 无铅笔类型, 枚举永不命中, 属双保险)
 - 核对过安全的 API: DataTransferManager/ShowShareUI、PrintManager/PrintDocument、BitmapDecoder/BitmapEncoder、CoreApplicationViewTitleBar/SetTitleBar、SetPreferredMinSize、TryEnterFullScreenMode 均 10240 原生; App.xaml 高对比度字典的 `SystemColorXxxColor` 为框架级资源, 10240 存在
 - 排查方法: 全局 grep `ContentDialog|Clipboard\.SetContentWithOptions|CloseButtonText` 及新控件/新属性, 对照文档 "Requirements > API contract" 栏确认引入版本
+
+### 19. 10240 图片显示时序三连: fit 延迟到布局稳定、淡入延迟到动画结束、兜底定时器
+- **症状**: 10240 上打开图片"先放大到 >100% 再缩小"、"淡入过程中缩放乱跳"、"打开显示错误的邻居图"
+- **根因**: 10240 上 `ImageOpened` 在布局未稳时提前触发、事件链偶发断链 (`ChangeView` 动画完成后 `ViewChanged(IsIntermediate=false)` 不触发; 同一 BitmapImage 实例重复赋值不再触发 `ImageOpened`); 换图瞬间 `TheImage.ActualWidth` 是**旧图遗留尺寸**
+- **解决 (ImageViewer 状态机, 见 `Controls/ImageViewer.xaml.cs`)**:
+  - `OnSourceChanged`: 换图即隐藏 (`Opacity=0`)、`_pendingFit=true`, 等布局稳定; 起 120ms `_fitRetryTimer` 兜底
+  - `SizeChanged`(布局完成)/`OnFitRetryTick` → `TryFit()` → 成功后 `RequestFadeIn`
+  - `ViewChanged(IsIntermediate=false)`(fit 动画结束)执行 `FadeIn`, 300ms `_fadeInTimer` 兜底 —— 图片可见时缩放动画已结束, 不会"淡入中乱跳"
+- **10240 三参 `ChangeView(null, null, fit)` 居中**: offset 由系统在 zoom 变化时自行锚定(保持视口中心), 居中正确; **不要**显式传 offset —— `Extent` 异步更新, 手算偏移会基于不一致的内部状态偏右下方
+- **曾尝试又回退的方案**: `ZoomToFactor`/手动 `cx/cy`/`_pendingCenter`/`CenterViewport` (commit 2e149a7 前), 全部移除; 保持三参 + 系统锚定
+
+### 20. 高 DPI 下 `BitmapImage.PixelWidth` 是物理像素, 与布局尺寸不一致 (fit 必须用 ActualWidth)
+- **症状**: 220% 缩放的设备上图片显示比 10240(100% DPI)小约 DPI 倍数; 模拟 10240 与真实不符
+- **根因**: `PixelWidth` 是解码物理像素; 220% 设备上 quick 低清图布局 1024x603 而 PixelWidth 报 2248, `ScrollViewer` 的 Extent 按**布局尺寸**算 → 按像素算的 fit 偏小 2.2 倍
+- **解决**: `FitToWindow` 用 `TheImage.ActualWidth/ActualHeight`(与 ScrollViewer 同单位); `PixelWidth > 0` 仅作"解码完成"守卫; 换图瞬间 ActualWidth 是旧图遗留值的问题由坑 19 的"布局稳定后才 fit"时序规避
+- **观察技巧**: 日志里 `SizeChanged 1024.0x603.0` 与 `PixelWidth 2248` 并存 = 高 DPI 设备, 此时所有像素单位计算都会出错
+
+### 21. 低清占位图 keep-zoom: 不做二次 fit (IsPlaceholder)
+- **症状**: 打开/切换图片"先放大(低清 fit)后缩小(高清 fit)"两次缩放动画
+- **解决**: `ImageViewer.IsPlaceholder` (DP, 绑定 `Vm.IsQuickShowing`); 低清邻居占位显示时**不隐藏、不拟合、保持当前 zoom** 直接显示; 高清图到达 (`IsQuickShowing=false`) 才走"隐藏 → fit → 淡入", 全程一次 fit
+- 绑定顺序保证: VM 先设 `IsQuickShowing=true` 再赋 `DisplayImage` (x:Bind OneWay 在 PropertyChanged 内同步推送到目标 DP, 无竞态)
+
+### 22. `DispatcherTimer` 防抖必须 Tick 内先 `Stop()`, 否则空转死循环
+- **症状**: 日志里每 ~270ms 一条重复 `Fit: ... ChangeView3 (anim)` 直到切图/最小化
+- **根因**: `Tick` 里只检查条件不 Stop; 条件在"fit 完成后 `IsAtFitZoom`"上恒成立 → 定时器每 250ms 无限重调 `FitToWindow`(防抖只挡住了 resize 突发, 挡不住空转)
+- **解决**: `Tick` 第一行 `_resizeFitTimer.Stop();`, 一次性防抖后归位, 下次 resize 再 `Stop()+Start()`
+
+### 23. 10240 调试设施: 模拟开关 + 文件日志
+- **模拟开关** `Helpers/UwpCompat.cs` (全局唯一版本判断入口, 模拟时全部按 10240 分支走):
+  - `HasContractV2/V4/V5`(契约版本)、`HasInkToolbar`、`HasXamlRoot` —— 必须是**属性**而非 `static readonly`, 开关切换即时生效
+  - `!SettingsService.DebugSimulate10240 && ApiInformation.IsApiContractPresent(...)`; 设置页开发者选项开启
+  - 已覆盖分支: `ChangeView` 四参 ×4、`BringIntoViewOptions` ×2、`CompatContentDialog`(23 处)、`Clipboard.SetContentWithOptions`、`PencilProperties`、`InkToolbar`、`XamlRoot` 缩放、`RequestRestartAsync`、解码延迟注入 700ms
+- **无法用开关模拟的系统级差异**: 10240 系统字体字形、XAML 控件默认样式/动画时长、ScrollViewer 动画被吞的内部实现、ImageOpened 事件断链
+- **文件日志** `Helpers/DebugLog.cs`: 始终写 `%LOCALAPPDATA%\Packages\YoungZhouCorp.HyperViewer_*\LocalState\debug.log`(每次启动清空, 格式 `[ms][tag] 消息`); 所有日志点统一走 `DebugLog.Write` (`[IMG]`/`[VM]`/`[KEY]` 同一时间轴), 不依赖开关
+
+### 24. UWP 的 `Debug` 类没有 `Listeners`/`TextWriterTraceListener`
+- 症状: `CS0117: Debug 未包含 Listeners`; `StreamWriter(path, bool, Encoding)` 等重载在 UWP 也缺失
+- 解决: 文件日志直接 `new StreamWriter(File.Create(path)) { AutoFlush = true }` 自持落盘; UWP `StreamWriter` 只有 `(Stream)` / `(Stream, Encoding)` 构造
+
+### 25. 打开显示"错误的邻居图片": 邻居缓存按 index 残留错配
+- **症状**: 全部照片处打开某图, 显示的是别处的低清图
+- **根因**: `_neighborCache`(按 index 缓存 ±2 张 1024px 低清)跨文件夹/会话残留, 新列表的同 index 命中了旧图
+- **解决**: `LoadFolderAsync`/`GoHome` 清空缓存; `RaiseImageChangedAsync` 加 `_loadSeq` 序号, 解码完成后过期结果直接丢弃
+
+### 26. 旋转动画必须显式 `From` (10240 隐式基值陷阱)
+- **症状**: 旋转 90° → 下一张再旋转, 动画从 0° 转(或先跳回 0°)
+- **根因**: `ApplyTransform` 的 `DoubleAnimation` 无 `From`; `_rotationStoryboard.Stop()` 后 `CompositeTransform.Rotation` 回落基值 0, 下一次动画从 0 开始
+- **解决**: 动画显式 `From=_currentRotation, To=ImageRotation`, 换图时同步 `_currentRotation = ImageRotation`
+
+### 27. resw 文件禁止用编辑工具直接改 (编码事故)
+- **症状**: `edit`/`Write` 工具写 resw 后 BOM 丢失、中文乱码 (zh-CN 与 en-US 各发生过一次, en-US 那次还丢掉了根 `<root>` 闭合标签)
+- **解决**: resw 一律 `git checkout` 恢复 + .NET `File.ReadAllText` → `WriteAllText(..., UTF8Encoding($true))` 追加内容; 其他文件 (.cs/.xaml/.md) 编辑工具无问题
 
 ## 开发顺序 (已执行 + 待执行)
 
