@@ -208,6 +208,9 @@ namespace HyperViewer.Controls
             if (_pendingFit && TryFit())
             {
                 _pendingFit = false;
+                // 14393+: fit 无动画已完成, 不淡入 —— 图片全程可见, 过渡动画
+                // 的 scale/translate 会在已就位的图片上播放成"抽抽" (切换抽动);
+                // 10240: 三参 fit 动画结束 (ViewChanged 最终态) 后才淡入
                 if (!Helpers.UwpCompat.HasContractV2) RequestFadeIn();
             }
         }

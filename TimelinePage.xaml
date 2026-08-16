@@ -88,7 +88,7 @@
                                             <DataTemplate x:DataType="models:PhotoItem">
                                                 <Button Tag="{x:Bind}" Click="Photo_Click"
                                                         Padding="0" Background="Transparent" BorderThickness="0">
-                                                    <Image Source="{x:Bind Thumbnail}" Width="120" Height="120" Stretch="UniformToFill"/>
+                                                    <Image Source="{x:Bind Thumbnail, Mode=OneWay}" Width="120" Height="120" Stretch="UniformToFill"/>
                                                 </Button>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>

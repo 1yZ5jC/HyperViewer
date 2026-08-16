@@ -186,8 +186,14 @@ namespace HyperViewer.Services
                 var bmp = await LoadThumbnailAsync(p, size);
                 if (bmp != null)
                 {
-                    p.Thumbnail = bmp;
-                    p.ThumbnailLoaded = true;
+                    // 必须在 UI 线程赋值: 后台线程的 PropertyChanged 通知绑定不更新
+                    // (踩坑 28 封面同款问题: 时间轴缩略图由后台任务预载)
+                    await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                        Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                        {
+                            p.Thumbnail = bmp;
+                            p.ThumbnailLoaded = true;
+                        });
                 }
             }
             finally

@@ -568,7 +568,8 @@
                             <DataTemplate x:DataType="models:PhotoItem">
                                 <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
                                        Stretch="UniformToFill"
-                                       Loaded="PhotoThumbnail_Loaded"/>
+                                       Loaded="PhotoThumbnail_Loaded"
+                                       DataContextChanged="PhotoImage_DataContextChanged"/>
                             </DataTemplate>
                         </GridView.ItemTemplate>
                     </GridView>
@@ -646,7 +647,8 @@
                             <DataTemplate x:DataType="models:PhotoItem">
                                 <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
                                        Stretch="UniformToFill"
-                                       Loaded="PhotoThumbnail_Loaded"/>
+                                       Loaded="PhotoThumbnail_Loaded"
+                                       DataContextChanged="PhotoImage_DataContextChanged"/>
                             </DataTemplate>
                         </GridView.ItemTemplate>
                     </GridView>
@@ -925,8 +927,8 @@
                     Click="RecentButton_Click"
                     VerticalAlignment="Stretch"
                     FontSize="13"/>
-            <ListView x:Name="ThumbList"
-                      Grid.Column="1"
+            <Grid Grid.Column="1">
+                <ListView x:Name="ThumbList"
                       ItemsSource="{x:Bind Vm.Photos, Mode=OneWay}"
                       SelectionChanged="ThumbList_SelectionChanged"
                       IsItemClickEnabled="False"
@@ -960,11 +962,55 @@
                                    Stretch="UniformToFill"
                                    Width="76"
                                    Height="76"
-                                   Loaded="PhotoThumbnail_Loaded"/>
+                                   Loaded="PhotoThumbnail_Loaded"
+                                   DataContextChanged="PhotoImage_DataContextChanged"/>
                       </Border>
                   </DataTemplate>
               </ListView.ItemTemplate>
             </ListView>
+                <!-- 手动卷动按钮: 半透明圆钮叠在胶片左右两侧, 按 0.8 视口宽卷动
+                     (10240 的 Button 无 CornerRadius, 用 Border 包按钮, 同导航箭头模式) -->
+                <Border Width="32" Height="32"
+                        CornerRadius="16"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Margin="4,0,0,0"
+                        Background="{ThemeResource NavArrowBgBrush}">
+                    <Button x:Name="ThumbScrollLeft"
+                            Click="ThumbScrollLeft_Click"
+                            Width="32" Height="32"
+                            MinWidth="0" MinHeight="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            IsTabStop="False"
+                            AutomationProperties.Name="胶片向左卷动">
+                        <FontIcon Glyph="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="White"/>
+                    </Button>
+                </Border>
+                <Border Width="32" Height="32"
+                        CornerRadius="16"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Margin="0,0,4,0"
+                        Background="{ThemeResource NavArrowBgBrush}">
+                    <Button x:Name="ThumbScrollRight"
+                            Click="ThumbScrollRight_Click"
+                            Width="32" Height="32"
+                            MinWidth="0" MinHeight="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            IsTabStop="False"
+                            AutomationProperties.Name="胶片向右卷动">
+                        <FontIcon Glyph="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="White"/>
+                    </Button>
+                </Border>
+            </Grid>
         </Grid>
 
         <Border x:Name="StatusBar" Grid.Row="2" Background="{ThemeResource ChromeBgBrush}" Padding="12,6"

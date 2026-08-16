@@ -560,6 +560,7 @@ namespace HyperViewer
 
         private void SyncThumbnailSelection()
         {
+            _thumbScrollCursor = -1; // 翻页后卷动游标复位到当前项
             if (Vm.CurrentIndex >= 0 && Vm.CurrentIndex < ThumbList.Items.Count)
             {
                 var prev = ThumbList.SelectedIndex;
@@ -567,17 +568,19 @@ namespace HyperViewer
                 {
                     ThumbList.SelectedIndex = Vm.CurrentIndex;
                 }
-                // 滚到当前项 (BringIntoViewOptions 是 14393+ 才有, 10240 用 ListViewBase.ScrollIntoView)
-                if (ThumbList.ContainerFromIndex(Vm.CurrentIndex) is FrameworkElement fe)
+                // 无条件滚到当前项: 虚拟化容器未实现时 ContainerFromIndex 返回 null,
+                // 原判断 (先查容器再滚) 在快速翻页/幻灯片时漏滚, 胶片不跟随
+                if (Helpers.UwpCompat.HasContractV2)
                 {
-                    if (Helpers.UwpCompat.HasContractV2)
+                    ThumbList.ScrollIntoView(ThumbList.Items[Vm.CurrentIndex]);
+                    if (ThumbList.ContainerFromIndex(Vm.CurrentIndex) is FrameworkElement fe)
                     {
                         fe.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = true });
                     }
-                    else
-                    {
-                        ThumbList.ScrollIntoView(ThumbList.Items[Vm.CurrentIndex]);
-                    }
+                }
+                else
+                {
+                    ThumbList.ScrollIntoView(ThumbList.Items[Vm.CurrentIndex]);
                 }
             }
         }
@@ -588,6 +591,50 @@ namespace HyperViewer
             {
                 Vm.SelectByIndex(ThumbList.SelectedIndex);
             }
+        }
+
+        // ====== 胶片手动卷动按钮 ======
+        private const int ThumbScrollStep = 10;
+        private int _thumbScrollCursor = -1;
+
+        private void ThumbScrollLeft_Click(object sender, RoutedEventArgs e) => ScrollThumbBar(-1);
+
+        private void ThumbScrollRight_Click(object sender, RoutedEventArgs e) => ScrollThumbBar(1);
+
+        private void ScrollThumbBar(int direction)
+        {
+            int count = ThumbList.Items.Count;
+            if (count == 0)
+            {
+                Helpers.DebugLog.Write("TL", "thumb scroll: empty list");
+                return;
+            }
+            // 游标以当前项起步, 每次卷动推进 ±4 项 (连续点击持续前进);
+            // 翻页 (CurrentIndex 变化) 时由 SyncThumbnailSelection 复位
+            if (_thumbScrollCursor < 0 || _thumbScrollCursor >= count)
+            {
+                _thumbScrollCursor = Vm.CurrentIndex;
+            }
+            _thumbScrollCursor = Math.Max(0, Math.Min(count - 1, _thumbScrollCursor + direction * ThumbScrollStep));
+            // ScrollViewer.ChangeView 对虚拟化 ListView 无效 (off 恒 0);
+            // ScrollIntoView 默认只保证"可见": 目标仍在视口内时不滚动 (首次点击无效果)。
+            // 用 ScrollIntoViewAlignment.Leading 强制目标滚到视口最左, 必然滚动
+            // (该重载 10240 即有, 无需版本分支)
+            ThumbList.ScrollIntoView(ThumbList.Items[_thumbScrollCursor], ScrollIntoViewAlignment.Leading);
+            Helpers.DebugLog.Write("TL", $"thumb scroll dir={direction} -> item {_thumbScrollCursor}/{count - 1}");
+        }
+
+        private static T FindDescendant<T>(DependencyObject root) where T : DependencyObject
+        {
+            int count = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < count; i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+                if (child is T t) return t;
+                var found = FindDescendant<T>(child);
+                if (found != null) return found;
+            }
+            return null;
         }
 
         // ====== 胶卷滚轮 / 触摸板手势 / 中键拖拽 ======
@@ -818,6 +865,16 @@ namespace HyperViewer
                     photo.Thumbnail = bmp;
                     photo.ThumbnailLoaded = true;
                 }
+            }
+        }
+
+        // 容器回收兜底: ListView 虚拟化回收容器复用后 Image.Loaded 不再触发,
+        // 新项 DataContext 替换时这里重新触发懒加载 (胶片卷动到远处只有前几张有图的问题)
+        private void PhotoImage_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            if (sender is Image img && img.DataContext is PhotoItem photo && !photo.ThumbnailLoaded && img.Source == null)
+            {
+                PhotoThumbnail_Loaded(img, null);
             }
         }
 
