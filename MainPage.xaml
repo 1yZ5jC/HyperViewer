@@ -83,69 +83,7 @@
                </Setter.Value>
            </Setter>
        </Style>
-        <!-- 标题栏图标按钮样式 (Win11 Photos 风格) -->
-        <Style x:Key="TitleBarIconButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Width" Value="38"/>
-            <Setter Property="Height" Value="38"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Foreground" Value="{ThemeResource TextPrimaryBrush}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Grid>
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualState x:Name="Normal"/>
-                                    <VisualState x:Name="PointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootBorder.Background" Value="{ThemeResource BtnBgBrush}"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Pressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootBorder.Background" Value="{ThemeResource AccentBrush}"/>
-                                            <Setter Target="ContentPresenter.Foreground" Value="White"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Disabled">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootBorder.Opacity" Value="0.35"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                                <VisualStateGroup x:Name="FocusStates">
-                                    <VisualState x:Name="Focused">
-                                        <VisualState.Setters>
-                                            <Setter Target="FocusRing.Visibility" Value="Visible"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Unfocused"/>
-                                    <VisualState x:Name="PointerFocused"/>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                            <Border x:Name="RootBorder" CornerRadius="8" Background="{TemplateBinding Background}">
-                                <Grid>
-                                    <Border x:Name="FocusRing"
-                                            BorderBrush="{ThemeResource AccentBrush}"
-                                            BorderThickness="2"
-                                            CornerRadius="8"
-                                            Visibility="Collapsed"
-                                            IsHitTestVisible="False"/>
-                                    <ContentPresenter x:Name="ContentPresenter"
-                                                      Content="{TemplateBinding Content}"
-                                                      Foreground="{TemplateBinding Foreground}"
-                                                      FontSize="{TemplateBinding FontSize}"
-                                                      HorizontalAlignment="Center"
-                                                      VerticalAlignment="Center"/>
-                                </Grid>
-                            </Border>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <!-- 标题栏图标按钮样式 (Win11 Photos 风格, 已迁至 App.xaml 全局, 编辑页等复用) -->
         <!-- 视图布局资源: 项目宽高 -->
         <ItemsPanelTemplate x:Key="AlbumPanelWide">
             <ItemsWrapGrid Orientation="Horizontal" ItemWidth="224" ItemHeight="220"/>
@@ -772,6 +710,7 @@
                                         Margin="0,28,0,0">
                                 <Button x:Uid="HomeOpenImage"
                                         Command="{x:Bind Vm.OpenImageCommand}"
+                                        Style="{StaticResource AccentTextButtonStyle}"
                                         Padding="24,10"
                                         MinWidth="160"
                                         FontSize="13"
@@ -780,6 +719,7 @@
                                         BorderThickness="0"/>
                                 <Button x:Uid="HomeOpenFolder"
                                         Command="{x:Bind Vm.OpenFolderCommand}"
+                                        Style="{StaticResource TextButtonStyle}"
                                         Padding="24,10"
                                         MinWidth="160"
                                         FontSize="13"
@@ -1138,6 +1078,7 @@
                 <Button x:Name="LibOverflowBtn"
                         Grid.Column="1"
                         Visibility="Collapsed"
+                        Style="{StaticResource TextButtonStyle}"
                         Padding="12,7"
                         Margin="0,0,8,0"
                         Background="{ThemeResource BtnBgBrush}"
@@ -1211,6 +1152,7 @@
                 <StackPanel x:Name="ActionPanel" Grid.Column="3" Orientation="Horizontal">
                     <Button x:Name="LibOpenImageBtn"
                             Command="{x:Bind Vm.OpenImageCommand}"
+                            Style="{StaticResource TextButtonStyle}"
                             Padding="14,7"
                             Background="{ThemeResource BtnBgBrush}"
                             Foreground="{ThemeResource TextPrimaryBrush}"
@@ -1225,6 +1167,7 @@
                     </Button>
                     <Button x:Name="LibAddFolderBtn"
                             Command="{x:Bind Vm.OpenFolderCommand}"
+                            Style="{StaticResource AccentTextButtonStyle}"
                             Padding="14,7" Margin="8,0,8,0"
                             Background="{ThemeResource AccentBrush}"
                             Foreground="White"
@@ -1239,6 +1182,7 @@
                     </Button>
                     <Button x:Name="LibSettingsBtn"
                             Click="SettingsButton_Click"
+                            Style="{StaticResource TextButtonStyle}"
                             Padding="14,7" Margin="8,0,0,0"
                             Background="{ThemeResource BtnBgBrush}"
                             Foreground="{ThemeResource TextPrimaryBrush}"
@@ -1253,6 +1197,7 @@
                     </Button>
                     <Button x:Name="SelectModeBtn"
                             Click="SelectModeBtn_Click"
+                            Style="{StaticResource TextButtonStyle}"
                             Padding="12,7" Margin="8,0,0,0"
                             Background="{ThemeResource BtnBgBrush}"
                             Foreground="{ThemeResource TextPrimaryBrush}"

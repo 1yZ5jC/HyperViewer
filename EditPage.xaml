@@ -25,6 +25,7 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Click="BackButton_Click" Padding="10,4"
+                    Style="{StaticResource TitleBarIconButtonStyle}"
                     Background="Transparent" BorderThickness="0"
                     x:Uid="BackToolTip">
                 <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets"
@@ -55,16 +56,16 @@
         <Grid Grid.Row="1" Padding="8,6" Background="{ThemeResource ChromeBgBrush}">
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                 <StackPanel Orientation="Horizontal">
-                    <ToggleButton x:Name="CropToggle" x:Uid="EditCropToggle" Click="CropToggle_Click" MinWidth="60"/>
-                    <ToggleButton x:Name="InkToggle" x:Uid="EditInkToggle" Click="InkToggle_Click" MinWidth="60" Margin="6,0,0,0"/>
-                    <ToggleButton x:Name="MosaicToggle" x:Uid="EditMosaicToggle" Click="MosaicToggle_Click" MinWidth="60" Margin="6,0,0,0"/>
-                    <ToggleButton x:Name="TextToggle" x:Uid="EditTextToggle" Click="TextToggle_Click" MinWidth="60" Margin="6,0,0,0"/>
+                    <ToggleButton x:Name="CropToggle" x:Uid="EditCropToggle" Click="CropToggle_Click" MinWidth="60" Style="{StaticResource PillToggleStyle}"/>
+                    <ToggleButton x:Name="InkToggle" x:Uid="EditInkToggle" Click="InkToggle_Click" MinWidth="60" Margin="6,0,0,0" Style="{StaticResource PillToggleStyle}"/>
+                    <ToggleButton x:Name="MosaicToggle" x:Uid="EditMosaicToggle" Click="MosaicToggle_Click" MinWidth="60" Margin="6,0,0,0" Style="{StaticResource PillToggleStyle}"/>
+                    <ToggleButton x:Name="TextToggle" x:Uid="EditTextToggle" Click="TextToggle_Click" MinWidth="60" Margin="6,0,0,0" Style="{StaticResource PillToggleStyle}"/>
                     <Border Width="1" Background="{ThemeResource ChromeBgStrongBrush}" Margin="10,4"/>
-                    <Button x:Name="UndoBtn" x:Uid="EditUndo" Click="Undo_Click" Width="40" Padding="6" IsEnabled="False">
+                    <Button x:Name="UndoBtn" x:Uid="EditUndo" Click="Undo_Click" Width="40" Padding="6" IsEnabled="False" Style="{StaticResource TitleBarIconButtonStyle}">
                         <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
                     </Button>
                     <Button x:Name="RedoBtn" x:Uid="EditRedo" Click="Redo_Click" Width="40" Padding="6" Margin="6,0,0,0" IsEnabled="False"
-                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Style="{StaticResource TitleBarIconButtonStyle}">
                         <FontIcon Glyph="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="14" RenderTransformOrigin="0.5,0.5">
                             <FontIcon.RenderTransform>
                                 <ScaleTransform ScaleX="-1"/>
@@ -72,41 +73,42 @@
                         </FontIcon>
                     </Button>
                     <Button x:Name="CompareBtn" x:Uid="EditCompare" Width="40" Padding="6" Margin="6,0,0,0"
+                            Style="{StaticResource TitleBarIconButtonStyle}"
                             PointerPressed="Compare_PointerPressed" PointerReleased="Compare_PointerReleased"
                             PointerCanceled="Compare_PointerReleased" PointerCaptureLost="Compare_PointerReleased">
                         <FontIcon Glyph="&#xE890;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
                     </Button>
-                    <ToggleButton x:Name="HistoToggle" x:Uid="EditHistoToggle" Click="HistoToggle_Click" Width="40" Padding="6" Margin="6,0,0,0">
+                    <ToggleButton x:Name="HistoToggle" x:Uid="EditHistoToggle" Click="HistoToggle_Click" Width="40" Padding="6" Margin="6,0,0,0" Style="{StaticResource PillToggleStyle}">
                         <PathIcon Data="M2,8 L6,8 L6,14 L2,14 Z M7,4 L11,4 L11,14 L7,14 Z M12,6 L16,6 L16,14 L12,14 Z"/>
                     </ToggleButton>
                     <Border Width="1" Background="{ThemeResource ChromeBgStrongBrush}" Margin="10,4"/>
-                    <Button x:Uid="EditRotateCw" Click="RotateCw_Click" Width="40" Padding="6">
+                    <Button x:Uid="EditRotateCw" Click="RotateCw_Click" Width="40" Padding="6" Style="{StaticResource TitleBarIconButtonStyle}">
                         <FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
                     </Button>
                     <Button x:Uid="EditRotateCcw" Click="RotateCcw_Click" Width="40" Padding="6" Margin="6,0,0,0"
-                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Style="{StaticResource TitleBarIconButtonStyle}">
                         <FontIcon Glyph="&#xE7AD;" FontFamily="Segoe MDL2 Assets" FontSize="14" RenderTransformOrigin="0.5,0.5">
                             <FontIcon.RenderTransform>
                                 <ScaleTransform ScaleX="-1"/>
                             </FontIcon.RenderTransform>
                         </FontIcon>
                     </Button>
-                    <Button x:Uid="EditFlipH" Click="FlipH_Click" Width="40" Padding="6" Margin="6,0,0,0">
+                    <Button x:Uid="EditFlipH" Click="FlipH_Click" Width="40" Padding="6" Margin="6,0,0,0" Style="{StaticResource TitleBarIconButtonStyle}">
                         <PathIcon Data="M2,5 L6,8 L2,11 Z M14,5 L10,8 L14,11 Z M7.6,2 L8.4,2 L8.4,14 L7.6,14 Z"/>
                     </Button>
-                    <Button x:Uid="EditFlipV" Click="FlipV_Click" Width="40" Padding="6" Margin="6,0,0,0">
+                    <Button x:Uid="EditFlipV" Click="FlipV_Click" Width="40" Padding="6" Margin="6,0,0,0" Style="{StaticResource TitleBarIconButtonStyle}">
                         <PathIcon Data="M5,2 L8,6 L11,2 Z M5,14 L8,10 L11,14 Z M2,7.6 L2,8.4 L14,8.4 L14,7.6 Z"/>
                     </Button>
                     <Border Width="1" Background="{ThemeResource ChromeBgStrongBrush}" Margin="10,4"/>
-                    <Button x:Uid="EditApplyCrop" Click="ApplyCrop_Click" MinWidth="80"/>
-                    <Button x:Uid="EditReset" Click="Reset_Click" MinWidth="60" Margin="6,0,0,0"/>
+                    <Button x:Uid="EditApplyCrop" Click="ApplyCrop_Click" MinWidth="80" Style="{StaticResource TextButtonStyle}"/>
+                    <Button x:Uid="EditReset" Click="Reset_Click" MinWidth="60" Margin="6,0,0,0" Style="{StaticResource TextButtonStyle}"/>
                     <ComboBox x:Name="QualityCombo" MinWidth="72" Margin="6,0,0,0"
                               VerticalAlignment="Center" SelectedIndex="0">
                         <ComboBoxItem x:Uid="EditQualityHigh"/>
                         <ComboBoxItem x:Uid="EditQualityMedium"/>
                         <ComboBoxItem x:Uid="EditQualityLow"/>
                     </ComboBox>
-                    <Button x:Uid="EditSave" Click="Save_Click" MinWidth="60" Margin="6,0,0,0"/>
+                    <Button x:Uid="EditSave" Click="Save_Click" MinWidth="60" Margin="6,0,0,0" Style="{StaticResource TextButtonStyle}"/>
                     <TextBlock x:Name="HintText" x:Uid="EditCropHint"
                                VerticalAlignment="Center" Margin="10,0,0,0"
                                Foreground="{ThemeResource TextMutedBrush}"
@@ -143,9 +145,9 @@
                         <ComboBoxItem x:Uid="FilterFilm"/>
                         <ComboBoxItem x:Uid="FilterVignette"/>
                  </ComboBox>
-                    <Button x:Uid="EditApplyAdjust" Click="ApplyAdjust_Click" MinWidth="76"/>
+                    <Button x:Uid="EditApplyAdjust" Click="ApplyAdjust_Click" MinWidth="76" Style="{StaticResource TextButtonStyle}"/>
                     <Border Width="1" Background="{ThemeResource ChromeBgStrongBrush}" Margin="12,4"/>
-                    <Button x:Uid="EditMoreAdjust" MinWidth="80" VerticalAlignment="Center">
+                    <Button x:Uid="EditMoreAdjust" MinWidth="80" VerticalAlignment="Center" Style="{StaticResource TextButtonStyle}">
                         <Button.Flyout>
                             <Flyout>
                                 <StackPanel Width="300" Padding="4">
@@ -158,7 +160,7 @@
                                     <Slider x:Name="TintSlider" Minimum="-100" Maximum="100" StepFrequency="1"
                                             ValueChanged="Wb_Changed" Margin="0,4,0,2"/>
                                     <Button x:Uid="EditApplyWb" Click="ApplyWb_Click" MinWidth="80"
-                                            HorizontalAlignment="Left" Margin="0,2,0,12"/>
+                                            HorizontalAlignment="Left" Margin="0,2,0,12" Style="{StaticResource TextButtonStyle}"/>
                                     <TextBlock x:Uid="EditBlur" FontSize="12"
                                                Foreground="{ThemeResource TextPrimaryBrush}"/>
                                     <Slider x:Name="BlurSlider" Minimum="0" Maximum="100" StepFrequency="1"
@@ -168,7 +170,7 @@
                                     <Slider x:Name="SharpenSlider" Minimum="0" Maximum="100" StepFrequency="1"
                                             ValueChanged="BlurSharpen_Changed" Margin="0,4,0,2"/>
                                     <Button x:Uid="EditApplyBlurSharpen" Click="ApplyBlurSharpen_Click" MinWidth="80"
-                                            HorizontalAlignment="Left" Margin="0,2,0,12"/>
+                                            HorizontalAlignment="Left" Margin="0,2,0,12" Style="{StaticResource TextButtonStyle}"/>
                                     <TextBlock x:Uid="EditBorderWidth" FontSize="12"
                                                Foreground="{ThemeResource TextPrimaryBrush}"/>
                                     <Slider x:Name="BorderWidthSlider" Minimum="0" Maximum="20" StepFrequency="1"
@@ -202,7 +204,7 @@
                                         </ComboBoxItem>
                                     </ComboBox>
                                     <Button x:Uid="EditApplyBorder" Click="ApplyBorder_Click" MinWidth="80"
-                                            HorizontalAlignment="Left"/>
+                                            HorizontalAlignment="Left" Style="{StaticResource TextButtonStyle}"/>
                                 </StackPanel>
                             </Flyout>
                         </Button.Flyout>
@@ -214,8 +216,8 @@
         <!-- 墨迹工具条 -->
         <Grid x:Name="InkBar" Grid.Row="3" Padding="8,6" Background="{ThemeResource ChromeBgBrush}" Visibility="Collapsed">
             <StackPanel x:Name="InkBarPanel" Orientation="Horizontal">
-                <Button x:Uid="EditInkUndo" Click="InkUndo_Click" MinWidth="64" Margin="8,0,0,0"/>
-                <Button x:Uid="EditInkClear" Click="InkClear_Click" MinWidth="64" Margin="8,0,0,0"/>
+                <Button x:Uid="EditInkUndo" Click="InkUndo_Click" MinWidth="64" Margin="8,0,0,0" Style="{StaticResource TextButtonStyle}"/>
+                <Button x:Uid="EditInkClear" Click="InkClear_Click" MinWidth="64" Margin="8,0,0,0" Style="{StaticResource TextButtonStyle}"/>
                 <TextBlock x:Uid="EditInkHint" VerticalAlignment="Center" Margin="12,0,0,0"
                            Foreground="{ThemeResource TextMutedBrush}"/>
             </StackPanel>
