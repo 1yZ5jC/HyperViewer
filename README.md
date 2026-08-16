@@ -353,6 +353,18 @@ HyperViewer/
 - **启动路径陷阱**: 库刷新是 VM 构造里的 fire-and-forget (`_ = RefreshLibraryAsync()`), MainPage 的 `await` 调用只在右键菜单等事件里 → 排查性 probe 要挂 MainPage `Loaded` + 延迟定时器, 否则永远不执行
 - **未解**: 该环境 `BitmapImage.DecodePixelWidth=320` 对封面解码失效 (结果 2248x1323 原尺寸), 与 ImageOpened 不触发疑似同一解码管线问题; 候选绕开方案 `StorageFile.GetThumbnailAsync` (系统缩略图管线), 待观察
 
+### 29. 10240 换图过渡的取舍链: 黑窗 → 缩放尾巴 → 进度环遮挡 (最终方案)
+- **背景**: 10240 的 `ChangeView` 三参重载 (有动画) 无法禁用动画; 14393+ 用四参 `disableAnimation=true` 零动画, 无此问题。所以 10240 换图 = 隐藏旧图 → fit 动画 (约 300-500ms) → 淡入, 关键问题是"fit 动画期间给用户看什么"
+- **方案 A (等动画结束再淡入)**: 出现 20-95ms 纯黑"卡顿" (用户反馈"黑色的一卡")
+- **方案 B (淡入与 fit 动画并行)**: 黑窗消失, 但淡入 220ms 先完成、fit 动画 500ms 后结束 → 淡入后仍剩 ~280ms 可见缩放尾巴 (每次切换高清图从放大态缓慢缩回 fit)
+- **方案 C (preset-fit 预置 zoom)**: 按"视觉一致"公式 `高清fit = 低清fit × 低清像素/高清像素` 在换源时先把 zoom 跳到位, 期望 SizeChanged 后 ChangeView3 同值零动画 —— 部分生效 (低清 fit 接近完成时替换有效), 但低清 fit 动画半途替换时被后续 ChangeView3 竞争覆盖, 500ms 动画依旧。不可靠, 弃用
+- **最终方案 D (进度环遮挡)**: ① 低清占位彻底取消 (10240 亦不再生成, `useQuick=false`), 解码期间旧图保持显示; ② 高清替换瞬间隐藏图片 + 显示居中 ProgressRing; ③ fit 动画全程在进度环下播放; ④ ViewChanged 最终态 (动画结束) 同帧隐藏进度环 + 淡入 —— 图片出现时已缩放好, 用户只看到"旧图 → 进度环 → 高清图", 无黑屏无尾巴。14393+ 走无动画 fit, 不受影响
+- **附属修复 (时序 bug 三连)**:
+  - **FitRetryTick 用旧布局算错 fit**: 高清 SourceChanged 后布局 (SizeChanged) 未同步时, 兜底定时器抢先用旧图 ActualWidth (低清 1024) 算出错误 fit (1.729, 应为 0.141) 并误清 `_pendingFit`, 高清图停在放大态。修复: TryFit 加布局同步守卫 (`|ActualWidth - PixelWidth| > 2` 则 defer, 等 SizeChanged 用新布局)
+  - **淡入兜底在动画中途触发**: fit 动画可 >300ms, 300ms 兜底定时器提前淡入造成"淡入中缩放乱跳"。修复: ViewChanged 中间态 (IsIntermediate) 重置兜底计时, 只在动画结束后 300ms 无事件才兜底 (真断链场景)
+  - **ViewChanged 动画时长不定**: 同一 ChangeView3, 距离小 (0.42→0.14) 22ms、距离大 (1.5→0.4) 500ms, 缓动尾段极慢 —— 不能靠"短动画"假设, 必须遮挡或等待最终态
+- **低清占位 (IsPlaceholder 分支) 保留为死代码**: 回退或未来启用低清时仍可用 (低清与高清同比例, 各自 fit 视觉尺寸一致, 替换无跳变)
+
 ## 开发顺序 (已执行 + 待执行)
 
 1. ✅ 搭 MVVM 骨架 + 目录 + 自研基类

@@ -991,10 +991,10 @@ namespace HyperViewer.ViewModels
             IsLoading = true;
             LoadFailed = false;
 
-            // 低清占位仅 10240 (解码慢, 需要即时反馈): 14393+ 解码快,
-            // 直接等高清 —— 解码期间旧图保持显示 (不赋值 DisplayImage),
-            // 解码完成后一次替换 + 一次 fit, 无"低清 -> 高清"过渡
-            bool useQuick = !Helpers.UwpCompat.HasContractV2;
+            // 低清占位已取消 (10240 亦不再需要): 解码期间旧图保持显示,
+            // 高清解码完成后一次替换 + fit (10240 由 ImageViewer 在
+            // fit 完成前显示进度环), 无"低清 -> 高清"过渡
+            bool useQuick = false;
             if (useQuick && _neighborCache.TryGetValue(CurrentIndex, out var quick))
             {
                 IsQuickShowing = true;

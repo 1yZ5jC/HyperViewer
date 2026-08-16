@@ -34,6 +34,16 @@
                    RenderTransformOrigin="0.5,0.5"/>
         </ScrollViewer>
 
+        <!-- 10240 换图加载指示: 高清解码/fit 完成前图片隐藏, 进度环提示加载中 -->
+        <ProgressRing x:Name="LoadingRing"
+                      Width="48"
+                      Height="48"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      IsActive="False"
+                      Visibility="Collapsed"
+                      IsHitTestVisible="False"/>
+
         <!-- 捏合/缩放百分比指示器 -->
         <Border x:Name="ZoomBadge"
                 HorizontalAlignment="Center"

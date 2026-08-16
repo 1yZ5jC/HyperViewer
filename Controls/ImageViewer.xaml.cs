@@ -166,10 +166,13 @@ namespace HyperViewer.Controls
                 if (!Helpers.UwpCompat.HasContractV2)
                 {
                     // 换图瞬间隐藏: 防止旧 zoom (如放大 150%) 残留, 新图以放大态
-                    // 短暂显示再缩回 fit ("先放大后缩小"跳动); 布局稳定后 fit 完成才淡入
+                    // 短暂显示再缩回 fit ("先放大后缩小"跳动); 显示进度环 (fit
+                    // 动画全程在进度环下播放, 完成后淡入, 无黑屏/缩放尾巴)
                     v.TheImage.Opacity = 0;
                     v._pendingFadeIn = false;
                     v._fadeInTimer.Stop();
+                    v.LoadingRing.Visibility = Visibility.Visible;
+                    v.LoadingRing.IsActive = true;
                 }
                 v._pendingFit = true;
                 v._lastFitZoom = -1f;
@@ -210,7 +213,7 @@ namespace HyperViewer.Controls
                 _pendingFit = false;
                 // 14393+: fit 无动画已完成, 不淡入 —— 图片全程可见, 过渡动画
                 // 的 scale/translate 会在已就位的图片上播放成"抽抽" (切换抽动);
-                // 10240: 三参 fit 动画结束 (ViewChanged 最终态) 后才淡入
+                // 10240: 等 fit 动画结束 (进度环遮挡) 再淡入, 淡入时已就位
                 if (!Helpers.UwpCompat.HasContractV2) RequestFadeIn();
             }
         }
@@ -246,6 +249,8 @@ namespace HyperViewer.Controls
             if (_pendingFadeIn)
             {
                 _pendingFadeIn = false;
+                LoadingRing.Visibility = Visibility.Collapsed;
+                LoadingRing.IsActive = false;
                 Helpers.DebugLog.Write("IMG", "FadeIn (timer fallback)");
                 FadeIn();
             }
@@ -261,6 +266,16 @@ namespace HyperViewer.Controls
                 || bmp.PixelHeight <= 0)
             {
                 Helpers.DebugLog.Write("IMG", $"TryFit deferred (px invalid: {(TheImage.Source as BitmapImage)?.PixelWidth}x{(TheImage.Source as BitmapImage)?.PixelHeight})");
+                return false;
+            }
+            // 布局同步守卫: Source 已换但布局 (SizeChanged) 未随新图更新时,
+            // ActualWidth 仍是旧图尺寸 —— 此时 fit 会算错比例 (FitRetryTick
+            // 抢先案例: 高清替换后旧布局 1024 算 fit=1.729, 高清实际 fit=0.141),
+            // 且会误清 _pendingFit 让新图尺寸到达后不再适应
+            if (TheImage.ActualWidth > 0
+                && Math.Abs(TheImage.ActualWidth - bmp.PixelWidth) > 2)
+            {
+                Helpers.DebugLog.Write("IMG", $"TryFit deferred (layout not synced: act={TheImage.ActualWidth:0.0}x{TheImage.ActualHeight:0.0} px={bmp.PixelWidth}x{bmp.PixelHeight})");
                 return false;
             }
             FitToWindow();
@@ -447,13 +462,23 @@ namespace HyperViewer.Controls
                 _lastBadgeZoom = z;
                 ShowZoomBadge();
             }
-            // fit 动画结束 (最终态) 后再淡入: 图片可见时缩放已完成, 无"淡入中缩放乱跳"
+            // fit 动画结束 (最终态) 后再淡入: 图片可见时缩放已完成, 无"淡入中缩放乱跳";
+            // 10240 同步隐藏进度环 (图片出现即淡入, 无黑屏)
             if (_pendingFadeIn && !e.IsIntermediate)
             {
                 _pendingFadeIn = false;
                 _fadeInTimer.Stop();
+                LoadingRing.Visibility = Visibility.Collapsed;
+                LoadingRing.IsActive = false;
                 Helpers.DebugLog.Write("IMG", "FadeIn (fit anim ended)");
                 FadeIn();
+            }
+            else if (_pendingFadeIn && e.IsIntermediate)
+            {
+                // fit 动画仍在进行 (ChangeView3 时长不定, 可 >300ms):
+                // 重置兜底计时, 防止 300ms 兜底在动画中途提前淡入
+                _fadeInTimer.Stop();
+                _fadeInTimer.Start();
             }
             if (!_suppressViewChange && !e.IsIntermediate)
             {
