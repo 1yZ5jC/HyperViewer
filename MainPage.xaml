@@ -448,17 +448,12 @@
                                                       HorizontalAlignment="Center"
                                                       VerticalAlignment="Center"/>
                                         <Image x:Name="CoverImage"
-                                               Source="{x:Bind Cover, Mode=OneWay}"
+                                               Source="{Binding Cover, Mode=OneWay}"
                                                Stretch="UniformToFill"
                                                Margin="0,0,0,44"
-                                               Opacity="0"
-                                               ImageOpened="CoverImage_ImageOpened">
-                                            <Image.Transitions>
-                                                <TransitionCollection>
-                                                    <EntranceThemeTransition />
-                                                </TransitionCollection>
-                                            </Image.Transitions>
-                                        </Image>
+                                               Loaded="CoverImage_Loaded"
+                                               ImageOpened="CoverImage_ImageOpened"
+                                               ImageFailed="CoverImage_ImageFailed"/>
                                     </Grid>
                                     <StackPanel VerticalAlignment="Bottom" Padding="10,10">
                                         <TextBlock Text="{x:Bind Name}"

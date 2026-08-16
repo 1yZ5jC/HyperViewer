@@ -345,6 +345,14 @@ HyperViewer/
 - **症状**: `edit`/`Write` 工具写 resw 后 BOM 丢失、中文乱码 (zh-CN 与 en-US 各发生过一次, en-US 那次还丢掉了根 `<root>` 闭合标签)
 - **解决**: resw 一律 `git checkout` 恢复 + .NET `File.ReadAllText` → `WriteAllText(..., UTF8Encoding($true))` 追加内容; 其他文件 (.cs/.xaml/.md) 编辑工具无问题
 
+### 28. 集锦封面加载不出的排查: 属性通知线程 + 绑定引擎 + ImageOpened 可靠性
+- **后台线程 PropertyChanged → 绑定不更新**: 封面赋值最初在 `Task.Run` (线程池) 里, x:Bind/经典 Binding 对后台线程的通知不更新 UI (全部照片缩略图正常, 因为它由 UI 线程的 `Image.Loaded` 事件触发赋值)。修复: 封面循环去掉 `Task.Run`, 直接在 UI 线程 await (GetFilesAsync/OpenReadAsync 均为异步 IO, await 不阻塞 UI)
+- **DataTemplate 内绑定先用经典 `{Binding Cover, Mode=OneWay}` 换掉 x:Bind**: 排除 x:Bind 在"属性初始为 null 后变非 null"场景下的静默失败嫌疑 (此案最终证实 x:Bind 并非元凶, 但排查顺序上值得先换)
+- **ImageOpened 可能从不触发**: 用 probe (GridView.ContainerFromIndex + FindName("CoverImage") 读 img.Source/Opacity) 证实 Source 已被 Binding 送达 (`img.Source=BitmapImage`), 但 `ImageOpened` 在特定环境 (26100 x86 Debug) 从不触发 → 依赖 `Opacity=0` + ImageOpened 淡入的显示方案整个失效。修复: 去掉 `Opacity=0`, Image 声明在 ProgressRing 之后 (上层), Source 一到位即盖住进度环直接显示, 零依赖事件
+- **调试手段**: 模板 `Loaded` 打 `DataContext` 类型与初始 Source; `ImageFailed` 打 ErrorMessage; probe 读容器内 `img.Source`/`Opacity`/`DataContext` 一锤定音
+- **启动路径陷阱**: 库刷新是 VM 构造里的 fire-and-forget (`_ = RefreshLibraryAsync()`), MainPage 的 `await` 调用只在右键菜单等事件里 → 排查性 probe 要挂 MainPage `Loaded` + 延迟定时器, 否则永远不执行
+- **未解**: 该环境 `BitmapImage.DecodePixelWidth=320` 对封面解码失效 (结果 2248x1323 原尺寸), 与 ImageOpened 不触发疑似同一解码管线问题; 候选绕开方案 `StorageFile.GetThumbnailAsync` (系统缩略图管线), 待观察
+
 ## 开发顺序 (已执行 + 待执行)
 
 1. ✅ 搭 MVVM 骨架 + 目录 + 自研基类

@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Windows.Storage;
 using Windows.UI.Xaml.Media.Imaging;
+using HyperViewer.Helpers;
 
 namespace HyperViewer.Models
 {
@@ -34,6 +35,7 @@ namespace HyperViewer.Models
                 if (!Equals(_cover, value))
                 {
                     _cover = value;
+                    Helpers.DebugLog.Write("LIB", $"cover set {Name}: {(value?.PixelWidth ?? 0)}x{(value?.PixelHeight ?? 0)}");
                     RaisePropertyChanged();
                 }
             }

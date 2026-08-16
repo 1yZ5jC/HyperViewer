@@ -129,19 +129,21 @@ namespace HyperViewer.Services
         {
             var key = ThumbKey(file, size);
             var cached = CacheGet(key);
-            if (cached != null) return cached;
+            if (cached != null)
+            {
+                Helpers.DebugLog.Write("LIB", $"thumb(file) cache HIT {file.Name} size={size} -> {cached.PixelWidth}x{cached.PixelHeight}");
+                return cached;
+            }
 
             BitmapImage bmp = null;
             try
             {
                 using (var stream = await file.OpenReadAsync())
                 {
-                    bmp = new BitmapImage
-                    {
-                        DecodePixelType = DecodePixelType.Logical,
-                        DecodePixelWidth = size
-                    };
+                    bmp = new BitmapImage();
+                    bmp.DecodePixelWidth = size;
                     await bmp.SetSourceAsync(stream);
+                    Helpers.DebugLog.Write("LIB", $"thumb(file) decoded {file.Name} size={size} -> {bmp.PixelWidth}x{bmp.PixelHeight}");
                 }
             }
             catch

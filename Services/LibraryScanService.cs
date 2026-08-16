@@ -91,7 +91,14 @@ namespace HyperViewer.Services
                     return;
                 }
                 album.Cover = await ImageLoaderService.LoadThumbnailAsync(latest, thumbSize);
-                Helpers.DebugLog.Write("LIB", $"cover ok {album.Name} ({files.Count} files, {latest.Name})");
+                if (album.Cover == null)
+                {
+                    Helpers.DebugLog.Write("LIB", $"cover FAIL (decode null) {album.Name}");
+                }
+                else
+                {
+                    Helpers.DebugLog.Write("LIB", $"cover ok {album.Name} ({files.Count} files, {latest.Name})");
+                }
             }
             catch (Exception ex)
             {

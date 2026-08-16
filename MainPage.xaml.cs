@@ -73,6 +73,19 @@ namespace HyperViewer
             this.DataContext = Vm;
             Vm.PropertyChanged += OnVmPropertyChanged;
             Vm.LibraryTabChanged += OnLibraryTabChanged;
+            // 启动后延迟探查相册封面: 启动刷新是 VM 构造里的 fire-and-forget,
+            // MainPage 没有 await 机会, 这里兜底读容器内 Image.Source 状态并
+            // 在 Binding 未送达时手动赋值 (强制显示封面)
+            Loaded += (_, __) =>
+            {
+                var probeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
+                probeTimer.Tick += (s, e) =>
+                {
+                    probeTimer.Stop();
+                    ProbeAlbumCoverBinding();
+                };
+                probeTimer.Start();
+            };
             // 启动初始态: 主页 (无图) 时隐藏悬浮顶栏, 图片模式才显示
             SetChrome(!Vm.HomeVisible);
             Viewer.ZoomFactorChanged += (_, __) =>
@@ -1153,6 +1166,7 @@ namespace HyperViewer
         {
             if (sender is Image img)
             {
+                Helpers.DebugLog.Write("LIB", "cover ImageOpened (source ready, fading in)");
                 // 隐藏加载指示器
                 if (img.Parent is Grid grid)
                 {
@@ -1176,6 +1190,67 @@ namespace HyperViewer
                 Storyboard.SetTarget(fadeIn, img);
                 Storyboard.SetTargetProperty(fadeIn, "Opacity");
                 storyboard.Begin();
+            }
+        }
+
+        private void CoverImage_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is Image img)
+            {
+                Helpers.DebugLog.Write("LIB", $"cover template Loaded dc={(img.DataContext?.GetType().Name ?? "null")} source={(img.Source?.GetType().Name ?? "null")}");
+            }
+        }
+
+        private void CoverImage_ImageFailed(object sender, ExceptionRoutedEventArgs e)
+        {
+            if (sender is Image img)
+            {
+                Helpers.DebugLog.Write("LIB", $"cover ImageFailed (error: {e.ErrorMessage}, source: {img.Tag?.ToString() ?? img.Source?.GetType().Name ?? "null"})");
+            }
+        }
+
+        private void ProbeAlbumCoverBinding()
+        {
+            try
+            {
+                var c = AlbumsGrid.ContainerFromIndex(0) as GridViewItem;
+                if (c?.ContentTemplateRoot is FrameworkElement fe)
+                {
+                    var img = fe.FindName("CoverImage") as Image;
+                    var album = fe.DataContext as AlbumItem;
+                    Helpers.DebugLog.Write("LIB", $"probe: dataCtx={(album?.Name ?? "null")} cover={(album?.Cover?.PixelWidth ?? 0)}x{(album?.Cover?.PixelHeight ?? 0)} img.Source={(img?.Source?.GetType().Name ?? "null")} opacity={img?.Opacity}");
+                    if (img == null) return;
+                    // 兜底 1: Binding 未把 Cover 送到 Image.Source 时手动赋值
+                    if (album?.Cover != null && img.Source == null)
+                    {
+                        img.Source = album.Cover;
+                        Helpers.DebugLog.Write("LIB", "probe: manual Source assignment (binding did not deliver)");
+                    }
+                    // 兜底 2: Source 有值但 ImageOpened 从未触发 (此环境下 Image 不解码/不渲染就绪)
+                    // -> 强制显示: 直接置 Opacity=1 并隐藏加载环
+                    if (img.Source != null && img.Opacity < 1)
+                    {
+                        img.Opacity = 1;
+                        if (img.Parent is Grid grid)
+                        {
+                            var ring = grid.FindName("CoverLoadingRing") as ProgressRing;
+                            if (ring != null)
+                            {
+                                ring.Visibility = Visibility.Collapsed;
+                                ring.IsActive = false;
+                            }
+                        }
+                        Helpers.DebugLog.Write("LIB", "probe: forced visible (ImageOpened never fired)");
+                    }
+                }
+                else
+                {
+                    Helpers.DebugLog.Write("LIB", "probe: no container yet");
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLog.Write("LIB", $"probe error: {ex.Message}");
             }
         }
 
@@ -1347,6 +1422,7 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
                 {
                     await album.Folder.RenameAsync(input.Text.Trim(), NameCollisionOption.GenerateUniqueName);
                     await Vm.RefreshLibraryAsync();
+                    ProbeAlbumCoverBinding();
                 }
                 catch { }
             }
@@ -1370,6 +1446,7 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
                 {
                     await album.Folder.DeleteAsync();
                     await Vm.RefreshLibraryAsync();
+                    ProbeAlbumCoverBinding();
                 }
                 catch { }
             }
@@ -1434,6 +1511,7 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
                 {
                     await photo.File.RenameAsync(input.Text.Trim(), NameCollisionOption.GenerateUniqueName);
                     await Vm.RefreshLibraryAsync();
+                    ProbeAlbumCoverBinding();
                 }
                 catch { }
             }
@@ -1457,6 +1535,7 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
                 {
                     await photo.File.DeleteAsync();
                     await Vm.RefreshLibraryAsync();
+                    ProbeAlbumCoverBinding();
                 }
                 catch { }
             }
@@ -1504,6 +1583,7 @@ bool ok = await Vm.RenameCurrentAsync(input.Text);
             {
                 await Vm.RecentFoldersService.RemoveAsync(folder);
                 await Vm.RefreshLibraryAsync();
+                    ProbeAlbumCoverBinding();
             }
         }
     }

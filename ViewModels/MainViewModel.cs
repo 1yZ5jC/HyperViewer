@@ -442,6 +442,7 @@ namespace HyperViewer.ViewModels
                 var folders = _recent.Folders;
                 if (folders == null || folders.Count == 0)
                 {
+                    Helpers.DebugLog.Write("LIB", "refresh: no recent folders");
                     Albums.Clear();
                     AllPhotos.Clear();
                     _masterAlbums.Clear();
@@ -450,8 +451,10 @@ namespace HyperViewer.ViewModels
                     _ = TileService.UpdateAsync(null);
                     return;
                 }
+                Helpers.DebugLog.Write("LIB", $"refresh: folders={folders.Count}");
                 var result = await LibraryScanService.ScanAsync(folders, token);
                 if (token.IsCancellationRequested) return;
+                Helpers.DebugLog.Write("LIB", $"scan done: albums={result.Albums.Count} photos={result.AllPhotos.Count}");
 
                 // 复用旧 PhotoItem 实例: 保留已加载的缩略图/拍摄日期, 避免重复解码
                 var oldByPath = _masterAllPhotos.ToDictionary(p => p.Path, StringComparer.OrdinalIgnoreCase);
@@ -475,18 +478,17 @@ namespace HyperViewer.ViewModels
                 // 磁贴轮换: 图库全部照片
                 TileRotationService.Start(_masterAllPhotos.Select(p => p.Path));
 
-                // 后台懒加载相册封面 (遍历快照: 遍历期间集合可能被 ApplySearch 修改,
-                // 直接 foreach ObservableCollection 会抛"集合已修改"异常中断全部封面)
+                // 懒加载相册封面。必须在 UI 线程上执行: EnsureAlbumCoverAsync 内部
+                // 赋值 album.Cover 会触发 PropertyChanged, 后台线程的通知 x:Bind 不更新
+                // (全部照片缩略图正常是因为它在 UI 线程的 Loaded 事件里赋值)。
+                // GetFilesAsync/OpenReadAsync 都是异步 IO, await 不阻塞 UI。
                 var albumsSnapshot = _masterAlbums.ToList();
-                _ = Task.Run(async () =>
+                foreach (var album in albumsSnapshot)
                 {
-                    foreach (var album in albumsSnapshot)
-                    {
-                        if (token.IsCancellationRequested) break;
-                        await LibraryScanService.EnsureAlbumCoverAsync(album);
-                    }
-                    Helpers.DebugLog.Write("LIB", $"cover loop done ({albumsSnapshot.Count} albums, cancelled={token.IsCancellationRequested})");
-                }, token);
+                    if (token.IsCancellationRequested) break;
+                    await LibraryScanService.EnsureAlbumCoverAsync(album);
+                }
+                Helpers.DebugLog.Write("LIB", $"cover loop done ({albumsSnapshot.Count} albums, cancelled={token.IsCancellationRequested})");
             }
             catch
             {
@@ -989,8 +991,11 @@ namespace HyperViewer.ViewModels
             IsLoading = true;
             LoadFailed = false;
 
-            // 已有相邻预取的低清版: 立即显示, 高清完成后替换
-            if (_neighborCache.TryGetValue(CurrentIndex, out var quick))
+            // 低清占位仅 10240 (解码慢, 需要即时反馈): 14393+ 解码快,
+            // 直接等高清 —— 解码期间旧图保持显示 (不赋值 DisplayImage),
+            // 解码完成后一次替换 + 一次 fit, 无"低清 -> 高清"过渡
+            bool useQuick = !Helpers.UwpCompat.HasContractV2;
+            if (useQuick && _neighborCache.TryGetValue(CurrentIndex, out var quick))
             {
                 IsQuickShowing = true;
                 DisplayImage = quick;
@@ -999,7 +1004,7 @@ namespace HyperViewer.ViewModels
             else
             {
                 IsQuickShowing = false;
-                Helpers.DebugLog.Write("VM", $"Load#{seq} idx={CurrentIndex} no quick, decode high-res...");
+                Helpers.DebugLog.Write("VM", $"Load#{seq} idx={CurrentIndex} {(useQuick ? "no quick, decode high-res..." : "no quick (v2+), keep old image until decoded")}");
             }
 
             // 开发者模拟 10240: 注入解码延迟, 复现"解码慢 -> ImageOpened 晚 ->
@@ -1023,8 +1028,11 @@ namespace HyperViewer.ViewModels
             RaisePropertyChanged(nameof(StatusLeftText));
             RaisePropertyChanged(nameof(StatusRightText));
 
-            // 预取相邻 ±2 张低清版
-            _ = PrefetchNeighborsAsync(CurrentIndex);
+            // 预取相邻 ±2 张低清版 (仅 10240 需要: 14393+ 解码快, 无低清占位则无需预取)
+            if (useQuick)
+            {
+                _ = PrefetchNeighborsAsync(CurrentIndex);
+            }
 
             // 异步加载图片信息 (不阻塞显示)
             try
