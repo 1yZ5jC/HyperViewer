@@ -161,7 +161,7 @@ namespace HyperViewer
                 InkHost.InkPresenter.StrokeContainer.Clear();
                 SetMode(EditMode.None);
                 ResetAdjust();
-                _previewBase = ImageEditService.Downsample(_original.Pixels, _original.Width, _original.Height, 1024);
+                _previewBase = ImageEditService.Downsample(_original.Pixels, _original.Width, _original.Height, 2048);
                 _rawCompareBmp = ToWriteableBitmap(_previewBase.Pixels, _previewBase.Width, _previewBase.Height);
                 UpdateOpButtons();
                 UpdatePreview();

@@ -85,11 +85,17 @@ namespace HyperViewer.Services
                     .Where(f => PhotoItem.IsKnownImageExtension(f.Name))
                     .OrderByDescending(f => f.DateCreated)
                     .FirstOrDefault();
-                if (latest == null) return;
+                if (latest == null)
+                {
+                    Helpers.DebugLog.Write("LIB", $"cover skip (no image) {album.Name}");
+                    return;
+                }
                 album.Cover = await ImageLoaderService.LoadThumbnailAsync(latest, thumbSize);
+                Helpers.DebugLog.Write("LIB", $"cover ok {album.Name} ({files.Count} files, {latest.Name})");
             }
-            catch
+            catch (Exception ex)
             {
+                Helpers.DebugLog.Write("LIB", $"cover FAIL {album.Name}: {ex.GetType().Name} {ex.Message}");
                 // 封面加载失败留空, UI 显示占位
             }
         }

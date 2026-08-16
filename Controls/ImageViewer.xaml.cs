@@ -141,27 +141,40 @@ namespace HyperViewer.Controls
                 v.TheImage.Source = e.NewValue as BitmapImage;
                 if (v.IsPlaceholder)
                 {
-                    // 低清占位图: 保持当前 zoom 直接显示, 不隐藏不拟合。
-                    // 高清图到达时 (IsPlaceholder=false) 再走正常"隐藏 -> fit -> 淡入"流程,
-                    // 全程只有一次 fit, 不会出现"低清 fit 放大 -> 高清 fit 缩小"的两次缩放跳变。
-                    v._pendingFit = false;
+                    // 低清占位图: 不隐藏、正常做 fit —— 低清与高清是同一张图,
+                    // 布局比例相同, 按各自布局算出的 fit 视觉尺寸一致
+                    // (低清 1024x603: fit=1.489 -> 视觉 1515 宽; 高清 2248x1323: fit=0.674 -> 视觉 1515 宽),
+                    // 因此高清到达时替换无尺寸跳变, 只是清晰化, 不再"先缩略图后原图"晃眼。
+                    // 不做淡入 (未隐藏无需淡入), 高清到达后走正常"隐藏 -> fit -> 淡入"。
+                    v._pendingFit = true;
                     v._pendingFadeIn = false;
                     v._fadeInTimer.Stop();
-                    v._fitRetryTimer.Stop();
                     v._lastFitZoom = -1f;
                     v.ImageChanged?.Invoke(v, EventArgs.Empty);
-                    Helpers.DebugLog.Write("IMG", $"SourceChanged (placeholder) new={(e.NewValue as BitmapImage)?.PixelWidth}x{(e.NewValue as BitmapImage)?.PixelHeight} keep-zoom");
+                    Helpers.DebugLog.Write("IMG", $"SourceChanged (placeholder) new={(e.NewValue as BitmapImage)?.PixelWidth}x{(e.NewValue as BitmapImage)?.PixelHeight} fit-for-stable");
+                    // 兜底: 事件断链时也要 fit (与正常路径一致)
+                    v._fitRetryTimer.Stop();
+                    v._fitRetryTimer.Start();
                     return;
                 }
-                // 换图瞬间隐藏: 防止旧 zoom (如放大 150%) 残留, 新图以放大态
-                // 短暂显示再缩回 fit ("先放大后缩小"跳动); 布局稳定后 fit 完成才淡入
-                v.TheImage.Opacity = 0;
+                // 14393+: 不隐藏、不淡入。低清与高清 fit 的视觉尺寸一致 (低清 1024x603
+                // fit 1.489 视觉 1515 宽 = 高清 2248x1323 fit 0.674 视觉 1515 宽),
+                // 换 Source (布局变化) 与无动画 fit 同帧更新, 每一帧视觉尺寸都是 1515,
+                // 只有清晰度渐变 —— 无闪、缩放比例必然正确。
+                // 10240: 三参 ChangeView 无法禁用动画, 必须隐藏 + 动画后淡入,
+                // 否则会看到"高清图以旧 zoom 显示再缩放回 fit"的可见动画。
+                if (!Helpers.UwpCompat.HasContractV2)
+                {
+                    // 换图瞬间隐藏: 防止旧 zoom (如放大 150%) 残留, 新图以放大态
+                    // 短暂显示再缩回 fit ("先放大后缩小"跳动); 布局稳定后 fit 完成才淡入
+                    v.TheImage.Opacity = 0;
+                    v._pendingFadeIn = false;
+                    v._fadeInTimer.Stop();
+                }
                 v._pendingFit = true;
-                v._pendingFadeIn = false;
-                v._fadeInTimer.Stop();
                 v._lastFitZoom = -1f;
                 v.ImageChanged?.Invoke(v, EventArgs.Empty);
-                Helpers.DebugLog.Write("IMG", $"SourceChanged new={(e.NewValue as BitmapImage)?.PixelWidth}x{(e.NewValue as BitmapImage)?.PixelHeight} opacity=0 pendingFit=true");
+                Helpers.DebugLog.Write("IMG", $"SourceChanged new={(e.NewValue as BitmapImage)?.PixelWidth}x{(e.NewValue as BitmapImage)?.PixelHeight} opacity={(Helpers.UwpCompat.HasContractV2 ? "keep" : "0")} pendingFit=true");
                 // 兜底: 事件 (ImageOpened/SizeChanged) 可能断链 (10240 上同一实例
                 // 重复赋值不再触发 ImageOpened), 定时重试直到适应成功并淡入
                 v._fitRetryTimer.Stop();
@@ -195,7 +208,7 @@ namespace HyperViewer.Controls
             if (_pendingFit && TryFit())
             {
                 _pendingFit = false;
-                RequestFadeIn();
+                if (!Helpers.UwpCompat.HasContractV2) RequestFadeIn();
             }
         }
 
@@ -211,7 +224,7 @@ namespace HyperViewer.Controls
             {
                 _pendingFit = false;
                 _fitRetryTimer.Stop();
-                RequestFadeIn();
+                if (!Helpers.UwpCompat.HasContractV2) RequestFadeIn();
             }
         }
 

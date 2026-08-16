@@ -20,6 +20,7 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
           </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Click="BackButton_Click" Padding="10,4"
                     Background="Transparent" BorderThickness="0"
@@ -43,6 +44,8 @@
                 <TextBlock Text="{x:Bind Vm.StatusText, Mode=OneWay}" VerticalAlignment="Center"
                            Foreground="{ThemeResource TextMutedBrush}"/>
           </StackPanel>
+            <!-- 系统窗口按钮 (最小化/最大化/关闭) 覆盖区: 防止窄窗口下右侧内容被挤到按钮下方 -->
+            <Grid x:Name="TitleInsetPad" Grid.Column="3"/>
       </Grid>
 
         <Grid Grid.Row="1">

@@ -475,14 +475,17 @@ namespace HyperViewer.ViewModels
                 // 磁贴轮换: 图库全部照片
                 TileRotationService.Start(_masterAllPhotos.Select(p => p.Path));
 
-                // 后台懒加载相册封面
+                // 后台懒加载相册封面 (遍历快照: 遍历期间集合可能被 ApplySearch 修改,
+                // 直接 foreach ObservableCollection 会抛"集合已修改"异常中断全部封面)
+                var albumsSnapshot = _masterAlbums.ToList();
                 _ = Task.Run(async () =>
                 {
-                    foreach (var album in Albums)
+                    foreach (var album in albumsSnapshot)
                     {
                         if (token.IsCancellationRequested) break;
                         await LibraryScanService.EnsureAlbumCoverAsync(album);
                     }
+                    Helpers.DebugLog.Write("LIB", $"cover loop done ({albumsSnapshot.Count} albums, cancelled={token.IsCancellationRequested})");
                 }, token);
             }
             catch

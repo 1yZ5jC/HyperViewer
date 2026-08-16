@@ -1,7 +1,10 @@
 using HyperViewer.Helpers;
 using HyperViewer.Models;
 using HyperViewer.ViewModels;
+using Windows.ApplicationModel.Core;
+using Windows.Foundation;
 using Windows.Storage;
+using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -27,6 +30,13 @@ namespace HyperViewer
                 if (e.PropertyName == nameof(TimelineViewModel.IsScanning))
                     UpdateEmptyHint();
             };
+            try
+            {
+                CoreApplication.GetCurrentView().TitleBar.LayoutMetricsChanged += OnTitleMetricsChanged;
+                Window.Current.SizeChanged += OnWindowSizeChanged;
+            }
+            catch { }
+            UpdateTitleBarInset();
             // 顶栏作为标题栏拖拽区 (与主页/编辑页/设置页一致)
             this.Loaded += (_, __) => ApplyDragRegion();
             // 窗口最小宽度下日历列可能过窄, 这里做简单保护
@@ -40,17 +50,44 @@ namespace HyperViewer
             catch { }
         }
 
+        private void OnTitleMetricsChanged(CoreApplicationViewTitleBar sender, object args)
+            => UpdateTitleBarInset();
+
+        private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs e)
+            => UpdateTitleBarInset();
+
+        private void UpdateTitleBarInset()
+        {
+            double inset = 0;
+            try { inset = CoreApplication.GetCurrentView().TitleBar.SystemOverlayRightInset; }
+            catch { }
+            if (TitleInsetPad != null) TitleInsetPad.Width = inset;
+        }
+
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             // 缓存复用页面实例时 Loaded 不重触发, 这里保险性重设标题栏拖动区
             ApplyDragRegion();
+            UpdateTitleBarInset();
             _currentFolder = e.Parameter as StorageFolder;
             TitleText.Text = _currentFolder?.Name ?? Loc.Get("TimelineTitle");
             if (_currentFolder != null)
             {
                 _ = Vm.LoadAsync(_currentFolder);
             }
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            try
+            {
+                CoreApplication.GetCurrentView().TitleBar.LayoutMetricsChanged -= OnTitleMetricsChanged;
+                Window.Current.SizeChanged -= OnWindowSizeChanged;
+                Window.Current.SetTitleBar(null);
+            }
+            catch { }
+            base.OnNavigatedFrom(e);
         }
 
         private void UpdateEmptyHint()
