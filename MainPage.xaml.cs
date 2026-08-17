@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
+using Windows.Devices.Input;
+using Windows.Foundation;
 using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
@@ -405,8 +407,58 @@ namespace HyperViewer
 
         // ====== 中央导航箭头 ======
 
+        // ====== 手势切换图片 (拖动/触摸板水平滚轮) ======
+        private Point _dragStart;
+        private bool _dragging;
+        private bool _suppressTap;
+        private const double SwipeThreshold = 90;
+
+        private void ImageArea_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            var pt = e.GetCurrentPoint(ImageArea);
+            if (pt.PointerDevice.PointerDeviceType == PointerDeviceType.Mouse && !pt.Properties.IsLeftButtonPressed)
+                return;
+            _dragStart = pt.Position;
+            _dragging = false;
+            _suppressTap = false;
+        }
+
+        private void ImageArea_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            if (_dragging)
+            {
+                _suppressTap = true;
+                var dx = e.GetCurrentPoint(ImageArea).Position.X - _dragStart.X;
+                if (dx < -SwipeThreshold && Vm.CanGoNext) Vm.Next();
+                else if (dx > SwipeThreshold && Vm.CanGoPrev) Vm.Prev();
+            }
+            _dragging = false;
+        }
+
+        private void ImageArea_PointerCanceled(object sender, PointerRoutedEventArgs e)
+        {
+            _dragging = false;
+        }
+
+        private void ImageArea_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        {
+            var props = e.GetCurrentPoint(ImageArea).Properties;
+            if (!props.IsHorizontalMouseWheel) return; // 仅触摸板双指左右滑 / 横向滚轮
+            if (!Vm.HasImage || Vm.ZoomFactor > 1.05) return; // 放大态保留平移
+            var delta = props.MouseWheelDelta;
+            if (delta < 0 && Vm.CanGoNext) { Vm.Next(); e.Handled = true; }
+            else if (delta > 0 && Vm.CanGoPrev) { Vm.Prev(); e.Handled = true; }
+        }
+
         private void ImageArea_PointerMoved(object sender, PointerRoutedEventArgs e)
         {
+            if (!_dragging)
+            {
+                var pt = e.GetCurrentPoint(ImageArea).Position;
+                var dx = pt.X - _dragStart.X;
+                var dy = pt.Y - _dragStart.Y;
+                if (Math.Abs(dx) > 12 && Math.Abs(dx) > Math.Abs(dy) * 1.2) _dragging = true;
+            }
             if (!Vm.HasImage) return;
             // 顶部悬停唤出标题栏 (Photos 行为)
             if (!_chromeVisible && e.GetCurrentPoint(ImageArea).Position.Y <= 3)
@@ -434,6 +486,11 @@ namespace HyperViewer
 
         private void ImageArea_Tapped(object sender, TappedRoutedEventArgs e)
         {
+            if (_suppressTap)
+            {
+                _suppressTap = false;
+                return;
+            }
             if (!Vm.HasImage) return;
             // 未放大时: 点击左/右 1/4 区域翻页, 中间区域切换 UI 显隐
             if (Vm.ZoomFactor <= 1.05)

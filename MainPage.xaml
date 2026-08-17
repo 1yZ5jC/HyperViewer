@@ -280,7 +280,11 @@
             <!-- 主图区 -->
             <Grid x:Name="ImageArea" Grid.Column="0"
                   Tapped="ImageArea_Tapped"
-                  PointerMoved="ImageArea_PointerMoved">
+                  PointerMoved="ImageArea_PointerMoved"
+                  PointerPressed="ImageArea_PointerPressed"
+                  PointerReleased="ImageArea_PointerReleased"
+                  PointerCanceled="ImageArea_PointerCanceled"
+                  PointerWheelChanged="ImageArea_PointerWheelChanged">
                 <controls:ImageViewer x:Name="Viewer"
                                       Source="{x:Bind Vm.DisplayImage, Mode=OneWay}"
                                       IsPlaceholder="{x:Bind Vm.IsQuickShowing, Mode=OneWay}"
