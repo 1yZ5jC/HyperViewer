@@ -97,6 +97,103 @@
         <ItemsPanelTemplate x:Key="PhotoPanelNarrow">
             <ItemsWrapGrid Orientation="Horizontal" ItemWidth="110" ItemHeight="110"/>
        </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="PhotoPanelLargeWide">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="320" ItemHeight="240"/>
+       </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="PhotoPanelLargeNarrow">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="220" ItemHeight="165"/>
+       </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="PhotoCardPanelWide">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="160" ItemHeight="190"/>
+       </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="PhotoCardPanelNarrow">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="120" ItemHeight="150"/>
+       </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="DayFlowPanel">
+            <ItemsWrapGrid Orientation="Horizontal" ItemWidth="110" ItemHeight="110"/>
+       </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="WaterfallPanel">
+            <VariableSizedWrapGrid Orientation="Horizontal" ItemWidth="150" ItemHeight="150"/>
+       </ItemsPanelTemplate>
+        <!-- 照片缩略图网格项样式 (全部照片各视图共用: 悬停高亮 + 选中角标) -->
+        <Style x:Key="PhotoGridItemStyle" TargetType="GridViewItem">
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="GridViewItem">
+                        <Grid x:Name="RootGrid" Background="Transparent">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="ContentBorder.Background" Value="{ThemeResource BtnBgBrush}"/>
+                                            <Setter Target="ContentBorder.BorderBrush" Value="{ThemeResource AccentBrush}"/>
+                                            <Setter Target="ContentBorder.BorderThickness" Value="2"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="ContentBorder.Background" Value="{ThemeResource AccentBrush}"/>
+                                            <Setter Target="ContentBorder.BorderBrush" Value="{ThemeResource AccentBrush}"/>
+                                            <Setter Target="ContentBorder.BorderThickness" Value="2"/>
+                                            <Setter Target="ContentBorder.Opacity" Value="0.9"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="FocusStates">
+                                    <VisualState x:Name="Focused">
+                                        <VisualState.Setters>
+                                            <Setter Target="FocusBorder.Visibility" Value="Visible"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Unfocused"/>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="SelectionStates">
+                                    <VisualState x:Name="Selected">
+                                        <VisualState.Setters>
+                                            <Setter Target="ContentBorder.BorderBrush" Value="{ThemeResource AccentBrush}"/>
+                                            <Setter Target="ContentBorder.BorderThickness" Value="3"/>
+                                            <Setter Target="CheckBadge.Visibility" Value="Visible"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Border x:Name="FocusBorder"
+                                    BorderBrush="{ThemeResource AccentBrush}"
+                                    BorderThickness="2"
+                                    Visibility="Collapsed"
+                                    IsHitTestVisible="False"/>
+                            <Border x:Name="CheckBadge"
+                                    Width="22"
+                                    Height="22"
+                                    CornerRadius="11"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Margin="0,4,4,0"
+                                    Background="{ThemeResource AccentBrush}"
+                                    Visibility="Collapsed"
+                                    IsHitTestVisible="False">
+                                <FontIcon Glyph="&#xE73E;"
+                                          FontFamily="Segoe MDL2 Assets"
+                                          FontSize="12"
+                                          Foreground="White"/>
+                            </Border>
+                            <Border x:Name="ContentBorder"
+                                    Background="{ThemeResource CardBgBrush}"
+                                    BorderBrush="{ThemeResource BtnBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Padding="3">
+                                <ContentPresenter
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"/>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <!-- 右键/长按上下文菜单 -->
         <MenuFlyout x:Key="AlbumContextFlyout">
             <MenuFlyoutItem Text="打开" Click="AlbumContext_Open_Click"/>
@@ -142,6 +239,8 @@
                         <Setter Target="AlbumsGrid.ItemsPanel" Value="{StaticResource AlbumPanelWide}" />
                         <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelWide}" />
                         <Setter Target="FavoritesGrid.ItemsPanel" Value="{StaticResource PhotoPanelWide}" />
+                        <Setter Target="PhotoLargeGrid.ItemsPanel" Value="{StaticResource PhotoPanelLargeWide}" />
+                        <Setter Target="PhotoCardsGrid.ItemsPanel" Value="{StaticResource PhotoCardPanelWide}" />
                         <Setter Target="FileNameText.MaxWidth" Value="280" />
                     </VisualState.Setters>
                 </VisualState>
@@ -153,6 +252,8 @@
                         <Setter Target="AlbumsGrid.ItemsPanel" Value="{StaticResource AlbumPanelNarrow}" />
                         <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
                         <Setter Target="FavoritesGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
+                        <Setter Target="PhotoLargeGrid.ItemsPanel" Value="{StaticResource PhotoPanelLargeNarrow}" />
+                        <Setter Target="PhotoCardsGrid.ItemsPanel" Value="{StaticResource PhotoCardPanelNarrow}" />
                         <Setter Target="FileNameText.MaxWidth" Value="160" />
                     </VisualState.Setters>
                 </VisualState>
@@ -161,6 +262,8 @@
                         <Setter Target="AlbumsGrid.ItemsPanel" Value="{StaticResource AlbumPanelNarrow}" />
                         <Setter Target="AllPhotosGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
                         <Setter Target="FavoritesGrid.ItemsPanel" Value="{StaticResource PhotoPanelNarrow}" />
+                        <Setter Target="PhotoLargeGrid.ItemsPanel" Value="{StaticResource PhotoPanelLargeNarrow}" />
+                        <Setter Target="PhotoCardsGrid.ItemsPanel" Value="{StaticResource PhotoCardPanelNarrow}" />
                         <Setter Target="FileNameText.MaxWidth" Value="100" />
                     </VisualState.Setters>
                 </VisualState>
@@ -410,9 +513,146 @@
                         </GridView.ItemTemplate>
                     </GridView>
 
+                    <!-- 全部照片 Tab 容器: 顶部视图切换栏 + 各视图内容 -->
+                    <Grid x:Name="AllPhotosHost"
+                          Visibility="{x:Bind Vm.AllPhotosVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <!-- 视图模式切换栏 (网格/列表/大图/卡片/瀑布流/日期流/日历), 窄窗口可横向滑动 -->
+                        <Border Grid.Row="0"
+                                Margin="16,6,16,8"
+                                Padding="2,2"
+                                Background="{ThemeResource PanelBgBrush}"
+                                CornerRadius="8"
+                                BorderBrush="{ThemeResource BtnBorderBrush}"
+                                BorderThickness="1">
+                        <ScrollViewer
+                                      HorizontalScrollBarVisibility="Auto"
+                                      HorizontalScrollMode="Auto"
+                                      VerticalScrollBarVisibility="Disabled"
+                                      VerticalScrollMode="Disabled">
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Uid="LibViewGrid"
+                                        Style="{StaticResource TabPillButtonStyle}"
+                                        Command="{x:Bind Vm.SelectPhotoViewCommand}"
+                                        CommandParameter="Grid"
+
+                                        Padding="0"
+
+                                        Background="{x:Bind Vm.PhotoGridViewVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                        Foreground="{x:Bind Vm.PhotoGridViewVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                                        ToolTipService.ToolTip="网格视图"
+                                        AutomationProperties.Name="网格视图"
+                                        Width="40"
+                                        Height="40"
+                                        Margin="0,0,2,0">
+                                    <FontIcon Glyph="&#xE8A9;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                </Button>
+                                <Button x:Uid="LibViewList"
+                                        Style="{StaticResource TabPillButtonStyle}"
+                                        Command="{x:Bind Vm.SelectPhotoViewCommand}"
+                                        CommandParameter="List"
+
+                                        Padding="0"
+
+                                        Background="{x:Bind Vm.PhotoListViewVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                        Foreground="{x:Bind Vm.PhotoListViewVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                                        ToolTipService.ToolTip="列表视图"
+                                        AutomationProperties.Name="列表视图"
+                                        Width="40"
+                                        Height="40"
+                                        Margin="0,0,2,0">
+                                    <FontIcon Glyph="&#xE8FD;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                </Button>
+                                <Button x:Uid="LibViewLargeGrid"
+                                        Style="{StaticResource TabPillButtonStyle}"
+                                        Command="{x:Bind Vm.SelectPhotoViewCommand}"
+                                        CommandParameter="LargeGrid"
+
+                                        Padding="0"
+
+                                        Background="{x:Bind Vm.PhotoLargeGridVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                        Foreground="{x:Bind Vm.PhotoLargeGridVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                                        ToolTipService.ToolTip="大图视图"
+                                        AutomationProperties.Name="大图视图"
+                                        Width="40"
+                                        Height="40"
+                                        Margin="0,0,2,0">
+                                    <FontIcon Glyph="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                </Button>
+                                <Button x:Uid="LibViewCards"
+                                        Style="{StaticResource TabPillButtonStyle}"
+                                        Command="{x:Bind Vm.SelectPhotoViewCommand}"
+                                        CommandParameter="Cards"
+
+                                        Padding="0"
+
+                                        Background="{x:Bind Vm.PhotoCardsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                        Foreground="{x:Bind Vm.PhotoCardsVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                                        ToolTipService.ToolTip="卡片视图"
+                                        AutomationProperties.Name="卡片视图"
+                                        Width="40"
+                                        Height="40"
+                                        Margin="0,0,2,0">
+                                    <FontIcon Glyph="&#xE7C3;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                </Button>
+                                <Button x:Uid="LibViewWaterfall"
+                                        Style="{StaticResource TabPillButtonStyle}"
+                                        Command="{x:Bind Vm.SelectPhotoViewCommand}"
+                                        CommandParameter="Waterfall"
+
+                                        Padding="0"
+
+                                        Background="{x:Bind Vm.PhotoWaterfallVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                        Foreground="{x:Bind Vm.PhotoWaterfallVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                                        ToolTipService.ToolTip="瀑布流"
+                                        AutomationProperties.Name="瀑布流"
+                                        Width="40"
+                                        Height="40"
+                                        Margin="0,0,2,0">
+                                    <FontIcon Glyph="&#xE91B;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                </Button>
+                                <Button x:Uid="LibViewDayFlow"
+                                        Style="{StaticResource TabPillButtonStyle}"
+                                        Command="{x:Bind Vm.SelectPhotoViewCommand}"
+                                        CommandParameter="DayFlow"
+
+                                        Padding="0"
+
+                                        Background="{x:Bind Vm.PhotoDayFlowVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                        Foreground="{x:Bind Vm.PhotoDayFlowVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                                        ToolTipService.ToolTip="日期流"
+                                        AutomationProperties.Name="日期流"
+                                        Width="40"
+                                        Height="40"
+                                        Margin="0,0,2,0">
+                                    <FontIcon Glyph="&#xE8BF;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                </Button>
+                                <Button x:Uid="LibViewCalendar"
+                                        Style="{StaticResource TabPillButtonStyle}"
+                                        Command="{x:Bind Vm.SelectPhotoViewCommand}"
+                                        CommandParameter="Calendar"
+
+                                        Padding="0"
+
+                                        Background="{x:Bind Vm.PhotoCalendarVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Bg}"
+                                        Foreground="{x:Bind Vm.PhotoCalendarVisible, Mode=OneWay, Converter={StaticResource SelBrush}, ConverterParameter=Fg}"
+                                        ToolTipService.ToolTip="日历热力图"
+                                        AutomationProperties.Name="日历热力图"
+                                        Width="40"
+                                        Height="40"
+                                        Margin="2,0,0,0">
+                                    <FontIcon Glyph="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
+                                </Button>
+                            </StackPanel>
+                        </ScrollViewer>
+                        </Border>
                     <!-- 全部照片 Tab: 缩略图网格 -->
                     <GridView x:Name="AllPhotosGrid" ItemsSource="{x:Bind Vm.AllPhotos, Mode=OneWay}"
-                              Visibility="{x:Bind Vm.AllPhotosContentVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                              Grid.Row="1"
+                              Visibility="{x:Bind Vm.PhotoGridViewVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
                               Padding="16,0,16,16"
                               SelectionMode="None"
                               IsItemClickEnabled="True"
@@ -511,6 +751,303 @@
                             </DataTemplate>
                         </GridView.ItemTemplate>
                     </GridView>
+
+                    <!-- 全部照片: 列表视图 (缩略图 + 名称 + 日期) -->
+                    <ListView x:Name="PhotoListView"
+                              ItemsSource="{x:Bind Vm.AllPhotos, Mode=OneWay}"
+                              Grid.Row="1"
+                              Visibility="{x:Bind Vm.PhotoListViewVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                              Padding="16,4,16,16"
+                              SelectionMode="None"
+                              IsItemClickEnabled="True"
+                              ItemClick="PhotoGrid_ItemClick"
+                              RightTapped="AllPhotosGrid_RightTapped"
+                              ScrollViewer.HorizontalScrollMode="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:PhotoItem">
+                                <Grid Margin="0,2" Padding="8,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="64"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="52" Height="52" CornerRadius="8"
+                                            Background="{ThemeResource CardBgBrush}"
+                                            BorderBrush="{ThemeResource BtnBorderBrush}"
+                                            BorderThickness="1"
+                                            Padding="2">
+                                        <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
+                                               Stretch="UniformToFill"
+                                               Loaded="PhotoThumbnail_Loaded"
+                                               DataContextChanged="PhotoImage_DataContextChanged"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                                        <TextBlock Text="{x:Bind Name}"
+                                                   FontSize="14"
+                                                   Foreground="{ThemeResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{x:Bind DateCreatedText}"
+                                                   FontSize="12"
+                                                   Foreground="{ThemeResource TextMutedBrush}"
+                                                   Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                    <FontIcon Grid.Column="2"
+                                              Glyph="&#xE8A7;"
+                                              FontSize="13"
+                                              Foreground="{ThemeResource TextMutedBrush}"
+                                              VerticalAlignment="Center"
+                                              Margin="8,0,4,0"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <!-- 全部照片: 大图网格 -->
+                    <GridView x:Name="PhotoLargeGrid"
+                              ItemsSource="{x:Bind Vm.AllPhotos, Mode=OneWay}"
+                              Grid.Row="1"
+                              Visibility="{x:Bind Vm.PhotoLargeGridVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                              Padding="16,0,16,16"
+                              SelectionMode="None"
+                              IsItemClickEnabled="True"
+                              ItemClick="PhotoGrid_ItemClick"
+                              RightTapped="AllPhotosGrid_RightTapped"
+                              ScrollViewer.HorizontalScrollMode="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ItemContainerStyle="{StaticResource PhotoGridItemStyle}">
+                        <GridView.ItemTemplate>
+                            <DataTemplate x:DataType="models:PhotoItem">
+                                <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
+                                       Stretch="UniformToFill"
+                                       Loaded="PhotoThumbnail_Loaded"
+                                       DataContextChanged="PhotoImage_DataContextChanged"/>
+                            </DataTemplate>
+                        </GridView.ItemTemplate>
+                    </GridView>
+
+                    <!-- 全部照片: 详情卡片网格 (图 + 名称 + 日期) -->
+                    <GridView x:Name="PhotoCardsGrid"
+                              ItemsSource="{x:Bind Vm.AllPhotos, Mode=OneWay}"
+                              Grid.Row="1"
+                              Visibility="{x:Bind Vm.PhotoCardsVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                              Padding="16,0,16,16"
+                              SelectionMode="None"
+                              IsItemClickEnabled="True"
+                              ItemClick="PhotoGrid_ItemClick"
+                              RightTapped="AllPhotosGrid_RightTapped"
+                              ScrollViewer.HorizontalScrollMode="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ItemContainerStyle="{StaticResource PhotoGridItemStyle}">
+                        <GridView.ItemTemplate>
+                            <DataTemplate x:DataType="models:PhotoItem">
+                                <StackPanel>
+                                    <Border Height="128"
+                                            Background="{ThemeResource CardBgBrush}"
+                                            Padding="3">
+                                        <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
+                                               Stretch="UniformToFill"
+                                               Loaded="PhotoThumbnail_Loaded"
+                                               DataContextChanged="PhotoImage_DataContextChanged"/>
+                                    </Border>
+                                    <TextBlock Text="{x:Bind Name}"
+                                               FontSize="12"
+                                               Foreground="{ThemeResource TextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis"
+                                               Margin="4,6,4,0"/>
+                                    <TextBlock Text="{x:Bind DateCreatedText}"
+                                               FontSize="11"
+                                               Foreground="{ThemeResource TextMutedBrush}"
+                                               Margin="4,2,4,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridView.ItemTemplate>
+                    </GridView>
+
+                    <!-- 全部照片: 瀑布流 (按宽高比跨格: 横图 2 列宽, 竖图 2 行高) -->
+                    <GridView x:Name="PhotoWaterfallGrid"
+                              ItemsSource="{x:Bind Vm.AllPhotos, Mode=OneWay}"
+                              Grid.Row="1"
+                              Visibility="{x:Bind Vm.PhotoWaterfallVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                              Padding="16,0,16,16"
+                              SelectionMode="None"
+                              IsItemClickEnabled="True"
+                              ItemClick="PhotoGrid_ItemClick"
+                              RightTapped="AllPhotosGrid_RightTapped"
+                              ScrollViewer.HorizontalScrollMode="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ItemsPanel="{StaticResource WaterfallPanel}"
+                              ItemContainerStyle="{StaticResource PhotoGridItemStyle}">
+                        <GridView.ItemTemplate>
+                            <DataTemplate x:DataType="models:PhotoItem">
+                                <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
+                                       Stretch="UniformToFill"
+                                       Loaded="PhotoThumbnail_Loaded"
+                                       DataContextChanged="PhotoImage_DataContextChanged"/>
+                            </DataTemplate>
+                        </GridView.ItemTemplate>
+                    </GridView>
+
+                    <!-- 全部照片: 日期分组流 (按日期降序 + 组头) -->
+                    <Grid x:Name="DayFlowHost"
+                          Grid.Row="1"
+                          Visibility="{x:Bind Vm.PhotoDayFlowVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <!-- 日期过滤提示条 (日历点击后显示) -->
+                        <Border x:Name="DayFilterBar"
+                                Grid.Row="0"
+                                Margin="16,4,16,4"
+                                Padding="12,6"
+                                CornerRadius="10"
+                                Background="{ThemeResource CardBgBrush}"
+                                BorderBrush="{ThemeResource BtnBorderBrush}"
+                                BorderThickness="1"
+                                Visibility="{x:Bind Vm.FilterDayActive, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{x:Bind Vm.FilterDayText, Mode=OneWay}"
+                                           FontSize="13"
+                                           Foreground="{ThemeResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center"/>
+                                <Button x:Uid="DayFlowClear"
+                                        Style="{StaticResource TextButtonStyle}"
+                                        Padding="10,4"
+                                        Margin="8,0,0,0"
+                                        Background="{ThemeResource BtnBgBrush}"
+                                        Foreground="{ThemeResource TextPrimaryBrush}"
+                                        BorderThickness="0"
+                                        FontSize="12"
+                                        Command="{x:Bind Vm.ClearDayFilterCommand}"/>
+                            </StackPanel>
+                        </Border>
+                        <ListView x:Name="DayFlowList"
+                                  Grid.Row="1"
+                                  Padding="16,0,16,16"
+                                  ItemsSource="{x:Bind Vm.DayFlowGroups, Mode=OneWay}"
+                                  SelectionMode="None"
+                                  IsItemClickEnabled="True"
+                                  ItemClick="PhotoGrid_ItemClick"
+                                  RightTapped="AllPhotosGrid_RightTapped"
+                                  ScrollViewer.HorizontalScrollMode="Disabled"
+                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="models:PhotoDayGroup">
+                                    <StackPanel Margin="0,0,0,12">
+                                        <StackPanel Margin="0,6,0,6" Orientation="Horizontal">
+                                            <TextBlock Text="{x:Bind Title}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{ThemeResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{x:Bind Subtitle}"
+                                                       FontSize="12"
+                                                       Foreground="{ThemeResource TextMutedBrush}"
+                                                       VerticalAlignment="Bottom"
+                                                       Margin="10,0,0,2"/>
+                                        </StackPanel>
+                                        <ItemsControl ItemsSource="{x:Bind}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <ItemsWrapGrid Orientation="Horizontal" ItemWidth="110" ItemHeight="110"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="models:PhotoItem">
+                                                    <Border Margin="3"
+                                                            Padding="2"
+                                                            CornerRadius="10"
+                                                            Background="{ThemeResource CardBgBrush}"
+                                                            BorderBrush="{ThemeResource BtnBorderBrush}"
+                                                            BorderThickness="1"
+                                                            Tapped="DayFlowPhoto_Tapped">
+                                                        <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
+                                                               Stretch="UniformToFill"
+                                                               Loaded="PhotoThumbnail_Loaded"
+                                                               DataContextChanged="PhotoImage_DataContextChanged"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+
+                    <!-- 全部照片: 日历热力图 (月份块, 色阶=当日照片数, 点击某天筛选) -->
+                    <ScrollViewer x:Name="CalendarHost"
+                                  Grid.Row="1"
+                                  Visibility="{x:Bind Vm.PhotoCalendarVisible, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                                  Padding="16,8,16,16"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollMode="Disabled">
+                        <ItemsControl ItemsSource="{x:Bind Vm.CalendarMonths, Mode=OneWay}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <ItemsWrapGrid Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:CalendarMonth">
+                                    <Border Margin="6"
+                                            Padding="14"
+                                            CornerRadius="12"
+                                            Background="{ThemeResource CardBgBrush}"
+                                            BorderBrush="{ThemeResource BtnBorderBrush}"
+                                            BorderThickness="1">
+                                        <StackPanel>
+                                            <TextBlock Text="{x:Bind Title}"
+                                                       FontSize="15"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{ThemeResource TextPrimaryBrush}"
+                                                       Margin="2,0,0,8"/>
+                                            <ItemsControl ItemsSource="{x:Bind Weekdays}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <ItemsWrapGrid Orientation="Horizontal" ItemWidth="36" ItemHeight="22"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="x:String">
+                                                        <TextBlock Text="{x:Bind}"
+                                                                   FontSize="11"
+                                                                   Foreground="{ThemeResource TextMutedBrush}"
+                                                                   TextAlignment="Center"
+                                                                   Width="36"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <ItemsControl ItemsSource="{x:Bind Days}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <ItemsWrapGrid Orientation="Horizontal" ItemWidth="36" ItemHeight="36" MaximumRowsOrColumns="7"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="models:CalendarDay">
+                                                        <Border Width="32"
+                                                                Height="32"
+                                                                Margin="2"
+                                                                CornerRadius="8"
+                                                                Background="{x:Bind Fill}"
+                                                                Tapped="CalendarDay_Tapped">
+                                                            <TextBlock Text="{x:Bind DayNumberText}"
+                                                                       FontSize="11"
+                                                                       Foreground="{x:Bind TextBrush}"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    </Grid>
 
                     <!-- 收藏 Tab: 缩略图网格 (可拖拽排序) -->
                     <GridView x:Name="FavoritesGrid" ItemsSource="{x:Bind Vm.Favorites, Mode=OneWay}"

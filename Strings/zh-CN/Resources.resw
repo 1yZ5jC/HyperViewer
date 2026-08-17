@@ -878,4 +878,37 @@
   </data>
   <data name="SettingsDevVerboseLogHint.Text" xml:space="preserve">
     <value>输出图片解码/布局/fit/淡入时序日志,用 DebugView 或调试器捕获</value>
-  </data></root>
+  </data>  <data name="LibViewGrid" xml:space="preserve">
+    <value>网格</value>
+  </data>
+  <data name="LibViewList" xml:space="preserve">
+    <value>列表</value>
+  </data>
+  <data name="LibViewLargeGrid" xml:space="preserve">
+    <value>大图</value>
+  </data>
+  <data name="LibViewCards" xml:space="preserve">
+    <value>卡片</value>
+  </data>
+  <data name="LibViewWaterfall" xml:space="preserve">
+    <value>瀑布流</value>
+  </data>
+  <data name="LibViewDayFlow" xml:space="preserve">
+    <value>日期流</value>
+  </data>
+  <data name="LibViewCalendar" xml:space="preserve">
+    <value>日历</value>
+  </data>
+  <data name="DayFlowCount" xml:space="preserve">
+    <value>{0} 张</value>
+  </data>
+  <data name="DayFlowFilter" xml:space="preserve">
+    <value>{0}年{1}月{2}日 的照片</value>
+  </data>
+  <data name="DayFlowClear" xml:space="preserve">
+    <value>清除筛选</value>
+  </data>
+  <data name="CalendarWeekdays" xml:space="preserve">
+    <value>日 一 二 三 四 五 六</value>
+  </data>
+</root>

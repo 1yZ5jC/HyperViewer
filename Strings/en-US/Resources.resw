@@ -878,4 +878,37 @@
   </data>
   <data name="SettingsDevVerboseLogHint.Text" xml:space="preserve">
     <value>Log image decode/layout/fit/fade-in timing; capture with DebugView or a debugger</value>
-  </data></root>
+  </data>  <data name="LibViewGrid" xml:space="preserve">
+    <value>Grid</value>
+  </data>
+  <data name="LibViewList" xml:space="preserve">
+    <value>List</value>
+  </data>
+  <data name="LibViewLargeGrid" xml:space="preserve">
+    <value>Large</value>
+  </data>
+  <data name="LibViewCards" xml:space="preserve">
+    <value>Cards</value>
+  </data>
+  <data name="LibViewWaterfall" xml:space="preserve">
+    <value>Waterfall</value>
+  </data>
+  <data name="LibViewDayFlow" xml:space="preserve">
+    <value>By day</value>
+  </data>
+  <data name="LibViewCalendar" xml:space="preserve">
+    <value>Calendar</value>
+  </data>
+  <data name="DayFlowCount" xml:space="preserve">
+    <value>{0} photos</value>
+  </data>
+  <data name="DayFlowFilter" xml:space="preserve">
+    <value>Photos on {0}/{1}/{2}</value>
+  </data>
+  <data name="DayFlowClear" xml:space="preserve">
+    <value>Clear filter</value>
+  </data>
+  <data name="CalendarWeekdays" xml:space="preserve">
+    <value>Su Mo Tu We Th Fr Sa</value>
+  </data>
+</root>

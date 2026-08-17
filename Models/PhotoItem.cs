@@ -18,6 +18,17 @@ namespace HyperViewer.Models
         public string ContentType => File?.ContentType ?? string.Empty;
         public DateTimeOffset DateCreated => File?.DateCreated ?? DateTimeOffset.MinValue;
 
+        /// <summary>本地化日期文本 (列表/卡片视图展示)。</summary>
+        public string DateCreatedText
+        {
+            get
+            {
+                var d = DateCreated;
+                return d == DateTimeOffset.MinValue ? string.Empty
+                    : d.ToString("yyyy-MM-dd HH:mm");
+            }
+        }
+
         private BitmapImage _thumbnail;
         public BitmapImage Thumbnail
         {

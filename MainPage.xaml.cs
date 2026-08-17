@@ -210,16 +210,37 @@ namespace HyperViewer
         private void OnLibraryTabChanged(object sender, MainViewModel.LibraryTabKind newTab)
         {
             // 简单的淡入淡出切换动画
-            var grids = new FrameworkElement[] { AlbumsGrid, AllPhotosGrid, FoldersGrid, FavoritesGrid };
+            var grids = new FrameworkElement[]
+            {
+                AlbumsGrid, AllPhotosGrid, FoldersGrid, FavoritesGrid,
+                PhotoListView, PhotoLargeGrid, PhotoCardsGrid, PhotoWaterfallGrid, DayFlowList, CalendarHost
+            };
             FrameworkElement targetGrid = null;
-            if (newTab == MainViewModel.LibraryTabKind.Albums)
-                targetGrid = AlbumsGrid;
-            else if (newTab == MainViewModel.LibraryTabKind.AllPhotos)
-                targetGrid = AllPhotosGrid;
-            else if (newTab == MainViewModel.LibraryTabKind.Folders)
-                targetGrid = FoldersGrid;
-            else if (newTab == MainViewModel.LibraryTabKind.Favorites)
-                targetGrid = FavoritesGrid;
+            switch (newTab)
+            {
+                case MainViewModel.LibraryTabKind.Albums:
+                    targetGrid = AlbumsGrid;
+                    break;
+                case MainViewModel.LibraryTabKind.AllPhotos:
+                    // 全部照片 Tab 具体显示哪个视图由 PhotoView 决定 (x:Bind 已控制可见性)
+                    switch (Vm.PhotoView)
+                    {
+                        case MainViewModel.PhotoViewKind.List: targetGrid = PhotoListView; break;
+                        case MainViewModel.PhotoViewKind.LargeGrid: targetGrid = PhotoLargeGrid; break;
+                        case MainViewModel.PhotoViewKind.Cards: targetGrid = PhotoCardsGrid; break;
+                        case MainViewModel.PhotoViewKind.Waterfall: targetGrid = PhotoWaterfallGrid; break;
+                        case MainViewModel.PhotoViewKind.DayFlow: targetGrid = DayFlowList; break;
+                        case MainViewModel.PhotoViewKind.Calendar: targetGrid = CalendarHost; break;
+                        default: targetGrid = AllPhotosGrid; break;
+                    }
+                    break;
+                case MainViewModel.LibraryTabKind.Folders:
+                    targetGrid = FoldersGrid;
+                    break;
+                case MainViewModel.LibraryTabKind.Favorites:
+                    targetGrid = FavoritesGrid;
+                    break;
+            }
 
             if (targetGrid == null) return;
 
@@ -865,6 +886,61 @@ namespace HyperViewer
                     photo.Thumbnail = bmp;
                     photo.ThumbnailLoaded = true;
                 }
+            }
+            if (img?.DataContext is PhotoItem loaded && loaded.ThumbnailLoaded)
+            {
+                ApplyWaterfallSpan(img, loaded);
+            }
+        }
+
+        // 瀑布流: 按宽高比设置容器跨格 (横图 2 列宽, 竖图 2 行高)
+        private void ApplyWaterfallSpan(Image img, PhotoItem photo)
+        {
+            var container = FindAscendant<GridViewItem>(img);
+            if (container == null) return;
+            double w = photo.Thumbnail?.PixelWidth ?? 0;
+            double h = photo.Thumbnail?.PixelHeight ?? 0;
+            if (w <= 0 || h <= 0)
+            {
+                VariableSizedWrapGrid.SetColumnSpan(container, 1);
+                VariableSizedWrapGrid.SetRowSpan(container, 1);
+                return;
+            }
+            double ratio = w / h;
+            int cs = 1, rs = 1;
+            if (ratio > 1.35) cs = 2;
+            else if (ratio < 0.74) rs = 2;
+            VariableSizedWrapGrid.SetColumnSpan(container, cs);
+            VariableSizedWrapGrid.SetRowSpan(container, rs);
+            (container.Parent as VariableSizedWrapGrid)?.InvalidateMeasure();
+        }
+
+        private static T FindAscendant<T>(FrameworkElement element) where T : FrameworkElement
+        {
+            var current = element;
+            while (current != null)
+            {
+                current = current.Parent as FrameworkElement;
+                if (current is T t) return t;
+            }
+            return null;
+        }
+
+        // 日历热力图: 点击某天 → 按该日期过滤照片并切到日期流视图
+        private void CalendarDay_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.DataContext is CalendarDay day && !day.Empty)
+            {
+                Vm.ShowDay(day.Date.DateTime);
+            }
+        }
+
+        // 日期流视图: 组内照片点击打开 (ListView 的 ItemClick 收到的是组对象, 由 PhotoGrid_ItemClick 的类型判断忽略)
+        private void DayFlowPhoto_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            if ((sender as FrameworkElement)?.DataContext is PhotoItem photo)
+            {
+                _ = Vm.OpenPhotoFromLibraryAsync(photo);
             }
         }
 

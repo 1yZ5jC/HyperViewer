@@ -16,6 +16,7 @@ namespace HyperViewer.Helpers
         private const string KeySlideRandomTransition = "SlideRandomTransition";
         private const string KeySlideBlurBackground = "SlideBlurBackground";
         private const string KeyLastTab = "LastTab";
+        private const string KeyLastPhotoView = "LastPhotoView";
         private const string KeyRestoreLastFolder = "RestoreLastFolder";
         private const string KeyLastFolderPath = "LastFolderPath";
         private const string KeyLiveTileEnabled = "LiveTileEnabled";
@@ -96,6 +97,13 @@ namespace HyperViewer.Helpers
         {
             get { return GetString(KeyLastTab, "Albums"); }
             set { Store.Values[KeyLastTab] = value; }
+        }
+
+        // 全部照片 Tab 的视图模式 (Grid / List / LargeGrid / Cards / Waterfall / DayFlow / Calendar)
+        public static string LastPhotoView
+        {
+            get { return GetString(KeyLastPhotoView, "Grid"); }
+            set { Store.Values[KeyLastPhotoView] = value; }
         }
 
         /// <summary>启动时是否恢复上次浏览的文件夹。</summary>

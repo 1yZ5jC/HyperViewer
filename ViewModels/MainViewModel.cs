@@ -151,6 +151,94 @@ namespace HyperViewer.ViewModels
         public ObservableCollection<PhotoItem> AllPhotos { get; } = new ObservableCollection<PhotoItem>();
         public ObservableCollection<PhotoItem> Favorites { get; } = new ObservableCollection<PhotoItem>();
 
+        // ---- 全部照片 Tab: 多视图展示 (网格/列表/大图/卡片/瀑布流/日期流/日历) ----
+        public enum PhotoViewKind { Grid, List, LargeGrid, Cards, Waterfall, DayFlow, Calendar }
+
+        private PhotoViewKind _photoView = PhotoViewKind.Grid;
+        public PhotoViewKind PhotoView
+        {
+            get => _photoView;
+            set
+            {
+                if (SetProperty(ref _photoView, value))
+                {
+                    RaisePhotoViewVisibilities();
+                    SettingsService.LastPhotoView = value.ToString();
+                }
+            }
+        }
+
+        // 与 Tab/空态联动: 仅全部照片 Tab 且非空态时展示
+        public bool PhotoGridViewVisible => AllPhotosContentVisible && PhotoView == PhotoViewKind.Grid;
+        public bool PhotoListViewVisible => AllPhotosContentVisible && PhotoView == PhotoViewKind.List;
+        public bool PhotoLargeGridVisible => AllPhotosContentVisible && PhotoView == PhotoViewKind.LargeGrid;
+        public bool PhotoCardsVisible => AllPhotosContentVisible && PhotoView == PhotoViewKind.Cards;
+        public bool PhotoWaterfallVisible => AllPhotosContentVisible && PhotoView == PhotoViewKind.Waterfall;
+        public bool PhotoDayFlowVisible => AllPhotosContentVisible && PhotoView == PhotoViewKind.DayFlow;
+        public bool PhotoCalendarVisible => AllPhotosContentVisible && PhotoView == PhotoViewKind.Calendar;
+
+        public RelayCommand<string> SelectPhotoViewCommand { get; }
+
+        /// <summary>日期流分组 (按 DateCreated 的日期, 降序)。</summary>
+        public ObservableCollection<PhotoDayGroup> DayFlowGroups { get; } = new ObservableCollection<PhotoDayGroup>();
+
+        /// <summary>日历热力图月份块 (升序)。</summary>
+        public ObservableCollection<CalendarMonth> CalendarMonths { get; } = new ObservableCollection<CalendarMonth>();
+
+        /// <summary>日历点击某天后按该日期过滤, null=不过滤。</summary>
+        private DateTime? _filterDay;
+        public DateTime? FilterDay
+        {
+            get => _filterDay;
+            private set
+            {
+                if (SetProperty(ref _filterDay, value))
+                {
+                    RaisePropertyChanged(nameof(FilterDayActive));
+                    RaisePropertyChanged(nameof(FilterDayText));
+                }
+            }
+        }
+
+        public bool FilterDayActive => FilterDay != null;
+
+        public string FilterDayText => FilterDay == null ? string.Empty
+            : Loc.Format("DayFlowFilter", FilterDay.Value.Year, FilterDay.Value.Month, FilterDay.Value.Day);
+
+        private void RaisePhotoViewVisibilities()
+        {
+            RaisePropertyChanged(nameof(PhotoGridViewVisible));
+            RaisePropertyChanged(nameof(PhotoListViewVisible));
+            RaisePropertyChanged(nameof(PhotoLargeGridVisible));
+            RaisePropertyChanged(nameof(PhotoCardsVisible));
+            RaisePropertyChanged(nameof(PhotoWaterfallVisible));
+            RaisePropertyChanged(nameof(PhotoDayFlowVisible));
+            RaisePropertyChanged(nameof(PhotoCalendarVisible));
+        }
+
+        /// <summary>日历: 查看某一天的照片 (过滤 + 切到日期流视图)。</summary>
+        public void ShowDay(DateTime day)
+        {
+            FilterDay = day.Date;
+            ApplySearch();
+            PhotoView = PhotoViewKind.DayFlow;
+        }
+
+        /// <summary>清除日期过滤。</summary>
+        public RelayCommand ClearDayFilterCommand { get; }
+
+        private void ClearDayFilter()
+        {
+            FilterDay = null;
+            ApplySearch();
+        }
+
+        /// <summary>切换全部照片视图模式 (参数为 PhotoViewKind 名称字符串)。</summary>
+        public void SelectPhotoView(string kind)
+        {
+            if (Enum.TryParse<PhotoViewKind>(kind, out var v)) PhotoView = v;
+        }
+
         private bool _favoritesLoading;
         private bool _suppressFavoritesPersist;
 
@@ -176,22 +264,19 @@ namespace HyperViewer.ViewModels
             {
                 var term = (_searchText ?? string.Empty).Trim().ToLowerInvariant();
                 bool filtering = !string.IsNullOrEmpty(term);
+                var day = FilterDay;
 
                 Albums.Clear();
                 AllPhotos.Clear();
 
-                if (filtering)
-                {
-                    foreach (var a in _masterAlbums.Where(a => a.Name?.ToLowerInvariant().Contains(term) == true))
-                        Albums.Add(a);
-                    foreach (var p in _masterAllPhotos.Where(p => p.Name?.ToLowerInvariant().Contains(term) == true))
-                        AllPhotos.Add(p);
-                }
-                else
-                {
-                    foreach (var a in _masterAlbums) Albums.Add(a);
-                    foreach (var p in _masterAllPhotos) AllPhotos.Add(p);
-                }
+                foreach (var a in _masterAlbums.Where(a => a.Name?.ToLowerInvariant().Contains(term) == true))
+                    Albums.Add(a);
+                foreach (var p in _masterAllPhotos.Where(p =>
+                           (!filtering || p.Name?.ToLowerInvariant().Contains(term) == true) &&
+                           (day == null || p.DateCreated.Date == day.Value)))
+                    AllPhotos.Add(p);
+
+                RebuildDayFlowGroups();
                 // Update empty-state visibility based on filtered results
                 LibraryEmptyVisible = Albums.Count == 0 && AllPhotos.Count == 0 && !RecentVisible;
             }
@@ -199,6 +284,50 @@ namespace HyperViewer.ViewModels
             {
                 // 搜索异常时静默忽略，保持原列表
                 System.Diagnostics.Debug.WriteLine($"ApplySearch error: {ex.Message}");
+            }
+        }
+
+        /// <summary>重建日期流分组 (按日期降序)。</summary>
+        private void RebuildDayFlowGroups()
+        {
+            DayFlowGroups.Clear();
+            var groups = AllPhotos
+                .GroupBy(p => p.DateCreated.Date)
+                .OrderByDescending(g => g.Key)
+                .Select(g => new PhotoDayGroup(g.Key, g))
+                .ToList();
+            foreach (var g in groups) DayFlowGroups.Add(g);
+        }
+
+        /// <summary>重建日历热力图月份块 (全量照片分布, 升序)。内部容错: 任何异常不得阻塞图库主流程。</summary>
+        private void RebuildCalendar()
+        {
+            try
+            {
+                CalendarMonths.Clear();
+                if (_masterAllPhotos.Count == 0) return;
+                var counts = new Dictionary<DateTime, int>();
+                DateTime min = DateTime.MaxValue, max = DateTime.MinValue;
+                foreach (var p in _masterAllPhotos)
+                {
+                    var d = p.DateCreated.Date;
+                    if (d == DateTime.MinValue.Date) continue;
+                    counts.TryGetValue(d, out var c);
+                    counts[d] = c + 1;
+                    if (d < min) min = d;
+                    if (d > max) max = d;
+                }
+                if (min == DateTime.MaxValue) return;
+                for (var m = new DateTime(min.Year, min.Month, 1);
+                     m <= new DateTime(max.Year, max.Month, 1);
+                     m = m.AddMonths(1))
+                {
+                    CalendarMonths.Add(new CalendarMonth(m.Year, m.Month, counts));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RebuildCalendar error: {ex.Message}");
             }
         }
 
@@ -226,6 +355,7 @@ namespace HyperViewer.ViewModels
             RaisePropertyChanged(nameof(AllPhotosContentVisible));
             RaisePropertyChanged(nameof(FoldersContentVisible));
             RaisePropertyChanged(nameof(FavoritesContentVisible));
+            RaisePhotoViewVisibilities();
         }
 
         private bool _loadFailed;
@@ -408,6 +538,8 @@ namespace HyperViewer.ViewModels
             SelectAllPhotosTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.AllPhotos));
             SelectFoldersTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.Folders));
             SelectFavoritesTabCommand = new RelayCommand(() => SelectLibraryTab(LibraryTabKind.Favorites));
+            SelectPhotoViewCommand = new RelayCommand<string>(SelectPhotoView);
+            ClearDayFilterCommand = new RelayCommand(ClearDayFilter);
             Favorites.CollectionChanged += OnFavoritesChanged;
 
             _recent = RecentFoldersService.Instance;
@@ -425,6 +557,10 @@ namespace HyperViewer.ViewModels
             var savedTab = SettingsService.LastTab;
             if (Enum.TryParse<LibraryTabKind>(savedTab, out var tab))
                 LibraryTab = tab;
+            // 恢复全部照片的视图模式
+            var savedView = SettingsService.LastPhotoView;
+            if (Enum.TryParse<PhotoViewKind>(savedView, out var view))
+                PhotoView = view;
         }
 
         private CancellationTokenSource _libraryCts;
@@ -472,6 +608,7 @@ namespace HyperViewer.ViewModels
                     // Populate filtered collections based on current search text
                     ApplySearch();
                     LibraryEmptyVisible = _masterAlbums.Count == 0 && _masterAllPhotos.Count == 0;
+                    RebuildCalendar();
 
                 // 动态磁贴: 最近照片 (按日期降序的列表头部)
                 _ = TileService.UpdateAsync(_masterAllPhotos.Take(4).Select(p => p.Path));
