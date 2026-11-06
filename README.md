@@ -5,11 +5,13 @@
 ## 平台
 
 - UWP (C# + XAML)
-- Target: Windows 10.0.26100 / Min: 10.0.10240
+- Target: Windows 10.0.26100 / Min: **10.0.16299** (Windows 10 1709)
+- 构建: **.NET Native 2.2.12**（由 MinVersion ≥ 16299 自动选中）；1.7.6 已于 2026-10-13 终止支持
 - 默认语言: zh-CN
 - MVVM: 自研轻量基类 (`Helpers/ObservableObject.cs`, `Helpers/RelayCommand.cs`)
-  - 原因: `CommunityToolkit.Mvvm` / `Microsoft.Toolkit.Mvvm` 不直接兼容 UAP 10.0.10240
+  - 原因: 项目最初面向 UAP 10.0.10240, `CommunityToolkit.Mvvm` / `Microsoft.Toolkit.Mvvm` 不直接兼容（最低版本已提升，基类沿用）
   - 自研基类已覆盖 `ObservableObject` / `RelayCommand` / `AsyncRelayCommand`
+- 下文「踩坑」记录中的 10240 为历史兼容背景；最低版本已提升，代码里的低版本兼容分支仍保留
 
 ## 功能进度
 

@@ -92,13 +92,12 @@ foreach ($a in ($Arch -split ',')) {
 
     Write-Host ""
     Write-Host "==> [1/3] 编译 $platform (Release, .NET Native) ..."
-    # arm64 必须用 .NET Native 2.2 工具链 (TargetPlatformMinVersion>=16299 触发),
-    # 1.7 工具链无 arm64 框架包。arm (32) 维持 10240 (1.7 工具链)。
-    $buildArgs = @("/t:Build", "/p:Configuration=Release", "/p:Platform=$platform", "/v:m", "/nologo")
+    # 全架构统一走 .NET Native 2.2 工具链 (由 csproj 的 TargetPlatformMinVersion=16299 选中)。
+    # /restore 确保 NuGet assets 与新的最低版本一致, 避免 UAP,Version=v10.0.16299 校验错。
+    $buildArgs = @("/restore", "/t:Build", "/p:Configuration=Release", "/p:Platform=$platform", "/v:m", "/nologo")
     # csproj 的 AppxBundlePlatforms 默认是 x86|x64; 单架构构建时若不覆盖, VS 会额外
     # 递归编译/补其它架构的打包布局 (耗时数分钟)。仅 arm(32) 分支需要此覆盖。
     if ($a -eq "arm") { $buildArgs += "/p:AppxBundlePlatforms=ARM" }
-    if ($a -eq "arm64") { $buildArgs += "/p:TargetPlatformMinVersion=10.0.16299.0" }
     & $msbuild (Join-Path $root "HyperViewer.csproj") @buildArgs 2>&1 | Out-Null
     # _ValidateConfiguration 的 ARM/ARM64 校验失败是预期的 (TargetPlatformVersion=26100 > 22621),
     # 但 .NET Native 编译已完成。以 exe 产物判断真实成败。
@@ -129,7 +128,7 @@ foreach ($a in ($Arch -split ',')) {
     Copy-Item (Join-Path $root "Assets") $stage -Recurse -Force
 
     # 规范化 manifest:
-    #   arm  : 取 x86 Release (VS 生成的完整产物, 已注入 .NET Native 1.7 框架依赖), 替换架构为 arm
+    #   arm  : 取 x86 Release (VS 生成的完整产物, 已注入 .NET Native 2.2 框架依赖), 替换架构为 arm
     #   arm64: 取 ARM64 Release 自身产物 (注入 .NET Native 2.2 框架依赖, 架构已是 arm64),
     #          缺失说明 ARM64 打包校验未通过, 此时用 x86 的会导致 2.2 依赖丢失而启动即崩
     if ($a -eq "arm64") {
@@ -156,7 +155,7 @@ foreach ($a in ($Arch -split ',')) {
     }
     Remove-FileSafe (Join-Path $stage "HyperViewer.pdb")
 
-    # 仅 arm (1.7) 需要清理 .NET Native 编译中间产物:
+    # 仅 arm (直接复制 bin\ARM\Release) 需要清理 .NET Native 编译中间产物:
     #   bin\Release 会包含 ILC 的引用集 (全量 System.*.dll 等, 运行时由框架包提供)、
     #   ilc\ 源文件、AppxMetadata、嵌套的 *.appx / *.recipe。
     #   arm64 (2.2) 从 PackageLayout 复制, 天然干净, 跳过。
@@ -164,9 +163,12 @@ foreach ($a in ($Arch -split ',')) {
         $exclude = '^(System.*\.dll|mscorlib\.dll|netstandard\.dll|Microsoft\..*\.dll|WindowsBase\.dll|Microsoft\.CSharp\.dll|Microsoft\.VisualBasic\.dll)$'
         Get-ChildItem $stage -File | Where-Object { $_.Name -match $exclude } |
             ForEach-Object { Remove-FileSafe $_.FullName }
-        foreach ($dir in @("ilc", "AppxMetadata")) {
-            Remove-TreeSafe (Join-Path $stage $dir)
-        }
+        # bin\<arch>\Release 会残留 VS 打多架构 bundle 时生成的 x86/x64 子布局
+        # (内含嵌套 .appx, 曾把包撑到 24.5 MB)。按白名单保留应用真实内容目录,
+        # 其余子目录 (x86 / x64 / ilc / AppxMetadata / ...) 一律清掉。
+        Get-ChildItem $stage -Directory |
+            Where-Object { $_.Name -notin @('Assets', 'Controls', 'Strings') } |
+            ForEach-Object { Remove-TreeSafe $_.FullName }
         Get-ChildItem $stage -File -Filter '*.appx' |
             ForEach-Object { Remove-FileSafe $_.FullName }
         Get-ChildItem $stage -File -Filter '*.appxrecipe' |
@@ -196,23 +198,17 @@ foreach ($a in ($Arch -split ',')) {
 }
 
 # ---- 汇总 + 部署提示 ----
-# ---- 复制 .NET Native 框架依赖包: 本地 Add-AppxPackage 不会自动安装依赖,
-#      目标设备若缺 Microsoft.NET.Native.Runtime/Framework.1.7, 应用启动即崩
-#      (mrt100 加载失败)。1.7 无 arm64 版框架包 (arm64 需 .NET Native 2.2 工具链)。 ----
-$depDir = Join-Path $dist "framework"
+# ---- 复制 .NET Native 2.2 框架依赖包: 本地 Add-AppxPackage 不会自动安装依赖,
+#      目标设备若缺 Microsoft.NET.Native.Runtime/Framework.2.2, 应用启动即崩。
+#      arm 与 arm64 的 2.2 框架包同名但内容不同, 必须按架构分目录存放, 否则互相覆盖。 ----
 $fwBase = "C:\Program Files (x86)\Microsoft SDKs\UWPNuGetPackages"
 $deps = @()
 foreach ($a in (@("arm", "arm64") | Where-Object { $Arch -split ',' -contains $_ })) {
-    # arm:  .NET Native 1.7 框架包 (Framework.1.7 来自 sharedlibrary 1.7.3, Runtime.1.7 来自 compiler 1.7.6)
-    # arm64: .NET Native 2.2 框架包 (Framework.2.2 来自 runtime.win10-arm64.sharedlibrary 2.2.8,
-    #        Runtime.2.2 来自 runtime.win10-arm64.compiler 2.2.12 的 tools\Runtime\arm64)
-    if ($a -eq "arm64") {
-        $fwSrc = Join-Path $fwBase "runtime.win10-arm64.microsoft.net.native.sharedlibrary\2.2.8-rel-31116-00\tools\SharedLibrary\ret\Native\Microsoft.NET.Native.Framework.2.2.appx"
-        $rtSrc = Join-Path $fwBase "runtime.win10-arm64.microsoft.net.native.compiler\2.2.12-rel-31116-00\tools\Runtime\arm64\Microsoft.NET.Native.Runtime.2.2.appx"
-    } else {
-        $fwSrc = Join-Path $fwBase "microsoft.net.native.sharedlibrary-arm\1.7.3\tools\SharedLibrary\ret\Native\Microsoft.NET.Native.Framework.1.7.appx"
-        $rtSrc = Join-Path $fwBase "microsoft.net.native.compiler\1.7.6\tools\Runtime\arm\Microsoft.NET.Native.Runtime.1.7.appx"
-    }
+    $depDir = Join-Path (Join-Path $dist "framework") $a
+    # Framework.2.2 来自 runtime.win10-<arch>.sharedlibrary 2.2.8,
+    # Runtime.2.2  来自 runtime.win10-<arch>.compiler 2.2.12 的 tools\Runtime\<arch>
+    $fwSrc = Join-Path $fwBase "runtime.win10-${a}.microsoft.net.native.sharedlibrary\2.2.8-rel-31116-00\tools\SharedLibrary\ret\Native\Microsoft.NET.Native.Framework.2.2.appx"
+    $rtSrc = Join-Path $fwBase "runtime.win10-${a}.microsoft.net.native.compiler\2.2.12-rel-31116-00\tools\Runtime\${a}\Microsoft.NET.Native.Runtime.2.2.appx"
     foreach ($s in @($rtSrc, $fwSrc)) {
         if (Test-Path $s) {
             New-Item -ItemType Directory -Path $depDir -Force | Out-Null
@@ -220,7 +216,7 @@ foreach ($a in (@("arm", "arm64") | Where-Object { $Arch -split ',' -contains $_
             Copy-Item $s $dst -Force
             $deps += $dst
         } else {
-            Write-Host "[依赖] 警告: 未找到 $s (该架构的 .NET Native 1.7 框架包不存在)"
+            Write-Host "[依赖] 警告: 未找到 $s (该架构的 .NET Native 2.2 框架包不存在)"
         }
     }
 }
@@ -231,7 +227,7 @@ foreach ($p in $results) {
     $item = Get-Item $p
     Write-Host ("  {0}  ({1:N1} MB)" -f $item.FullName, ($item.Length / 1MB))
 }
-Write-Host "框架依赖 (已复制到 dist\framework, 需先于应用安装):"
+Write-Host "框架依赖 (已按架构复制到 dist\framework\<arch>, 需先于应用安装):"
 foreach ($d in $deps) { Write-Host "  $d" }
 Write-Host "=========================================="
 Write-Host "部署到目标设备 (桌面, 本地部署不自动装依赖!):"
@@ -240,7 +236,7 @@ Write-Host "  2. 安装框架依赖 (一次, 必须先于应用):"
 foreach ($d in $deps) { Write-Host ("     Add-AppxPackage -Path {0}" -f $d) }
 Write-Host "  3. 安装应用:          Add-AppxPackage -Path <HyperViewer_..._arm.appx> / _arm64.appx"
 Write-Host "若应用启动即崩 (0x8007007e / 0xc000027b), 优先检查第 2 步的框架包是否已装。"
-Write-Host "arm64 包由 .NET Native 2.2 工具链产出, 需 2.2 框架包; arm 包需 1.7 框架包 (脚本已按架构复制对应版本)。"
+Write-Host "arm / arm64 包均由 .NET Native 2.2 工具链产出, 需对应架构的 2.2 框架包 (已按架构分目录复制)。"
 Write-Host "(若使用自己的证书, 请安装对应的根证书; 商店提交需使用商店发布证书。)"
 
 exit 0
