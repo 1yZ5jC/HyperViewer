@@ -28,6 +28,8 @@
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
     <AppxBundle>Always</AppxBundle>
+    <AppxPackageSigningTimestampServerUrl>http://timestamp.digicert.com</AppxPackageSigningTimestampServerUrl>
+    <AppxBundlePlatforms>x86|x64|arm</AppxBundlePlatforms>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -295,4 +297,26 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <!-- .NET Native 1.7.6 的 Mcg 阶段解析 Windows SDK 10.0.22621.0 的 WindowsApp.lib 时,
+       读完 4900 余个导出后抛 "Internal compiler error: 值对于 UInt32 太大或太小"。
+       10.0.26100.0 的导入库导出集较小 (约 4400), 1.7 ILC 能正常解析。
+       这里只替换 ILC 的导入库搜索路径, 不改 TargetPlatformMinVersion(10.0.10240.0)、
+       不改 TargetPlatformVersion(10.0.22621.0)、不换 .NET Native 工具链,
+       生成的清单仍是 MinVersion=10.0.10240.0 + Framework/Runtime 1.7。
+       必须放在 XAML targets 之后, 此时 $(WindowsSdkDir) 才已定义。 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' and ('$(Platform)' == 'x86' or '$(Platform)' == 'x64') and Exists('$(WindowsSdkDir)Lib\10.0.26100.0\um\x64\WindowsApp.lib')">
+    <IlcTargetPlatformSdkLibPath>$(WindowsSdkDir)Lib\10.0.26100.0\um</IlcTargetPlatformSdkLibPath>
+  </PropertyGroup>
+  <!-- ARM(32): Windows SDK 10.0.26100.0 没有 um\arm 目录, 而 22621 的 um\arm\WindowsApp.lib
+       同样会触发 1.7 ILC 的 UInt32 溢出 (实测 4899 个导出)。
+       ILC 的 Mcg 只读取 WindowsApp.lib 与 winsqlite3.lib 两个导入库, 且 ARM 与 x64 的
+       符号名都是未修饰形式, 因此把 26100 的 x64 导入库复制成 um\arm 供 ILC 查找即可。
+       实测: 4427 个导出, ILC 完整走完本机代码生成, 产物为 10240 + .NET Native 1.7。 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(Platform)' == 'ARM' and Exists('$(WindowsSdkDir)Lib\10.0.26100.0\um\x64\WindowsApp.lib')">
+    <IlcTargetPlatformSdkLibPath>$(MSBuildProjectDirectory)\obj\IlcLibs\um</IlcTargetPlatformSdkLibPath>
+  </PropertyGroup>
+  <Target Name="PrepareIlcArmImportLibs" BeforeTargets="PrepareForBuild" Condition="'$(Configuration)' == 'Release' and '$(Platform)' == 'ARM'">
+    <MakeDir Directories="$(MSBuildProjectDirectory)\obj\IlcLibs\um\arm" />
+    <Copy SourceFiles="$(WindowsSdkDir)Lib\10.0.26100.0\um\x64\WindowsApp.lib;$(WindowsSdkDir)Lib\10.0.26100.0\um\x64\winsqlite3.lib" DestinationFolder="$(MSBuildProjectDirectory)\obj\IlcLibs\um\arm" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

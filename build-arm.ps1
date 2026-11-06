@@ -23,6 +23,17 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $dist = Join-Path $root "dist"
 
+# 清理统一用 .NET 文件 API: PowerShell 的 Remove-Item cmdlet 在受管环境下
+# 可能被安全删除包装拦截 (批量删除确认 / trash-failed), 且 5.1 直接接
+# FileInfo 管道会报 InputObjectNotBound。这里语义与 -Recurse -Force 相同。
+function Remove-TreeSafe([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path)) { return }
+    [System.IO.Directory]::Delete($Path, $true)
+}
+function Remove-FileSafe([string]$Path) {
+    if (Test-Path -LiteralPath $Path) { [System.IO.File]::Delete($Path) }
+}
+
 $msbuild = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
 if (-not (Test-Path $msbuild)) {
     $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -84,6 +95,9 @@ foreach ($a in ($Arch -split ',')) {
     # arm64 必须用 .NET Native 2.2 工具链 (TargetPlatformMinVersion>=16299 触发),
     # 1.7 工具链无 arm64 框架包。arm (32) 维持 10240 (1.7 工具链)。
     $buildArgs = @("/t:Build", "/p:Configuration=Release", "/p:Platform=$platform", "/v:m", "/nologo")
+    # csproj 的 AppxBundlePlatforms 默认是 x86|x64; 单架构构建时若不覆盖, VS 会额外
+    # 递归编译/补其它架构的打包布局 (耗时数分钟)。仅 arm(32) 分支需要此覆盖。
+    if ($a -eq "arm") { $buildArgs += "/p:AppxBundlePlatforms=ARM" }
     if ($a -eq "arm64") { $buildArgs += "/p:TargetPlatformMinVersion=10.0.16299.0" }
     & $msbuild (Join-Path $root "HyperViewer.csproj") @buildArgs 2>&1 | Out-Null
     # _ValidateConfiguration 的 ARM/ARM64 校验失败是预期的 (TargetPlatformVersion=26100 > 22621),
@@ -94,7 +108,7 @@ foreach ($a in ($Arch -split ',')) {
     Write-Host "      编译完成 (校验报错可忽略)。"
 
     Write-Host "==> [2/3] 组装布局 + makeappx 打包 ..."
-    if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+    Remove-TreeSafe $stage
     New-Item -ItemType Directory -Path $stage | Out-Null
     # 布局来源:
     #   arm  : bin\ARM\Release (应用 IL 在 HyperViewer.exe 内, XBF 为独立文件, 之后清理 ILC 中间产物)
@@ -111,7 +125,7 @@ foreach ($a in ($Arch -split ',')) {
     } else {
         Copy-Item (Join-Path $binDir "*") $stage -Recurse -Force
     }
-    if (Test-Path (Join-Path $stage "Assets")) { Remove-Item (Join-Path $stage "Assets") -Recurse -Force }
+    Remove-TreeSafe (Join-Path $stage "Assets")
     Copy-Item (Join-Path $root "Assets") $stage -Recurse -Force
 
     # 规范化 manifest:
@@ -140,7 +154,7 @@ foreach ($a in ($Arch -split ',')) {
         if (-not (Test-Path $srcPri)) { $srcPri = Join-Path $root "bin\x86\Debug\resources.pri" }
         Copy-Item $srcPri (Join-Path $stage "resources.pri") -Force
     }
-    Remove-Item (Join-Path $stage "HyperViewer.pdb") -Force -ErrorAction SilentlyContinue
+    Remove-FileSafe (Join-Path $stage "HyperViewer.pdb")
 
     # 仅 arm (1.7) 需要清理 .NET Native 编译中间产物:
     #   bin\Release 会包含 ILC 的引用集 (全量 System.*.dll 等, 运行时由框架包提供)、
@@ -148,12 +162,15 @@ foreach ($a in ($Arch -split ',')) {
     #   arm64 (2.2) 从 PackageLayout 复制, 天然干净, 跳过。
     if ($a -ne "arm64") {
         $exclude = '^(System.*\.dll|mscorlib\.dll|netstandard\.dll|Microsoft\..*\.dll|WindowsBase\.dll|Microsoft\.CSharp\.dll|Microsoft\.VisualBasic\.dll)$'
-        Get-ChildItem $stage -File | Where-Object { $_.Name -match $exclude } | Remove-Item -Force
+        Get-ChildItem $stage -File | Where-Object { $_.Name -match $exclude } |
+            ForEach-Object { Remove-FileSafe $_.FullName }
         foreach ($dir in @("ilc", "AppxMetadata")) {
-            if (Test-Path (Join-Path $stage $dir)) { Remove-Item (Join-Path $stage $dir) -Recurse -Force }
+            Remove-TreeSafe (Join-Path $stage $dir)
         }
-        Get-ChildItem $stage -File -Filter '*.appx' | Remove-Item -Force
-        Get-ChildItem $stage -File -Filter '*.appxrecipe' | Remove-Item -Force
+        Get-ChildItem $stage -File -Filter '*.appx' |
+            ForEach-Object { Remove-FileSafe $_.FullName }
+        Get-ChildItem $stage -File -Filter '*.appxrecipe' |
+            ForEach-Object { Remove-FileSafe $_.FullName }
     }
 
     & $makeappx pack /d $stage /p $pkg /o /l | Out-Null

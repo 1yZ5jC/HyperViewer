@@ -1000,7 +1000,7 @@ namespace HyperViewer.ViewModels
         private const ushort FOF_SILENT = 0x0004;
         private const ushort FOF_NOERRORUI = 0x0400;
 
-        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
         private static extern int SHFileOperation(ref SHFILEOPSTRUCTW lpFileOp);
 
         /// <summary>尝试将文件移入回收站 (不可用时返回 false)。</summary>
