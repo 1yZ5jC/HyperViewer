@@ -911,4 +911,10 @@
   <data name="CalendarWeekdays" xml:space="preserve">
     <value>Su Mo Tu We Th Fr Sa</value>
   </data>
+  <data name="PrintTitle" xml:space="preserve">
+    <value>Print</value>
+  </data>
+  <data name="PrintUnavailable" xml:space="preserve">
+    <value>Could not open the print dialog. Make sure a printer or 'Microsoft Print to PDF' is installed, then try again.</value>
+  </data>
 </root>

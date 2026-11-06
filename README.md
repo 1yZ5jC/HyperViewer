@@ -54,8 +54,8 @@
 - [ ] 缩放快捷键: Ctrl+0 实际尺寸 / Ctrl+9 适应窗口
 
 **分享与导出**
-- [ ] 分享按钮 (`DataTransferManager` 分享当前图片)
-- [ ] 打印 (`PrintManager`)
+- [x] 分享按钮 (`DataTransferManager` 分享当前图片)
+- [x] 打印 (`PrintManager`)
 - [ ] 主视图"另存为" (Ctrl+S)
 - [ ] EXIF 旋转方向写回 (保存副本时可选)
 
