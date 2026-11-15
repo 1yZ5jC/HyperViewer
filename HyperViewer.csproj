@@ -11,11 +11,11 @@
     <AssemblyName>HyperViewer</AssemblyName>
     <DefaultLanguage>zh-CN</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
-    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.22621.0</TargetPlatformVersion>
+    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.26100.0</TargetPlatformVersion>
     <!-- .NET Native 2.2 工具链的下限是 Windows 10 1709 (16299)。
          10240 只会选中已终止支持 (2026-10-13) 的 .NET Native 1.7.6,
          且其 ILC 解析新版 SDK 的 WindowsApp.lib 会抛 UInt32 溢出。 -->
-    <TargetPlatformMinVersion>10.0.16299.0</TargetPlatformMinVersion>
+    <TargetPlatformMinVersion>10.0.10240.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
